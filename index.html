@@ -123,7 +123,7 @@
                 <div class="bg-gray-850 p-6 rounded-2xl border border-gray-800 shadow-xl">
                     <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2 flex justify-between items-center">
                         <span><i class="fas fa-history text-blue-400 mr-2"></i>İşlem Geçmişi (Canlı Cloud)</span>
-                        <span id="sync-status" class="text-xs text-green-400 font-medium"><i class="fas fa-check-circle"></i> Firebase Eşitlendi</span>
+                        <span id="sync-status" class="text-xs text-green-400 font-medium"><i class="fas fa-check-circle"></i> Firebase Yükleniyor...</span>
                     </h3>
                     
                     <div class="overflow-x-auto">
@@ -147,7 +147,7 @@
         </main>
     </div>
 
-    <!-- 🔥 FIREBASE SDK (COMPAT SÜRÜMÜ - SINGLE PAGE İÇİN EN KARARLISI) -->
+    <!-- 🔥 FIREBASE SDK (SINGLE PAGE İÇİN EN KARARLI COMPAT SÜRÜMÜ) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
@@ -156,23 +156,26 @@
         const GUVENLIK_SIFRESI = "6592";
         let localTradingData = []; // Canlı verilerin runtime hafızası
 
-        // 🔥 FIREBASE YAPILANDIRMASI (Kendi bilgilerinle doldur)
+        // 🔥 SİZİN GERÇEK FIREBASE YAPILANDIRMANIZ (BAŞARIYLA ENTEGRE EDİLDİ)
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyC0U6uXDpb_herXOtUxQDgU90sFqHCseVw",
+            authDomain: "analyzedout-4bf8e.firebaseapp.com",
+            databaseURL: "https://analyzedout-4bf8e-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "analyzedout-4bf8e",
+            storageBucket: "analyzedout-4bf8e.firebasestorage.app",
+            messagingSenderId: "930744089925",
+            appId: "1:930744089925:web:f034b0edfb5fd8af84522c",
+            measurementId: "G-S6KK4GXZG0"
         };
 
         // Firebase Başlatma
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        // Kolay erişim için doküman referansı
+        
+        // Verilerin bulutta kaydolacağı döküman yolu
         const journalDocRef = db.collection("trading_journal").doc("metin_trades");
 
-        // 🛡️ GİRİŞ KONTROLÜ (AÇILIŞTA TETİKLENİR)
+        // 🛡️ GİRİŞ KONTROLÜ (SAYFA AÇILDIĞINDA TETİKLENİR)
         const loginOverlay = document.getElementById("login-overlay");
         const mainApp = document.getElementById("main-app");
         const passwordInput = document.getElementById("journal-password");
@@ -181,11 +184,11 @@
 
         function appGirisiniDene() {
             if (passwordInput.value === GUVENLIK_SIFRESI) {
-                // Şifre doğruysa overlay'i kaldır, uygulamayı göster
+                // Şifre doğruysa kilitli ekranı kaldır, paneli göster
                 loginOverlay.style.display = "none";
                 mainApp.classList.remove("hidden-app");
                 
-                // Başarılı giriş sonrası verileri canlı olarak Cloud'dan çek
+                // Başarılı giriş sonrasında verileri Firestore bulutundan canlı olarak çek
                 buluttanVeriYukle();
             } else {
                 errorMsg.classList.remove("hidden");
@@ -194,15 +197,15 @@
             }
         }
 
-        // Giriş tetikleyicileri
+        // Giriş butonları tetikleyicileri
         loginBtn.addEventListener("click", appGirisiniDene);
         passwordInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") appGirisiniDene();
         });
 
-        // ☁️ FIREBASE VERİ AKTARIMI (YAZMA VE OKUMA)
+        // ☁️ FIREBASE VERİ AKTARIMI
         
-        // 1. Buluttan Veri Çekme (Sayfa Açıldığında)
+        // Buluttan Veri Çekme
         async function buluttanVeriYukle() {
             document.getElementById("sync-status").innerHTML = `<i class="fas fa-spinner fa-spin"></i> Buluttan yükleniyor...`;
             try {
@@ -210,9 +213,10 @@
                 if (doc.exists) {
                     localTradingData = doc.data().trades || [];
                     tabloyuGuncelle();
-                    document.getElementById("sync-status").innerHTML = `<i class="fas fa-check-circle text-green-400"></i> Canlı Veri Yüklendi`;
+                    document.getElementById("sync-status").innerHTML = `<i class="fas fa-check-circle text-green-400"></i> Canlı Veri Güncel`;
                 } else {
-                    document.getElementById("sync-status").innerHTML = `<i class="fas fa-info-circle text-yellow-400"></i> Bulutta kayıt yok, yeni günlük oluşturuldu`;
+                    document.getElementById("sync-status").innerHTML = `<i class="fas fa-info-circle text-yellow-400"></i> Bulutta kayıt yok, ilk işleminizi ekleyin`;
+                    tabloyuGuncelle();
                 }
             } catch (error) {
                 console.error("Bulut okuma hatası:", error);
@@ -220,7 +224,7 @@
             }
         }
 
-        // 2. Buluta Veri Gönderme (Ekleme ve Güncelleme Esnasında)
+        // Buluta Canlı Veri Yazma
         async function bulutaCanliKaydet() {
             document.getElementById("sync-status").innerHTML = `<i class="fas fa-sync fa-spin"></i> Canlı kaydediliyor...`;
             try {
@@ -231,11 +235,11 @@
                 document.getElementById("sync-status").innerHTML = `<i class="fas fa-check-circle text-green-400"></i> Canlı Eşitlendi`;
             } catch (error) {
                 console.error("Buluta yazma hatası:", error);
-                alert("Canlı bulut kaydı başarısız oldu! İnternet bağlantınızı kontrol edin.");
+                alert("Canlı bulut kaydı başarısız oldu! Firestore kurallarını kontrol edin.");
             }
         }
 
-        // 📥 YENİ İŞLEM EKLEME FORMU
+        // 📥 YENİ İŞLEM FORMU GÖNDERME
         document.getElementById("trade-form").addEventListener("submit", async (e) => {
             e.preventDefault();
 
@@ -249,20 +253,18 @@
                 notes: document.getElementById("trade-notes").value
             };
 
-            // Yerel runtime listeye ekle
+            // Listeye ekle ve hemen tabloyu güncelle
             localTradingData.unshift(yeniIslem);
-            
-            // Tabloyu anlık render et
             tabloyuGuncelle();
             
             // Formu temizle
             document.getElementById("trade-form").reset();
 
-            // ⚡ LOCAL STORAGE YOK! Doğrudan Canlı Firebase Kaydı
+            // ⚡ Doğrudan Canlı Firebase Kaydı
             await bulutaCanliKaydet();
         });
 
-        // 🔄 TABLOYU RENDER ETME FONKSİYONU
+        // 🔄 TABLO GÜNCELLEME (RENDER)
         function tabloyuGuncelle() {
             const tbody = document.getElementById("trade-logs-body");
             tbody.innerHTML = "";
@@ -290,7 +292,7 @@
             });
         }
 
-        // ☁️ MANUEL "BULUTA YEDEKLE" BUTONU ÇALIŞMASI
+        // ☁️ MANUEL "BULUTA YEDEKLE" BUTTONU
         document.getElementById("btnYedekle").addEventListener("click", async () => {
             const btn = document.getElementById("btnYedekle");
             btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Yedekleniyor...`;
@@ -300,12 +302,12 @@
 
             btn.innerHTML = `<i class="fas fa-cloud-upload-alt"></i> Buluta Yedekle`;
             btn.disabled = false;
-            alert("Harika! Tüm trading geçmişiniz manuel olarak Firebase bulutuna senkronize edildi. 🚀");
+            alert("Harika! Tüm verileriniz şu an Firebase bulutuna manuel olarak senkronize edildi. 🚀");
         });
 
-        // 🗑️ GÜNLÜĞÜ SIFIRLAMA (6592 ŞİFRE KORUMALI)
+        // 🗑️ GÜNLÜĞÜ SIFIRLAMA (ŞİFRE KORUMALI)
         document.getElementById("btnSifirla").addEventListener("click", async () => {
-            const teyitSifresi = prompt("DİKKAT: Tüm veriler buluttan tamamen silinecektir!\nOnaylamak için şifreyi tekrar girin:");
+            const teyitSifresi = prompt("DİKKAT: Tüm veriler buluttan tamamen silinecektir!\nOnaylamak için güvenlik şifresini girin:");
             
             if (teyitSifresi === GUVENLIK_SIFRESI) {
                 localTradingData = [];
