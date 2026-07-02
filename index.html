@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* Giriş ekranı için tam ekran sabitleme */
         #login-overlay {
             position: fixed;
             top: 0;
@@ -18,7 +17,6 @@
             height: 100%;
             z-index: 9999;
         }
-        /* Gizleme sınıfı */
         .hidden-app {
             display: none !important;
         }
@@ -26,14 +24,14 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen font-sans">
 
-    <!-- 🔐 GİRİŞ PANELİ (SAYFA AÇILIR AÇILMAZ ÇALIŞIR) -->
+    <!-- 🔐 GİRİŞ PANELİ (HAFIZADA YOKSA ÇALYŞIR) -->
     <div id="login-overlay" class="bg-gray-950 flex flex-col items-center justify-center p-4">
         <div class="bg-gray-900 p-8 rounded-2xl shadow-2xl border border-yellow-600/30 w-full max-w-md text-center">
             <div class="text-yellow-500 text-5xl mb-4">
                 <i class="fas fa-user-shield"></i>
             </div>
             <h2 class="text-2xl font-bold text-white mb-2">Giriş Yetkilendirmesi</h2>
-            <p class="text-gray-400 text-sm mb-6">Trading günlüğüne erişmek için şifrenizi giriniz.</p>
+            <p class="text-gray-400 text-sm mb-6">Trading günlüğüne güvenli erişim için şifrenizi giriniz.</p>
             
             <div class="relative mb-4">
                 <input type="password" id="journal-password" placeholder="••••" 
@@ -47,31 +45,57 @@
         </div>
     </div>
 
-    <!-- 📊 ANA UYGULAMA ARAYÜZÜ (ŞİFRESİZ GÖZÜKMEZ) -->
+    <!-- 📊 ANA UYGULAMA ARAYÜZÜ -->
     <div id="main-app" class="hidden-app">
         
-        <!-- Üst Bar / Navigasyon -->
+        <!-- Üst Bar -->
         <header class="bg-gray-850 border-b border-gray-800 p-4 sticky top-0 z-40 shadow-md">
             <div class="container mx-auto flex justify-between items-center">
                 <h1 class="text-xl font-black tracking-wider text-yellow-500">
                     <i class="fas fa-chart-line mr-2"></i>SOVEREIGN JOURNAL
                 </h1>
                 
-                <!-- Kontrol Butonları -->
                 <div class="flex items-center gap-3">
-                    <!-- ☁️ BULUTA YEDEKLE BUTONU -->
                     <button id="btnYedekle" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 shadow-md">
                         <i class="fas fa-cloud-upload-alt"></i> Buluta Yedekle
                     </button>
-                    
                     <button id="btnSifirla" class="bg-red-600/20 hover:bg-red-600 hover:text-white text-red-400 px-4 py-2 rounded-xl text-sm font-semibold transition-all border border-red-500/30">
                         <i class="fas fa-trash-alt"></i> Günlüğü Sıfırla
+                    </button>
+                    <!-- 🚪 GÜVENLİ ÇIKIŞ BUTONU (YENİ EKLENDİ) -->
+                    <button id="btnCikis" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-xl text-sm font-semibold transition-all border border-gray-700 flex items-center gap-2">
+                        <i class="fas fa-sign-out-alt text-red-400"></i> Güvenli Çıkış
                     </button>
                 </div>
             </div>
         </header>
 
-        <!-- İçerik Alanı -->
+        <!-- 📈 İSTATİSTİK ÖZET KARTLARI -->
+        <section class="container mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+            <div class="bg-gray-850 p-5 rounded-2xl border border-gray-800 shadow-lg flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Net Kar / Zarar</p>
+                    <h3 id="stat-pnl" class="text-2xl font-black mt-1 text-gray-200">0.00$</h3>
+                </div>
+                <div class="text-3xl text-gray-700"><i class="fas fa-wallet"></i></div>
+            </div>
+            <div class="bg-gray-850 p-5 rounded-2xl border border-gray-800 shadow-lg flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Win Rate (Kazanma Oranı)</p>
+                    <h3 id="stat-winrate" class="text-2xl font-black mt-1 text-yellow-500">0%</h3>
+                </div>
+                <div class="text-3xl text-gray-700"><i class="fas fa-trophy"></i></div>
+            </div>
+            <div class="bg-gray-850 p-5 rounded-2xl border border-gray-800 shadow-lg flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 uppercase font-semibold">Toplam İşlem</p>
+                    <h3 id="stat-total" class="text-2xl font-black mt-1 text-blue-400">0</h3>
+                </div>
+                <div class="text-3xl text-gray-700"><i class="fas fa-folder-open"></i></div>
+            </div>
+        </section>
+
+        <!-- Ana İçerik Alanı -->
         <main class="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <!-- Sol Sütun: İşlem Ekleme Formu -->
@@ -117,13 +141,17 @@
                 </form>
             </section>
 
-            <!-- Sağ Sütun: İşlem Listesi ve Özet -->
+            <!-- Sağ Sütun: İşlem Listesi -->
             <section class="lg:grid-cols-2 lg:col-span-2 space-y-6">
-                <!-- Canlı Veri Listesi -->
                 <div class="bg-gray-850 p-6 rounded-2xl border border-gray-800 shadow-xl">
                     <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2 flex justify-between items-center">
-                        <span><i class="fas fa-history text-blue-400 mr-2"></i>İşlem Geçmişi (Canlı Cloud)</span>
-                        <span id="sync-status" class="text-xs text-green-400 font-medium"><i class="fas fa-check-circle"></i> Firebase Yükleniyor...</span>
+                        <span><i class="fas fa-history text-blue-400 mr-2"></i>İşlem Geçmişi (Realtime Cloud)</span>
+                        <div class="flex items-center gap-3">
+                            <button id="btnExport" class="bg-gray-800 hover:bg-gray-700 text-xs text-gray-300 px-2.5 py-1 rounded-lg transition-all border border-gray-700">
+                                <i class="fas fa-file-download mr-1"></i> CSV İndir
+                            </button>
+                            <span id="sync-status" class="text-xs text-green-400 font-medium"><i class="fas fa-check-circle"></i> Yükleniyor...</span>
+                        </div>
                     </h3>
                     
                     <div class="overflow-x-auto">
@@ -138,7 +166,7 @@
                                 </tr>
                             </thead>
                             <tbody id="trade-logs-body" class="divide-y divide-gray-800 text-sm">
-                                <!-- Dinamik JavaScript verisi buraya gelecek -->
+                                <!-- Veriler buraya gelecek -->
                             </tbody>
                         </table>
                     </div>
@@ -147,16 +175,15 @@
         </main>
     </div>
 
-    <!-- 🔥 FIREBASE SDK (SINGLE PAGE İÇİN EN KARARLI COMPAT SÜRÜMÜ) -->
+    <!-- 🔥 FIREBASE SDK (REALTIME DATABASE UYUMLU) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <script>
-        // 🔑 GÜVENLİK AYARLARI
         const GUVENLIK_SIFRESI = "6592";
-        let localTradingData = []; // Canlı verilerin runtime hafızası
+        let localTradingData = [];
 
-        // 🔥 SİZİN GERÇEK FIREBASE YAPILANDIRMANIZ (BAŞARIYLA ENTEGRE EDİLDİ)
+        // 🔑 REALTIME DATABASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyC0U6uXDpb_herXOtUxQDgU90sFqHCseVw",
             authDomain: "analyzedout-4bf8e.firebaseapp.com",
@@ -170,25 +197,27 @@
 
         // Firebase Başlatma
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        
-        // Verilerin bulutta kaydolacağı döküman yolu
-        const journalDocRef = db.collection("trading_journal").doc("metin_trades");
+        const database = firebase.database();
+        const dbRef = database.ref("trading_journal/metin_trades");
 
-        // 🛡️ GİRİŞ KONTROLÜ (SAYFA AÇILDIĞINDA TETİKLENİR)
         const loginOverlay = document.getElementById("login-overlay");
         const mainApp = document.getElementById("main-app");
         const passwordInput = document.getElementById("journal-password");
         const loginBtn = document.getElementById("btn-login");
         const errorMsg = document.getElementById("login-error");
 
+        // 🧠 TARAYICI HAFIZASI KONTROLÜ
+        if (localStorage.getItem("journal_auth_success") === "true") {
+            loginOverlay.style.display = "none";
+            mainApp.classList.remove("hidden-app");
+            buluttanVeriYukle();
+        }
+
         function appGirisiniDene() {
             if (passwordInput.value === GUVENLIK_SIFRESI) {
-                // Şifre doğruysa kilitli ekranı kaldır, paneli göster
+                localStorage.setItem("journal_auth_success", "true");
                 loginOverlay.style.display = "none";
                 mainApp.classList.remove("hidden-app");
-                
-                // Başarılı giriş sonrasında verileri Firestore bulutundan canlı olarak çek
                 buluttanVeriYukle();
             } else {
                 errorMsg.classList.remove("hidden");
@@ -197,49 +226,56 @@
             }
         }
 
-        // Giriş butonları tetikleyicileri
         loginBtn.addEventListener("click", appGirisiniDene);
         passwordInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") appGirisiniDene();
         });
 
-        // ☁️ FIREBASE VERİ AKTARIMI
-        
-        // Buluttan Veri Çekme
+        // 🚪 GÜVENLİK ÇIKIŞ SİSTEMİ (YENİ EKLENDİ)
+        document.getElementById("btnCikis").addEventListener("click", () => {
+            localStorage.removeItem("journal_auth_success"); // Hafızayı temizle
+            mainApp.classList.add("hidden-app"); // Uygulamayı gizle
+            loginOverlay.style.display = "flex"; // Şifre ekranını geri getir
+            passwordInput.value = "";
+            errorMsg.classList.add("hidden");
+        });
+
+        // ☁️ CLOUD VERİ YÖNETİMİ
         async function buluttanVeriYukle() {
-            document.getElementById("sync-status").innerHTML = `<i class="fas fa-spinner fa-spin"></i> Buluttan yükleniyor...`;
+            document.getElementById("sync-status").innerHTML = `<i class="fas fa-spinner fa-spin"></i> Yükleniyor...`;
             try {
-                const doc = await journalDocRef.get();
-                if (doc.exists) {
-                    localTradingData = doc.data().trades || [];
+                dbRef.once("value", (snapshot) => {
+                    if (snapshot.exists() && snapshot.val().trades) {
+                        localTradingData = snapshot.val().trades;
+                    } else {
+                        localTradingData = [];
+                    }
                     tabloyuGuncelle();
-                    document.getElementById("sync-status").innerHTML = `<i class="fas fa-check-circle text-green-400"></i> Canlı Veri Güncel`;
-                } else {
-                    document.getElementById("sync-status").innerHTML = `<i class="fas fa-info-circle text-yellow-400"></i> Bulutta kayıt yok, ilk işleminizi ekleyin`;
-                    tabloyuGuncelle();
-                }
+                    document.getElementById("sync-status").innerHTML = `<i class="fas fa-check-circle text-green-400"></i> Cloud Güncel`;
+                }, (error) => {
+                    throw error;
+                });
             } catch (error) {
                 console.error("Bulut okuma hatası:", error);
                 document.getElementById("sync-status").innerHTML = `<i class="fas fa-exclamation-triangle text-red-500"></i> Bulut Bağlantı Hatası!`;
             }
         }
 
-        // Buluta Canlı Veri Yazma
         async function bulutaCanliKaydet() {
-            document.getElementById("sync-status").innerHTML = `<i class="fas fa-sync fa-spin"></i> Canlı kaydediliyor...`;
+            document.getElementById("sync-status").innerHTML = `<i class="fas fa-sync fa-spin"></i> Kaydediliyor...`;
             try {
-                await journalDocRef.set({
+                await dbRef.set({
                     trades: localTradingData,
                     sonGuncelleme: new Date().toISOString()
                 });
-                document.getElementById("sync-status").innerHTML = `<i class="fas fa-check-circle text-green-400"></i> Canlı Eşitlendi`;
+                document.getElementById("sync-status").innerHTML = `<i class="fas fa-check-circle text-green-400"></i> Eşitlendi`;
             } catch (error) {
                 console.error("Buluta yazma hatası:", error);
-                alert("Canlı bulut kaydı başarısız oldu! Firestore kurallarını kontrol edin.");
+                alert("Kayıt başarısız! Firebase Database kurallarınızı kontrol edin.");
             }
         }
 
-        // 📥 YENİ İŞLEM FORMU GÖNDERME
+        // FORM SUBMIT
         document.getElementById("trade-form").addEventListener("submit", async (e) => {
             e.preventDefault();
 
@@ -253,28 +289,34 @@
                 notes: document.getElementById("trade-notes").value
             };
 
-            // Listeye ekle ve hemen tabloyu güncelle
             localTradingData.unshift(yeniIslem);
             tabloyuGuncelle();
-            
-            // Formu temizle
             document.getElementById("trade-form").reset();
 
-            // ⚡ Doğrudan Canlı Firebase Kaydı
             await bulutaCanliKaydet();
         });
 
-        // 🔄 TABLO GÜNCELLEME (RENDER)
+        // 🔄 TABLO VE İSTATİSTİKLERİ GÜNCELLEME
         function tabloyuGuncelle() {
             const tbody = document.getElementById("trade-logs-body");
             tbody.innerHTML = "";
 
+            let totalPnl = 0;
+            let tpCount = 0;
+
             if (localTradingData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-500">Kayıtlı işlem bulunamadı.</td></tr>`;
+                document.getElementById("stat-pnl").textContent = "0.00$";
+                document.getElementById("stat-pnl").className = "text-2xl font-black mt-1 text-gray-200";
+                document.getElementById("stat-winrate").textContent = "0%";
+                document.getElementById("stat-total").textContent = "0";
                 return;
             }
 
             localTradingData.forEach(trade => {
+                totalPnl += trade.pnl;
+                if (trade.result === "TP") tpCount++;
+
                 const pnlClass = trade.pnl >= 0 ? "text-green-400" : "text-red-400";
                 const dirClass = trade.direction === "BUY" ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400";
                 const resClass = trade.result === "TP" ? "text-green-500" : "text-red-500";
@@ -290,32 +332,50 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            document.getElementById("stat-total").textContent = localTradingData.length;
+            
+            const winRate = ((tpCount / localTradingData.length) * 100).toFixed(0);
+            document.getElementById("stat-winrate").textContent = `${winRate}%`;
+
+            document.getElementById("stat-pnl").textContent = `${totalPnl.toFixed(2)}$`;
+            document.getElementById("stat-pnl").className = `text-2xl font-black mt-1 ${totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
         }
 
-        // ☁️ MANUEL "BULUTA YEDEKLE" BUTTONU
+        // MANUEL BULUT YEDEKLENME
         document.getElementById("btnYedekle").addEventListener("click", async () => {
             const btn = document.getElementById("btnYedekle");
             btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Yedekleniyor...`;
             btn.disabled = true;
-
             await bulutaCanliKaydet();
-
             btn.innerHTML = `<i class="fas fa-cloud-upload-alt"></i> Buluta Yedekle`;
             btn.disabled = false;
-            alert("Harika! Tüm verileriniz şu an Firebase bulutuna manuel olarak senkronize edildi. 🚀");
         });
 
-        // 🗑️ GÜNLÜĞÜ SIFIRLAMA (ŞİFRE KORUMALI)
+        // CSV DOWNLOAD
+        document.getElementById("btnExport").addEventListener("click", () => {
+            if(localTradingData.length === 0) return alert("Dışa aktarılacak veri yok!");
+            let csvContent = "data:text/csv;charset=utf-8,Tarih,Varlik,Yon,Sonuc,PnL\n";
+            localTradingData.forEach(t => {
+                csvContent += `${t.tarih},${t.asset},${t.direction},${t.result},${t.pnl}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Sovereign_Journal_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // RESET
         document.getElementById("btnSifirla").addEventListener("click", async () => {
-            const teyitSifresi = prompt("DİKKAT: Tüm veriler buluttan tamamen silinecektir!\nOnaylamak için güvenlik şifresini girin:");
-            
-            if (teyitSifresi === GUVENLIK_SIFRESI) {
+            const teyit = prompt("Tüm veriler buluttan silinecek! Güvenlik şifresini girin:");
+            if (teyit === GUVENLIK_SIFRESI) {
                 localTradingData = [];
                 tabloyuGuncelle();
                 await bulutaCanliKaydet();
-                alert("Tüm verileriniz Firebase bulutundan başarıyla temizlendi.");
-            } else if (teyitSifresi !== null) {
-                alert("Hatalı şifre! Sıfırlama işlemi reddedildi.");
+                alert("Sıfırlandı.");
             }
         });
     </script>
