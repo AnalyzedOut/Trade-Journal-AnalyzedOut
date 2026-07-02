@@ -971,6 +971,7 @@
         let entryTypes = [];
         let editingNoteIndex = null;
         let isOnline = false;
+        let firebaseAccountsLoaded = false; // Startup synchronization safety flag
 
         const LOCK_PASSWORD = '6592';
 
@@ -1065,7 +1066,9 @@
             onValue(connectedRef, (snap) => {
                 if (snap.val() === true) {
                     updateSyncStatus(true);
-                    syncLocalToFirebase();
+                    if (firebaseAccountsLoaded) {
+                        syncLocalToFirebase();
+                    }
                 } else {
                     updateSyncStatus(false);
                 }
@@ -1075,8 +1078,16 @@
             const accountsRef = ref(db, "tradeJournal/6592/accounts");
             onValue(accountsRef, (snapshot) => {
                 const val = snapshot.val();
+                firebaseAccountsLoaded = true;
+
                 if (val) {
                     accounts = val;
+                    // Protect and preserve existing createdAt values during local storage updates
+                    accounts.forEach(acc => {
+                        if (!acc.createdAt) {
+                            acc.createdAt = new Date().toISOString();
+                        }
+                    });
                     localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
                     if (currentView === 'home') renderAccounts();
                     
@@ -1087,8 +1098,33 @@
                     } else {
                         subscribeToAccount(currentAccountId);
                     }
-                } else if (accounts.length > 0) {
-                    set(accountsRef, accounts);
+                } else {
+                    // Firebase returned null (completely empty cloud DB)
+                    const localAccounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [];
+                    if (localAccounts.length > 0) {
+                        accounts = localAccounts;
+                        accounts.forEach(acc => {
+                            if (!acc.createdAt) {
+                                acc.createdAt = new Date().toISOString();
+                            }
+                        });
+                        set(accountsRef, accounts);
+                    } else {
+                        // Creating default account only when both Firebase and Local are completely empty
+                        const defaultAccount = {
+                            id: 'acc_' + Date.now(),
+                            name: 'Kişisel',
+                            isActive: true,
+                            createdAt: new Date().toISOString()
+                        };
+                        accounts = [defaultAccount];
+                        currentAccountId = defaultAccount.id;
+                        localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
+                        localStorage.setItem('XAU_currentAccountId', currentAccountId);
+                        
+                        set(accountsRef, accounts);
+                        loadAccountData(currentAccountId);
+                    }
                 }
             });
 
@@ -1166,21 +1202,33 @@
 
         // Offline Synchronization engine
         function syncLocalToFirebase() {
-            if (!isOnline) return;
+            if (!isOnline || !firebaseAccountsLoaded) return;
 
-            // Upload unsynced accounts
+            // Upload unsynced accounts only if Firebase data doesn't exist
             if (localStorage.getItem('accounts_unsynced') === 'true' || accounts.length > 0) {
-                set(ref(db, "tradeJournal/6592/accounts"), accounts)
-                    .then(() => localStorage.removeItem('accounts_unsynced'));
+                get(ref(db, "tradeJournal/6592/accounts")).then((snapshot) => {
+                    if (!snapshot.exists()) {
+                        set(ref(db, "tradeJournal/6592/accounts"), accounts)
+                            .then(() => localStorage.removeItem('accounts_unsynced'));
+                    } else {
+                        localStorage.removeItem('accounts_unsynced');
+                    }
+                });
             }
 
-            // Upload unsynced entries types
+            // Upload unsynced entries types only if Firebase data doesn't exist
             if (localStorage.getItem('entryTypes_unsynced') === 'true' || entryTypes.length > 0) {
-                set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
-                    .then(() => localStorage.removeItem('entryTypes_unsynced'));
+                get(ref(db, "tradeJournal/6592/entryTypes")).then((snapshot) => {
+                    if (!snapshot.exists()) {
+                        set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
+                            .then(() => localStorage.removeItem('entryTypes_unsynced'));
+                    } else {
+                        localStorage.removeItem('entryTypes_unsynced');
+                    }
+                });
             }
 
-            // Iterate over local configurations to resolve queued entries
+            // Iterate over local configurations to resolve queued entries safely
             accounts.forEach(acc => {
                 const accId = acc.id;
                 
@@ -1251,46 +1299,13 @@
             accounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [];
             currentAccountId = localStorage.getItem('XAU_currentAccountId') || null;
 
-            if (accounts.length === 0) {
-                const defaultAccount = {
-                    id: 'acc_' + Date.now(),
-                    name: 'Kişisel',
-                    isActive: true,
-                    createdAt: new Date().toISOString()
-                };
-                accounts.push(defaultAccount);
-                currentAccountId = defaultAccount.id;
-                
-                // Keep backward compatibility migration checks
-                const oldTrades = JSON.parse(localStorage.getItem('trades'));
-                if (oldTrades) {
-                    localStorage.setItem(`trades_${currentAccountId}`, JSON.stringify(oldTrades));
-                    localStorage.removeItem('trades');
+            // Bypass auto-creation here; let snapshot subscription safely handle empty cloud/local states
+            if (accounts.length > 0) {
+                if (!currentAccountId || !accounts.find(a => a.id === currentAccountId)) {
+                    currentAccountId = accounts.find(a => a.isActive)?.id || accounts[0].id;
                 }
-                const oldNotes = JSON.parse(localStorage.getItem('notes'));
-                if (oldNotes) {
-                    localStorage.setItem(`notes_${currentAccountId}`, JSON.stringify(oldNotes));
-                    localStorage.removeItem('notes');
-                }
-                const oldBalance = localStorage.getItem('balance');
-                if (oldBalance) {
-                    localStorage.setItem(`balance_${currentAccountId}`, oldBalance);
-                    localStorage.removeItem('balance');
-                }
-                const oldTransactions = JSON.parse(localStorage.getItem('transactions'));
-                if (oldTransactions) {
-                    localStorage.setItem(`transactions_${currentAccountId}`, JSON.stringify(oldTransactions));
-                    localStorage.removeItem('transactions');
-                }
-                
-                saveAccountsState();
+                loadAccountData(currentAccountId);
             }
-            
-            if (!currentAccountId || !accounts.find(a => a.id === currentAccountId)) {
-                currentAccountId = accounts.find(a => a.isActive)?.id || accounts[0].id;
-            }
-            
-            loadAccountData(currentAccountId);
         }
 
         function loadAccountData(accountId) {
@@ -1339,10 +1354,16 @@
         }
 
         function saveAccountsState() {
+            // Preserve existing createdAt times during saves
+            accounts.forEach(acc => {
+                if (!acc.createdAt) {
+                    acc.createdAt = new Date().toISOString();
+                }
+            });
             localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
             localStorage.setItem('XAU_currentAccountId', currentAccountId);
 
-            if (isOnline) {
+            if (isOnline && firebaseAccountsLoaded) {
                 updateSyncStatus(true, "Eşitleniyor...");
                 set(ref(db, "tradeJournal/6592/accounts"), accounts)
                     .then(() => {
@@ -1369,7 +1390,7 @@
             localStorage.setItem(`balance_${currentAccountId}`, balance.toString());
             localStorage.setItem(`transactions_${currentAccountId}`, JSON.stringify(transactions));
 
-            if (isOnline) {
+            if (isOnline && firebaseAccountsLoaded) {
                 updateSyncStatus(true, "Eşitleniyor...");
                 const updates = {
                     [`tradeJournal/6592/trades/${currentAccountId}`]: trades,
@@ -1507,6 +1528,14 @@
                     selectAccount(acc.id);
                 };
 
+                let dateStr = 'Uygulama Başı';
+                if (acc.createdAt) {
+                    const parsed = new Date(acc.createdAt);
+                    if (!isNaN(parsed.getTime())) {
+                        dateStr = parsed.toLocaleDateString('tr-TR');
+                    }
+                }
+
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex items-center space-x-3">
@@ -1515,7 +1544,7 @@
                             </div>
                             <div>
                                 <h5 class="font-bold text-slate-100">${acc.name}</h5>
-                                <p class="text-xs text-slate-500">${new Date(acc.createdAt).toLocaleDateString('tr-TR')}</p>
+                                <p class="text-xs text-slate-500">${dateStr}</p>
                             </div>
                         </div>
                         <div class="flex flex-col items-end">
@@ -1555,86 +1584,6 @@
             }
 
             lucide.createIcons();
-        }
-
-        function selectAccount(id) {
-            const acc = accounts.find(a => a.id === id);
-            if (!acc.isActive) {
-                showToast('Pasif hesaplar seçilemez. Önce aktif hale getirin.', 'error');
-                return;
-            }
-            saveCurrentAccountData();
-            loadAccountData(id);
-            switchTab('calendar');
-            showToast(`${acc.name} hesabına geçiş yapıldı`);
-        }
-
-        function toggleAccountStatus(id) {
-            const index = accounts.findIndex(a => a.id === id);
-            if (index === -1) return;
-            
-            const wasActive = accounts[index].isActive;
-
-            if (wasActive && accounts.filter(a => a.isActive).length === 1) {
-                showToast('En az bir aktif hesap olmalıdır', 'error');
-                return;
-            }
-
-            accounts[index].isActive = !accounts[index].isActive;
-            
-            if (!accounts[index].isActive && id === currentAccountId) {
-                const nextActive = accounts.find(a => a.isActive);
-                if (nextActive) {
-                    saveCurrentAccountData();
-                    loadAccountData(nextActive.id);
-                }
-            }
-            
-            saveAccountsState();
-            renderAccounts();
-            showToast(wasActive ? 'Hesap pasif bölüme taşındı' : 'Hesap aktif hale getirildi');
-        }
-
-        function confirmDeleteAccount(id) {
-            const acc = accounts.find(a => a.id === id);
-            if (!acc) return;
-            
-            if (accounts.length === 1) {
-                showToast('Son hesabı silemezsiniz', 'error');
-                return;
-            }
-
-            showConfirm(
-                'Hesabı Sil',
-                `"${acc.name}" hesabını ve tüm verilerini (işlemler, notlar, bakiye) kalıcı olarak silmek istediğinize emin misiniz?`,
-                () => deleteAccount(id)
-            );
-        }
-
-        function deleteAccount(id) {
-            const index = accounts.findIndex(a => a.id === id);
-            if (index === -1) return;
-
-            if (id === currentAccountId) {
-                const nextAcc = accounts.find((a, i) => i !== index && a.isActive) || accounts.find((a, i) => i !== index);
-                loadAccountData(nextAcc.id);
-            }
-
-            localStorage.removeItem(`trades_${id}`);
-            localStorage.removeItem(`notes_${id}`);
-            localStorage.removeItem(`balance_${id}`);
-            localStorage.removeItem(`transactions_${id}`);
-
-            remove(ref(db, `tradeJournal/6592/trades/${id}`));
-            remove(ref(db, `tradeJournal/6592/notes/${id}`));
-            remove(ref(db, `tradeJournal/6592/balance/${id}`));
-            remove(ref(db, `tradeJournal/6592/transactions/${id}`));
-
-            accounts.splice(index, 1);
-            saveAccountsState();
-            renderAccounts();
-            closeConfirmModal();
-            showToast('Hesap ve verileri silindi');
         }
 
         function renderCalendar() {
@@ -3144,6 +3093,17 @@
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleTime()
+                .domain([startOfYear, endOfYear])
+                .range([0, width]);
+
+            const y = d3.scaleLinear()
+                .domain([
+                    Math.min(0, d3.min(data, d => d.value) * 0.9),
+                    d3.max(data, d => d.value) * 1.1
+                ])
+                .range([height, 0]);
 
             svg.append("g")
                 .attr("class", "grid")
