@@ -1,86 +1,1802 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XAU/USD Trading Journal</title>
-    <!-- Tailwind CSS ve FontAwesome Yüklemesi -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Firebase SDK Kurulumları -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .grid text { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; }
+        .grid path, .grid line { stroke: #334155; stroke-opacity: 0.15; shape-rendering: crispEdges; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b1329; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    </style>
+</head>
+<body class="bg-[#030712] text-slate-100 min-h-screen flex">
 
-        // Firebase Yapılandırma Ayarları
-        const firebaseConfig = {
-            apiKey: "AIzaSyC0U6uXDpb_herX0tUxQDgU98sFqHcSeVw",
-            authDomain: "analyzedout-4bf8e.firebaseapp.com",
-            databaseURL: "https://analyzedout-4bf8e-default-rtdb.europe-west3.firebasedatabase.app",
-            projectId: "analyzedout-4bf8e",
-            storageBucket: "analyzedout-4bf8e.appspot.com",
-            messagingSenderId: "930744089925",
-            appId: "1:930744089925:web:f034b0edfb5fd8af84522c",
-            measurementId: "G-S6KK4GX7G0"
-        };
+    <!-- SOL MENU (SIDEBAR) -->
+    <aside class="w-72 bg-[#0b1329] border-r border-slate-800/80 p-6 flex flex-col justify-between fixed h-full z-30">
+        <div>
+            <!-- Logo / Başlık -->
+            <div class="flex items-center gap-3 mb-8 px-2">
+                <div class="p-2.5 bg-amber-500/10 rounded-2xl border border-amber-500/20 text-amber-500">
+                    <i data-lucide="line-chart" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent">XAU Journal</h1>
+                    <p class="text-xs text-slate-400 font-medium">Bulut Destekli Takip</p>
+                </div>
+            </div>
 
-        // Firebase'i Başlat
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+            <!-- Hesap Seçici -->
+            <div class="mb-6 px-2">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-2">Aktif Hesap</label>
+                <div class="relative">
+                    <select id="account-selector" onchange="switchAccount(this.value)" class="w-full bg-[#111c44] border border-slate-700/60 rounded-xl px-4 py-3 text-sm font-semibold text-slate-200 focus:outline-none focus:border-amber-500 appearance-none cursor-pointer">
+                        <!-- Dinamik Yüklenecek -->
+                    </select>
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <button onclick="openAccountModal()" class="w-full mt-2 flex items-center justify-center gap-2 py-2 border border-dashed border-slate-700 hover:border-slate-500 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 transition-all">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Hesap Yönetimi
+                </button>
+            </div>
 
-        // Küresel Değişkenler
-        let currentAccountId = "default_account";
+            <!-- Menü Linkleri -->
+            <nav class="space-y-1.5">
+                <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all bg-gradient-to-r from-amber-500/10 to-transparent text-amber-400 border-l-4 border-amber-500">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Panel
+                </button>
+                <button onclick="switchView('trades')" id="nav-trades" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-l-4 border-transparent">
+                    <i data-lucide="history" class="w-4 h-4"></i> İşlem Geçmişi
+                </button>
+                <button onclick="switchView('calendar')" id="nav-calendar" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-l-4 border-transparent">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Takvim
+                </button>
+                <button onclick="switchView('analysis')" id="nav-analysis" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-l-4 border-transparent">
+                    <i data-lucide="pie-chart" class="w-4 h-4"></i> Performans Analizi
+                </button>
+                <button onclick="switchView('balance')" id="nav-balance" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-l-4 border-transparent">
+                    <i data-lucide="wallet" class="w-4 h-4"></i> Bakiye & Hesaplar
+                </button>
+                <button onclick="switchView('notes')" id="nav-notes" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-l-4 border-transparent">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Strateji Notları
+                </button>
+                <button onclick="switchView('settings')" id="nav-settings" class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-l-4 border-transparent">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Ayarlar
+                </button>
+            </nav>
+        </div>
+
+        <!-- Alt Bölüm Info -->
+        <div class="border-t border-slate-800/80 pt-4 px-2">
+            <div id="current-date-display" class="text-xs font-semibold text-slate-400 mb-1">Loading...</div>
+            <div class="text-[10px] text-slate-500 font-medium">XAU Journal v2.5 • GMT+3 Duyarlı</div>
+        </div>
+    </aside>
+
+    <!-- ANA İÇERİK ALANI -->
+    <main class="flex-1 pl-72 min-h-screen flex flex-col bg-[#030712]">
+        
+        <!-- TOPBAR -->
+        <header class="h-20 border-b border-slate-800/40 px-8 flex items-center justify-between bg-[#030712]/80 backdrop-blur-md sticky top-0 z-20">
+            <div class="flex items-center gap-4">
+                <h2 id="view-title" class="text-xl font-bold text-slate-100">Panel</h2>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="openTradeModal()" class="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-sm shadow-lg shadow-amber-500/10 transition-all transform active:scale-95">
+                    <i data-lucide="plus-circle" class="w-4 h-4 stroke-[2.5]"></i> Yeni İşlem Ekle
+                </button>
+            </div>
+        </header>
+
+        <!-- PANEL İÇERİKLERİ (DİNAMİK DEĞİŞEN GÖRÜNÜMLER) -->
+        <div id="view-container" class="p-8 flex-1">
+            
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="space-y-8">
+                <!-- Stat Kartları Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60 relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-slate-800/20 group-hover:text-slate-800/40 transition-all transform group-hover:scale-110">
+                            <i data-lucide="dollar-sign" class="w-24 h-24"></i>
+                        </div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Net Kar / Zarar</p>
+                        <h3 id="stat-total-pnl" class="text-3xl font-extrabold text-emerald-400">$0.00</h3>
+                    </div>
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60 relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-slate-800/20 group-hover:text-slate-800/40 transition-all transform group-hover:scale-110">
+                            <i data-lucide="percent" class="w-24 h-24"></i>
+                        </div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Kazanma Oranı (WR)</p>
+                        <h3 id="stat-win-rate" class="text-3xl font-extrabold text-sky-400">0%</h3>
+                    </div>
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60 relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-slate-800/20 group-hover:text-slate-800/40 transition-all transform group-hover:scale-110">
+                            <i data-lucide="activity" class="w-24 h-24"></i>
+                        </div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Profit Factor</p>
+                        <h3 id="stat-profit-factor" class="text-3xl font-extrabold text-amber-400">0.00</h3>
+                    </div>
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60 relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-slate-800/20 group-hover:text-slate-800/40 transition-all transform group-hover:scale-110">
+                            <i data-lucide="wallet" class="w-24 h-24"></i>
+                        </div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Güncel Bakiye</p>
+                        <h3 id="stat-current-budget" class="text-3xl font-extrabold text-slate-200">$0.00</h3>
+                    </div>
+                </div>
+
+                <!-- Grafik ve Son İşlemler Ana Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Grafik Alanı -->
+                    <div class="lg:col-span-2 bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h4 class="text-base font-bold text-slate-200">Sermaye Eğrisi (Equity Curve)</h4>
+                                <p class="text-xs text-slate-400">Kümülatif hesap büyüme grafiği</p>
+                            </div>
+                            <span id="report-drawdown" class="px-3 py-1 bg-rose-950 text-rose-400 border border-rose-800/50 rounded-xl text-xs font-bold">Max DD: 0%</span>
+                        </div>
+                        <div id="equity-chart" class="w-full h-64 bg-[#030712]/30 rounded-2xl border border-slate-800/40 flex items-center justify-center text-slate-500 text-sm">
+                            Grafik verisi yükleniyor...
+                        </div>
+                    </div>
+                    <!-- Seans / Beklenti -->
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-base font-bold text-slate-200 mb-4">Matematiksel Beklenti</h4>
+                            <div class="bg-[#030712]/40 p-5 rounded-2xl border border-slate-800/50 mb-4 text-center">
+                                <p class="text-xs font-semibold text-slate-400 mb-1">İşlem Başına Ortalama Kazanç (Expectancy)</p>
+                                <h3 id="stat-expectancy" class="text-3xl font-extrabold text-emerald-400">$0.00</h3>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-slate-800/30 rounded-xl border border-slate-800/60">
+                                <span class="text-xs font-semibold text-slate-400">Max Win Streak</span>
+                                <span id="report-win-streak" class="text-sm font-bold text-emerald-400">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-slate-800/30 rounded-xl border border-slate-800/60">
+                                <span class="text-xs font-semibold text-slate-400">Max Loss Streak</span>
+                                <span id="report-loss-streak" class="text-sm font-bold text-rose-400">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-slate-800/30 rounded-xl border border-slate-800/60">
+                                <span class="text-xs font-semibold text-slate-400">Ortalama R:R Oranı</span>
+                                <span id="report-rr-ratio" class="text-sm font-bold text-sky-400">0R</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Son 5 İşlem -->
+                <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                    <div class="flex items-center justify-between mb-6">
+                        <h4 class="text-base font-bold text-slate-200">Son Girilen İşlemler</h4>
+                        <button onclick="switchView('trades')" class="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-all">Tümünü Gör <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-800 pb-3">
+                                    <th class="pb-3">Tarih / Saat</th>
+                                    <th class="pb-3">Parite / Yön</th>
+                                    <th class="pb-3">Killzone (TR)</th>
+                                    <th class="pb-3">Setup Modeli</th>
+                                    <th class="pb-3 text-center">R %</th>
+                                    <th class="pb-3 text-center">R:R</th>
+                                    <th class="pb-3 text-right">Net PnL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-trades-body" class="divide-y divide-slate-800/50 text-sm">
+                                <!-- Dinamik Yüklenecek -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: TRADES -->
+            <div id="view-trades" class="hidden space-y-6">
+                <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                        <div class="relative flex-1 max-w-md">
+                            <input type="text" id="trade-search" oninput="filterTrades()" placeholder="İşlemlerde ara (Setup, Notlar, Parite vb.)..." class="w-full bg-[#030712] border border-slate-700/60 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium focus:outline-none focus:border-amber-500">
+                            <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
+                                <i data-lucide="search" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="exportTrades()" class="flex items-center gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-semibold transition-all">
+                                <i data-lucide="download" class="w-4 h-4"></i> Dışa Aktar (.json)
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-800 pb-3">
+                                    <th class="pb-3">Tarih / Saat</th>
+                                    <th class="pb-3">Parite</th>
+                                    <th class="pb-3">Yön</th>
+                                    <th class="pb-3">Bias</th>
+                                    <th class="pb-3">Killzone (TR)</th>
+                                    <th class="pb-3">Setup</th>
+                                    <th class="pb-3 text-center">Lot</th>
+                                    <th class="pb-3 text-center">R %</th>
+                                    <th class="pb-3 text-center">R:R</th>
+                                    <th class="pb-3 text-right">PnL</th>
+                                    <th class="pb-3 text-center">Aksiyon</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-trades-body" class="divide-y divide-slate-800/50 text-sm">
+                                <!-- Dinamik Yüklenecek -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: CALENDAR -->
+            <div id="view-calendar" class="hidden space-y-6">
+                <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h4 id="calendar-month-year" class="text-lg font-bold text-slate-200">Ocak 2026</h4>
+                            <p class="text-xs text-slate-400">Günlük kümülatif performans görünümü</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="prevMonth()" class="p-2 bg-slate-800 border border-slate-700 hover:bg-slate-700 rounded-xl transition-all text-slate-300">
+                                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="nextMonth()" class="p-2 bg-slate-800 border border-slate-700 hover:bg-slate-700 rounded-xl transition-all text-slate-300">
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Gün İsimleri -->
+                    <div class="grid grid-cols-7 gap-4 mb-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <div>Pzt</div><div>Sal</div><div>Çar</div><div>Per</div><div>Cum</div><div>Cmt</div><div>Paz</div>
+                    </div>
+                    <!-- Gün Hücreleri -->
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-4">
+                        <!-- Dinamik Yüklenecek -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: ANALYSIS -->
+            <div id="view-analysis" class="hidden space-y-8">
+                <!-- Üst Analiz Kartları -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                        <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Saatlik Verimlilik</h4>
+                        <div class="overflow-y-auto max-h-64 pr-2">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="text-slate-500 font-bold border-b border-slate-800/80 pb-2">
+                                        <th class="pb-2">Saat Dilimi</th>
+                                        <th class="pb-2 text-center">İşlem</th>
+                                        <th class="pb-2 text-center">WR</th>
+                                        <th class="pb-2 text-right">Net PnL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hourly-perf-body" class="divide-y divide-slate-800/40 text-slate-300">
+                                    <!-- Dinamik -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                        <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Günlük Dağılım (Win Rate)</h4>
+                        <div class="overflow-y-auto max-h-64 pr-2">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="text-slate-500 font-bold border-b border-slate-800/80 pb-2">
+                                        <th class="pb-2">Gün</th>
+                                        <th class="pb-2 text-center">İşlem</th>
+                                        <th class="pb-2 text-center">WR</th>
+                                        <th class="pb-2 text-right">Net PnL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="daily-wr-body" class="divide-y divide-slate-800/40 text-slate-300">
+                                    <!-- Dinamik -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                        <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Setup / Model Performansı</h4>
+                        <div class="overflow-y-auto max-h-64 pr-2">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="text-slate-500 font-bold border-b border-slate-800/80 pb-2">
+                                        <th class="pb-2">Setup</th>
+                                        <th class="pb-2 text-center">İşlem</th>
+                                        <th class="pb-2 text-center">WR</th>
+                                        <th class="pb-2 text-right">Ort. RR</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="setup-perf-body" class="divide-y divide-slate-800/40 text-slate-300">
+                                    <!-- Dinamik -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alt Analiz Kartları -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                        <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Market Bias Doğruluğu</h4>
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="text-slate-500 font-bold border-b border-slate-800/80 pb-2">
+                                    <th class="pb-2">Bias Yönü</th>
+                                    <th class="pb-2 text-center">İşlem</th>
+                                    <th class="pb-2 text-center">WR</th>
+                                    <th class="pb-2 text-right">Toplam Kar/Zarar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bias-acc-body" class="divide-y divide-slate-800/40 text-slate-300">
+                                <!-- Dinamik -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                        <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Seans / Killzone Performansı</h4>
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="text-slate-500 font-bold border-b border-slate-800/80 pb-2">
+                                    <th class="pb-2">Seans (Killzone)</th>
+                                    <th class="pb-2 text-center">İşlem</th>
+                                    <th class="pb-2 text-center">WR</th>
+                                    <th class="pb-2 text-right">Net PnL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="session-perf-body" class="divide-y divide-slate-800/40 text-slate-300">
+                                <!-- Dinamik -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: BALANCE -->
+            <div id="view-balance" class="hidden space-y-8">
+                <!-- Hesap Bilgileri Üst Panel -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Mevcut Toplam Bakiye</p>
+                        <h3 id="balance-current" class="text-3xl font-extrabold text-slate-200">$0.00</h3>
+                        <p class="text-[11px] text-slate-500 mt-2">Açık işlemler hariç net cüzdan.</p>
+                    </div>
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Toplam Yatırılan</p>
+                        <h3 id="balance-total-deposit" class="text-2xl font-bold text-emerald-400">$0.00</h3>
+                    </div>
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Toplam Çekilen</p>
+                        <h3 id="balance-total-withdraw" class="text-2xl font-bold text-rose-400">$0.00</h3>
+                    </div>
+                </div>
+
+                <!-- Bakiye Aksiyon Kontrolleri -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60 space-y-6">
+                        <h4 class="text-base font-bold text-slate-200">Hesap Fon İşlemleri</h4>
+                        
+                        <div class="space-y-2">
+                            <label class="text-xs font-semibold text-slate-400">Başlangıç Bakiyesi Ayarla</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="initial-balance-input" placeholder="10000" class="flex-1 bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2 text-sm font-medium focus:outline-none focus:border-amber-500">
+                                <button onclick="saveInitialBalance()" id="save-balance-btn" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-sm transition-all">Kaydet</button>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-800/80 space-y-4">
+                            <label class="text-xs font-semibold text-slate-400 block">Para Yatır / Çek (Fon Ekle/Çıkar)</label>
+                            <input type="number" id="transaction-amount-input" placeholder="$ Miktar Girin" class="w-full bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-amber-500">
+                            <div class="flex gap-3">
+                                <button onclick="executeTransaction('deposit')" class="flex-1 py-2.5 bg-emerald-950 text-emerald-400 border border-emerald-800/60 font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-emerald-900 transition-all">Para Yatır</button>
+                                <button onclick="executeTransaction('withdraw')" class="flex-1 py-2.5 bg-rose-950 text-rose-400 border border-rose-800/60 font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-rose-900 transition-all">Para Çek</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
+                        <h4 class="text-base font-bold text-slate-200 mb-4">Hesap Finans Geçmişi</h4>
+                        <div class="overflow-y-auto max-h-72 pr-2">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-800 pb-2">
+                                        <th class="pb-2">Tarih</th>
+                                        <th class="pb-2">İşlem Türü</th>
+                                        <th class="pb-2 text-right">Miktar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="balance-history-body" class="divide-y divide-slate-800/40 text-sm">
+                                    <!-- Dinamik -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: NOTES -->
+            <div id="view-notes" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h4 class="text-base font-bold text-slate-200">Strateji Kuralları & Ders Notları</h4>
+                        <p class="text-xs text-slate-400">Trading disiplini ve trade kurulumu modellerini burada saklayın</p>
+                    </div>
+                    <button onclick="openNoteModal()" class="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-sm shadow-md transition-all">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Yeni Not Ekle
+                    </button>
+                </div>
+
+                <div id="notes-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dinamik Not Kartları -->
+                </div>
+            </div>
+
+            <!-- VIEW: SETTINGS -->
+            <div id="view-settings" class="hidden space-y-8">
+                <div class="max-w-3xl bg-[#0b1329] p-8 rounded-3xl border border-slate-800/60 space-y-8">
+                    <!-- Setup Ayarları -->
+                    <div class="space-y-4">
+                        <h4 class="text-base font-bold text-slate-200 flex items-center gap-2">
+                            <i data-lucide="toggle-left" class="w-5 h-5 text-amber-500"></i> İşlem Kurulum Modelleri (Setups)
+                        </h4>
+                        <p class="text-xs text-slate-400">Yeni işlem giriş paneline eklenmesini istediğiniz ICT/SMC kurulum modellerini tanımlayın.</p>
+                        <div class="flex gap-3">
+                            <input type="text" id="new-entry-type" placeholder="Örn: ICT Silver Bullet, MSS+OB, FVG" class="flex-1 bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-amber-500">
+                            <button onclick="addEntryType()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-sm border border-slate-700 transition-all">Ekle</button>
+                        </div>
+                        <div id="entry-types-list" class="grid grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+                            <!-- Dinamik -->
+                        </div>
+                    </div>
+
+                    <!-- Yedekleme & Sıfırlama -->
+                    <div class="pt-6 border-t border-slate-800/80 space-y-4">
+                        <h4 class="text-base font-bold text-slate-200 flex items-center gap-2">
+                            <i data-lucide="database" class="w-5 h-5 text-amber-500"></i> Veri Güvenliği & Yedekleme
+                        </h4>
+                        <p class="text-xs text-slate-400">Tüm verileriniz tarayıcınızın lokal hafızasında güvenle saklanır. Başka bilgisayara geçmek veya yedeklemek için dışa aktarabilirsiniz.</p>
+                        <div class="flex flex-wrap gap-4 pt-2">
+                            <button onclick="backupData()" class="flex items-center gap-2 px-5 py-3 bg-[#111c44] border border-slate-700/60 hover:bg-slate-800 text-slate-200 font-semibold text-sm rounded-xl transition-all">
+                                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i> Komple Sistemi Yedekle (.json)
+                            </button>
+                            <label class="flex items-center gap-2 px-5 py-3 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 font-semibold text-sm rounded-xl cursor-pointer transition-all">
+                                <i data-lucide="upload-cloud" class="w-4 h-4 text-sky-400"></i> Yedekten Geri Yükle
+                                <input type="file" onchange="restoreData(event)" class="hidden" accept=".json">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MODAL: YENİ İŞLEM EKLEME -->
+    <div id="trade-modal" class="fixed inset-0 bg-[#030712]/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-[#0b1329] w-full max-w-2xl rounded-3xl border border-slate-800 p-6 max-h-[90vh] overflow-y-auto space-y-6 shadow-2xl">
+            <div class="flex justify-between items-center pb-4 border-b border-slate-800">
+                <h3 id="trade-modal-title" class="text-lg font-bold text-slate-100">Yeni İşlem Kaydı Girdisi</h3>
+                <button onclick="closeTradeModal()" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="trade-form" onsubmit="handleTradeSubmit(e)" class="space-y-5">
+                <input type="hidden" id="trade-id">
+                <input type="hidden" id="trade-type" value="Long">
+                <input type="hidden" id="trade-exit-reason" value="TP">
+                <input type="hidden" id="trade-bias" value="Bullish">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-400">Tarih</label>
+                        <input type="date" id="trade-date" required class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-400">Saat (TR - GMT+3)</label>
+                        <input type="time" id="trade-time" required class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-400">Parite / Enstrüman</label>
+                        <select id="trade-symbol" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                            <option value="XAU/USD">XAU/USD (Altın)</option>
+                            <option value="BTC/USDT">BTC/USDT</option>
+                            <option value="ETH/USDT">ETH/USDT</option>
+                            <option value="EUR/USD">EUR/USD</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-400">Setup Kurulum Modeli</label>
+                        <select id="trade-entry-type" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                            <!-- Dinamik -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Yön (Type) ve Bias Seçici Büyük Butonlar -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-400">İşlem Yönü</label>
+                        <div class="flex gap-2">
+                            <button type="button" id="btn-type-Long" onclick="setTradeType('Long')" class="flex-1 py-3 bg-emerald-600 border border-emerald-600 text-white rounded-xl font-bold transition-all text-sm">BUY / LONG</button>
+                            <button type="button" id="btn-type-Short" onclick="setTradeType('Short')" class="flex-1 py-3 border border-slate-700 bg-slate-800 text-slate-400 rounded-xl font-bold hover:bg-slate-700 transition-all text-sm">SELL / SHORT</button>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-400">Yüksek Zaman Dilimi Makro Bias</label>
+                        <div class="flex gap-2">
+                            <button type="button" id="btn-bias-Bullish" onclick="setBias('Bullish')" class="flex-1 py-3 bg-sky-600 border border-sky-600 text-white rounded-xl font-bold transition-all text-xs">BULLISH</button>
+                            <button type="button" id="btn-bias-Bearish" onclick="setBias('Bearish')" class="flex-1 py-3 border border-slate-700 bg-slate-800 text-slate-400 rounded-xl font-bold hover:bg-slate-700 transition-all text-xs">BEARISH</button>
+                            <button type="button" id="btn-bias-Neutral" onclick="setBias('Neutral')" class="flex-1 py-3 border border-slate-700 bg-slate-800 text-slate-400 rounded-xl font-bold hover:bg-slate-700 transition-all text-xs">NÖTR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lot, Risk R% ve Net PnL Girişleri -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-400">İşlem Hacmi (Lot)</label>
+                        <input type="number" step="0.01" id="trade-lot" required placeholder="1.00" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-400">Risk Edilen Tutar (%)</label>
+                        <input type="number" step="0.1" id="trade-r-percent" required placeholder="1.0" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-400">Net Sonuç (Kar/Zarar $)</label>
+                        <input type="number" step="0.01" id="trade-pnl" required placeholder="-150 veya +350" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-slate-400">Çıkış Taktik Stratejisi</label>
+                    <div class="flex gap-2">
+                        <button type="button" id="btn-exit-TP" onclick="setExitReason('TP')" class="flex-1 py-3 bg-sky-600 border border-sky-600 text-white rounded-xl font-bold text-sm">Nizami Hedef (TP)</button>
+                        <button type="button" id="btn-exit-Manuel" onclick="setExitReason('Manuel')" class="flex-1 py-3 border border-slate-700 bg-slate-800 text-slate-400 rounded-xl font-bold hover:bg-slate-700 transition-all text-sm">Manuel Kapatma</button>
+                        <button type="button" id="btn-exit-SL" onclick="setExitReason('SL')" class="flex-1 py-3 border border-slate-700 bg-slate-800 text-slate-400 rounded-xl font-bold hover:bg-slate-700 transition-all text-sm">Stop Out (SL)</button>
+                    </div>
+                </div>
+
+                <!-- Detaylı İnceleme Notları -->
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-slate-400">Detaylı İnceleme Analiz Notları & Setup Linkleri</label>
+                    <textarea id="trade-notes" rows="3" placeholder="Örn: HTF Likidite alındı, LTF kırılım beklendi. Ekran Görüntüsü: https://tradingview.com/x/.../" class="w-full bg-[#030712] border border-slate-700 rounded-xl p-4 text-sm text-slate-200 focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+
+                <div class="pt-2 flex gap-4">
+                    <button type="button" onclick="closeTradeModal()" class="flex-1 py-3 bg-slate-800 border border-slate-700 hover:bg-slate-700 font-bold rounded-xl text-sm transition-all">İptal Et</button>
+                    <button type="submit" class="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-lg shadow-amber-500/10">İşlemi Günlüğe Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: HESAP DÜZENLEME MANTIĞI -->
+    <div id="account-modal" class="fixed inset-0 bg-[#030712]/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-[#0b1329] w-full max-w-md rounded-3xl border border-slate-800 p-6 space-y-6">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+                <h3 class="text-base font-bold text-slate-100">İşlem Hesapları Yönetimi</h3>
+                <button onclick="closeAccountModal()" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-slate-400">Yeni Hesap Adı Tanımla</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="new-account-name" placeholder="Örn: 50K Funded, Personal Real" class="flex-1 bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2 text-sm font-medium focus:outline-none focus:border-amber-500">
+                        <button onclick="createNewAccount()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-sm transition-all">Ekle</button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-slate-400 block">Kayıtlı Hesap Listesi</label>
+                    <div id="account-list-container" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        <!-- Dinamik -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFIRM DIALOG MODAL -->
+    <div id="confirm-modal" class="fixed inset-0 bg-[#030712]/70 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-[#0b1329] border border-slate-800 p-6 rounded-3xl w-full max-w-sm text-center space-y-4">
+            <h4 id="confirm-title" class="text-base font-bold text-slate-100">Emin misiniz?</h4>
+            <p id="confirm-message" class="text-xs text-slate-400 leading-relaxed">Bu veri tamamen silinecektir.</p>
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeConfirmModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold transition-all">Geri Dön</button>
+                <button id="confirm-action-btn" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-bold text-white transition-all">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GLOBAL BİLDİRİM TOAST MOTORU -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-[#0b1329] border border-slate-800 rounded-2xl px-5 py-4 flex items-center gap-3.5 shadow-2xl z-50 hidden animate-bounce-short">
+        <div id="toast-icon-wrapper" class="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-400">
+            <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5"></i>
+        </div>
+        <div>
+            <p id="toast-message" class="text-sm font-semibold text-slate-200">İşlem başarıyla tamamlandı.</p>
+        </div>
+    </div>
+
+    <!-- ── JAVASCRIPT ÇEKİRDEK KODLARI ── -->
+    <script>
+        // GLOBAL SISTEM DEĞİŞKENLERİ
+        let accounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [{ id: 'acc_1', name: 'Ana Hesap (Default)' }];
+        let currentAccountId = localStorage.getItem('XAU_currentAccountId') || 'acc_1';
+        let entryTypes = JSON.parse(localStorage.getItem('XAU_entryTypes')) || ['MSS+OB', 'Silver Bullet', 'FVG Entry', 'Liquidity Sweep', 'Breaker Block'];
+        
         let trades = [];
         let notes = [];
-        let balance = 10000;
+        let balance = 0;
         let transactions = [];
+        let currentView = 'dashboard';
+        let editingNoteIndex = null;
 
-        function updateUI() {
-            console.log("Arayüz yenileniyor...", { balance, tradesCount: trades.length });
-        }
+        // TAKVİM MOTORU DEĞİŞKENLERİ
+        let calendarDate = new Date();
 
-        // ANLIK BULUTTAN VERİ ÇEKME
-        function loadOnlineData() {
-            const userRef = ref(db, 'journal/' + currentAccountId);
-            onValue(userRef, (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    trades = data.trades || [];
-                    notes = data.notes || [];
-                    balance = data.balance || 10000;
-                    transactions = data.transactions || [];
-                } else {
-                    trades = []; notes = []; balance = 10000; transactions = [];
-                }
-                updateUI();
-            });
-        }
-
-        // BULUTA KAYDETME
-        function saveOnlineData() {
-            set(ref(db, 'journal/' + currentAccountId), {
-                trades: trades,
-                notes: notes,
-                balance: balance,
-                transactions: transactions
-            });
-        }
-
-        window.addTrade = function(tradeData) {
-            trades.push(tradeData);
-            saveOnlineData();
+        // SAYFA İLK KURULUMU
+        window.onload = function() {
+            lucide.createIcons();
+            updateDateDisplay();
+            initAccounts();
+            loadCurrentAccountData();
+            populateEntryTypeSelect();
+            refreshCurrentView();
+            checkBalanceButton();
+            
+            // Form Submit Listener'ını bağlama
+            const form = document.getElementById('trade-form');
+            if(form) {
+                form.addEventListener('submit', function(e) {
+                    handleTradeSubmit(e);
+                });
+            }
         };
 
-        window.addEventListener('DOMContentLoaded', () => {
-            loadOnlineData();
-        });
+        // HESAP YÖNETİMİ MANTIĞI
+        function initAccounts() {
+            if (!localStorage.getItem('XAU_accounts')) {
+                localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
+            }
+            if (!localStorage.getItem('XAU_currentAccountId')) {
+                localStorage.setItem('XAU_currentAccountId', currentAccountId);
+            }
+            renderAccountSelector();
+        }
+
+        function renderAccountSelector() {
+            const selector = document.getElementById('account-selector');
+            if(!selector) return;
+            selector.innerHTML = accounts.map(acc => `<option value="${acc.id}" ${acc.id === currentAccountId ? 'selected' : ''}>${acc.name}</option>`).join('');
+        }
+
+        function loadCurrentAccountData() {
+            trades = JSON.parse(localStorage.getItem(`trades_${currentAccountId}`)) || [];
+            notes = JSON.parse(localStorage.getItem(`notes_${currentAccountId}`)) || [];
+            balance = parseFloat(localStorage.getItem(`balance_${currentAccountId}`)) || 0;
+            transactions = JSON.parse(localStorage.getItem(`transactions_${currentAccountId}`)) || [];
+            
+            const balInput = document.getElementById('initial-balance-input');
+            if(balInput) balInput.value = balance || '';
+        }
+
+        function saveCurrentAccountData() {
+            localStorage.setItem(`trades_${currentAccountId}`, JSON.stringify(trades));
+            localStorage.setItem(`notes_${currentAccountId}`, JSON.stringify(notes));
+            localStorage.setItem(`balance_${currentAccountId}`, balance.toString());
+            localStorage.setItem(`transactions_${currentAccountId}`, JSON.stringify(transactions));
+        }
+
+        function switchAccount(id) {
+            currentAccountId = id;
+            localStorage.setItem('XAU_currentAccountId', id);
+            loadCurrentAccountData();
+            refreshCurrentView();
+            checkBalanceButton();
+            showToast('Hesap değiştirildi');
+        }
+
+        function openAccountModal() {
+            document.getElementById('account-modal').classList.remove('hidden');
+            renderAccountList();
+        }
+
+        function closeAccountModal() {
+            document.getElementById('account-modal').classList.add('hidden');
+        }
+
+        function createNewAccount() {
+            const input = document.getElementById('new-account-name');
+            const name = input.value.trim();
+            if(!name) return;
+            const newAcc = { id: 'acc_' + Date.now(), name: name };
+            accounts.push(newAcc);
+            localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
+            input.value = '';
+            renderAccountSelector();
+            renderAccountList();
+            showToast('Yeni işlem hesabı oluşturuldu');
+        }
+
+        function renderAccountList() {
+            const container = document.getElementById('account-list-container');
+            if(!container) return;
+            container.innerHTML = accounts.map(acc => `
+                <div class="flex justify-between items-center p-3 bg-[#030712] rounded-xl border border-slate-800">
+                    <span class="text-xs font-semibold ${acc.id === currentAccountId ? 'text-amber-400' : 'text-slate-300'}">${acc.name}</span>
+                    ${accounts.length > 1 ? `<button onclick="deleteAccount('${acc.id}')" class="text-slate-500 hover:text-rose-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function deleteAccount(id) {
+            if(id === currentAccountId) {
+                showToast('Aktif hesap silinemez', 'error');
+                return;
+            }
+            showConfirm('Hesabı Sil', 'Bu hesabı ve hesaba ait tüm trade geçmişini silmek istediğinize emin misiniz?', () => {
+                accounts = accounts.filter(acc => acc.id !== id);
+                localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
+                localStorage.removeItem(`trades_${id}`);
+                localStorage.removeItem(`notes_${id}`);
+                localStorage.removeItem(`balance_${id}`);
+                localStorage.removeItem(`transactions_${id}`);
+                renderAccountSelector();
+                renderAccountList();
+                closeConfirmModal();
+                showToast('Hesap silindi', 'info');
+            });
+        }
+
+        // GÖRÜNÜM DEGİŞTİRME MOTORU
+        function switchView(viewName) {
+            currentView = viewName;
+            const views = ['dashboard', 'trades', 'calendar', 'analysis', 'balance', 'notes', 'settings'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                const nav = document.getElementById(`nav-${v}`);
+                if (el) el.classList.add('hidden');
+                if (nav) {
+                    nav.className = "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-l-4 border-transparent";
+                }
+            });
+
+            const currentEl = document.getElementById(`view-${viewName}`);
+            const currentNav = document.getElementById(`nav-${viewName}`);
+            if (currentEl) currentEl.classList.remove('hidden');
+            if (currentNav) {
+                currentNav.className = "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all bg-gradient-to-r from-amber-500/10 to-transparent text-amber-400 border-l-4 border-amber-500";
+            }
+
+            // Başlık Güncelleme
+            const titles = { dashboard: 'Panel', trades: 'İşlem Günlüğü', calendar: 'Performans Takvimi', analysis: 'Performans Analizi', balance: 'Bakiye & Finans', notes: 'Strateji Kuralları & Ders Notları', settings: 'Sistem Ayarları' };
+            document.getElementById('view-title').innerText = titles[viewName] || 'Panel';
+
+            refreshCurrentView();
+        }
+
+        function refreshCurrentView() {
+            if (currentView === 'dashboard') {
+                updateStats();
+                renderRecentTrades();
+                renderEquityChart();
+            } else if (currentView === 'trades') {
+                renderAllTrades(trades);
+            } else if (currentView === 'calendar') {
+                renderCalendar();
+            } else if (currentView === 'analysis') {
+                renderAnalysis();
+            } else if (currentView === 'balance') {
+                renderBalance();
+            } else if (currentView === 'notes') {
+                renderNotes();
+            } else if (currentView === 'settings') {
+                renderEntryTypes();
+            }
+        }
+
+        // TIKLANABİLİR LİNK FORMATLAYICI
+        function formatNoteLinks(text) {
+            if(!text) return '';
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, function(url) {
+                return `<a href="${url}" target="_blank" class="text-amber-400 hover:underline inline-flex items-center gap-0.5 break-all">${url}</a>`;
+            });
+        }
+
+        // LONDRA/NY YAZ-KIŞ SAATİ (DST) DURUMUNA DUYARLI KILLZONE TESPİT MOTORU
+        function _getDSTOffsets(dateObj) {
+            const year = dateObj.getFullYear();
+            
+            // Mart ayının son Pazar günü (Avrupa DST başlangıcı)
+            let march = new Date(year, 2, 31);
+            let marchD = march.getDay();
+            let euDstStart = new Date(year, 2, 31 - marchD);
+            
+            // Ekim ayının son Pazar günü (Avrupa DST bitişi)
+            let october = new Date(year, 9, 31);
+            let octoberD = october.getDay();
+            let euDstEnd = new Date(year, 9, 31 - octoberD);
+            
+            // ABD için: Mart ayının 2. Pazar günü, Kasım ayının 1. Pazar günü
+            let usDstStart = new Date(year, 2, 8);
+            usDstStart.setDate(8 - usDstStart.getDay());
+            
+            let usDstEnd = new Date(year, 10, 1);
+            usDstEnd.setDate(1 + (usDstEnd.getDay() === 0 ? 0 : 7 - usDstEnd.getDay()));
+
+            return {
+                isEUDST: (dateObj >= euDstStart && dateObj < euDstEnd),
+                isUSDST: (dateObj >= usDstStart && dateObj < usDstEnd)
+            };
+        }
+
+        function getKillzoneForDateTime(dateStr, timeStr) {
+            const dObj = new Date(dateStr + 'T' + timeStr);
+            if(isNaN(dObj.getTime())) return 'Outside Killzone';
+
+            const dst = _getDSTOffsets(dObj);
+            const hour = dObj.getHours();
+            const min = dObj.getMinutes();
+            const totalMinutes = hour * 60 + min;
+
+            // TR (GMT+3) Sabit Saat Dilimine Göre Seans Algoritması (Yaz/Kış Dönemsel Kayma Dahil)
+            const frankfurtStart = dst.isEUDST ? (8 * 60) : (9 * 60); 
+            const frankfurtEnd = dst.isEUDST ? (9 * 60) : (10 * 60);
+
+            const londonOpenStart = dst.isEUDST ? (9 * 60) : (10 * 60);
+            const londonOpenEnd = dst.isEUDST ? (12 * 60) : (13 * 60);
+
+            const nyOpenStart = dst.isUSDST ? (14 * 60) : (15 * 60);
+            const nyOpenEnd = dst.isUSDST ? (17 * 60) : (18 * 60);
+
+            const nyPMStart = dst.isUSDST ? (20 * 60) : (21 * 60);
+            const nyPMEnd = dst.isUSDST ? (23 * 60) : (24 * 60);
+
+            const londonCloseStart = dst.isEUDST ? (18 * 60) : (19 * 60);
+            const londonCloseEnd = dst.isEUDST ? (19 * 60) : (20 * 60);
+
+            if (totalMinutes >= frankfurtStart && totalMinutes < frankfurtEnd) return 'Frankfurt';
+            if (totalMinutes >= londonOpenStart && totalMinutes < londonOpenEnd) return 'London Open';
+            if (totalMinutes >= nyOpenStart && totalMinutes < nyOpenEnd) return 'NY Open';
+            if (totalMinutes >= londonCloseStart && totalMinutes < londonCloseEnd) return 'London Close';
+            if (totalMinutes >= nyPMStart && totalMinutes < nyPMEnd) return 'NY PM';
+
+            return 'Outside Killzone';
+        }
+
+        // DINAMIK ISTATISTIK GORUNUM YUKLEYICI
+        function renderRecentTrades() {
+            const tbody = document.getElementById('recent-trades-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            const sorted = [...trades].sort((a,b) => new Date(b.date + 'T' + (b.time||'00:00')) - new Date(a.date + 'T' + (a.time||'00:00'))).slice(0, 5);
+
+            if(sorted.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-500 italic">Henüz girilmiş işlem kaydı bulunmuyor.</td></tr>';
+                return;
+            }
+
+            sorted.forEach(t => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-800/40 hover:bg-slate-800/20 transition-all">
+                        <td class="py-4 text-slate-400 font-medium">${t.date} <span class="text-xs text-slate-500 block">${t.time || ''}</span></td>
+                        <td class="py-4 font-bold text-slate-200">${t.symbol} <span class="text-[10px] px-2 py-0.5 rounded ml-1.5 ${t.type === 'Long' ? 'bg-emerald-950 text-emerald-400' : 'bg-rose-950 text-rose-400'}">${t.type}</span></td>
+                        <td class="py-4 font-semibold text-slate-400">${t.killzone || 'Dış Seans'}</td>
+                        <td class="py-4 font-medium text-slate-300 max-w-[150px] truncate" title="${t.entryType || (t.setupTypes ? t.setupTypes.join(', ') : '-')}">${t.entryType || (t.setupTypes ? t.setupTypes.join(', ') : '-')}</td>
+                        <td class="py-4 text-center text-slate-300 font-bold">${t.rPercent || 0}%</td>
+                        <td class="py-4 text-center font-bold text-amber-400">${t.rr && t.rr !== '-' ? t.rr + 'R' : '-'}</td>
+                        <td class="py-4 text-right font-extrabold ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}</td>
+                    </tr>`;
+            });
+        }
+
+        function renderAllTrades(tradesList) {
+            const tbody = document.getElementById('all-trades-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            if(tradesList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="py-8 text-center text-slate-500 italic">İşlem geçmişi boş.</td></tr>';
+                return;
+            }
+
+            const sorted = [...tradesList].sort((a,b) => new Date(b.date + 'T' + (b.time||'00:00')) - new Date(a.date + 'T' + (a.time||'00:00')));
+
+            sorted.forEach(t => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-800/50 hover:bg-slate-800/20 group transition-all">
+                        <td class="py-4 text-slate-400 font-medium">${t.date} <span class="text-xs text-slate-500 block">${t.time || ''}</span></td>
+                        <td class="py-4 font-bold text-slate-200">${t.symbol}</td>
+                        <td class="py-4 font-bold"><span class="px-2 py-0.5 text-xs rounded ${t.type === 'Long' ? 'bg-emerald-950 text-emerald-400' : 'bg-rose-950 text-rose-400'}">${t.type}</span></td>
+                        <td class="py-4 font-semibold text-xs text-slate-400">${t.bias || 'Neutral'}</td>
+                        <td class="py-4 font-semibold text-slate-400 text-xs">${t.killzone || 'Outside'}</td>
+                        <td class="py-4 font-medium text-slate-300 max-w-[120px] truncate" title="${t.entryType || (t.setupTypes ? t.setupTypes.join(', ') : '-')}">${t.entryType || (t.setupTypes ? t.setupTypes.join(', ') : '-')}</td>
+                        <td class="py-4 text-center font-bold text-slate-300">${t.lot || 0}</td>
+                        <td class="py-4 text-center font-bold text-slate-400">${t.rPercent || 0}%</td>
+                        <td class="py-4 text-center font-extrabold text-amber-400">${t.rr && t.rr !== '-' ? t.rr + 'R' : '-'}</td>
+                        <td class="py-4 text-right font-black ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}</td>
+                        <td class="py-4 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="openEditTradeModal('${t.id}')" class="p-1.5 text-slate-500 hover:text-amber-400 transition-all"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                                <button onclick="deleteTrade('${t.id}')" class="p-1.5 text-slate-500 hover:text-rose-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    ${t.notes ? `
+                    <tr class="bg-slate-900/10 border-b border-slate-800/20 hidden group-hover:table-row transition-all">
+                        <td colspan="11" class="px-6 py-2.5 text-xs text-slate-400 font-medium whitespace-pre-wrap"><span class="font-bold text-slate-500">Analiz Detay / Not:</span> ${formatNoteLinks(t.notes)}</td>
+                    </tr>` : ''}`;
+            });
+            lucide.createIcons();
+        }
+
+        function filterTrades() {
+            const query = document.getElementById('trade-search').value.toLowerCase().trim();
+            if(!query) {
+                renderAllTrades(trades);
+                return;
+            }
+            const filtered = trades.filter(t => {
+                return (t.symbol && t.symbol.toLowerCase().includes(query)) ||
+                       (t.entryType && t.entryType.toLowerCase().includes(query)) ||
+                       (t.notes && t.notes.toLowerCase().includes(query)) ||
+                       (t.killzone && t.killzone.toLowerCase().includes(query)) ||
+                       (t.type && t.type.toLowerCase().includes(query));
+            });
+            renderAllTrades(filtered);
+        }
+
+        // TIKLANAN MODAL METOTLARI
+        function openTradeModal() {
+            document.getElementById('trade-id').value = '';
+            document.getElementById('trade-form').reset();
+            document.getElementById('trade-modal-title').innerText = 'Yeni İşlem Kaydı Girdisi';
+            
+            // Bugünün tarih ve saatini otomatik getir
+            const now = new Date();
+            document.getElementById('trade-date').value = now.toISOString().slice(0, 10);
+            document.getElementById('trade-time').value = now.toTimeString().slice(0, 5);
+            
+            setTradeType('Long');
+            setBias('Bullish');
+            setExitReason('TP');
+            
+            document.getElementById('trade-modal').classList.remove('hidden');
+        }
+
+        function openEditTradeModal(id) {
+            const t = trades.find(item => item.id === id);
+            if(!t) return;
+
+            document.getElementById('trade-id').value = t.id;
+            document.getElementById('trade-date').value = t.date;
+            document.getElementById('trade-time').value = t.time || '';
+            document.getElementById('trade-symbol').value = t.symbol;
+            document.getElementById('trade-entry-type').value = t.entryType || (t.setupTypes ? t.setupTypes[0] : '') || '';
+            document.getElementById('trade-lot').value = t.lot || '';
+            document.getElementById('trade-r-percent').value = t.rPercent || '';
+            document.getElementById('trade-pnl').value = t.pnl;
+            document.getElementById('trade-notes').value = t.notes || '';
+
+            setTradeType(t.type || 'Long');
+            setBias(t.bias || 'Bullish');
+            setExitReason(t.exitReason || 'TP');
+
+            document.getElementById('trade-modal-title').innerText = 'İşlem Kaydını Düzenle';
+            document.getElementById('trade-modal').classList.remove('remove');
+            document.getElementById('trade-modal').classList.remove('hidden');
+        }
+
+        // DİNAMİK PERFORMANS TAKVİMİ MOTORU
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const monthYearTitle = document.getElementById('calendar-month-year');
+            if(!grid || !monthYearTitle) return;
+
+            grid.innerHTML = '';
+            const monthsTr = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            
+            const currentYear = calendarDate.getFullYear();
+            const currentMonth = calendarDate.getMonth();
+            
+            monthYearTitle.innerText = `${monthsTr[currentMonth]} ${currentYear}`;
+
+            // Ayın ilk gününün haftanın hangi günü başladığı hesabı
+            let firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+            // Pazartesiyi 0 yapmak için kaydırma
+            firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
+            const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            // Boş hücreleri doldur (Önceki ay taşmaları için)
+            for(let i = 0; i < firstDayIndex; i++) {
+                grid.innerHTML += `<div class="bg-transparent min-h-[96px]"></div>`;
+            }
+
+            // Günleri doldur
+            for(let day = 1; day <= totalDays; day++) {
+                const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const matchTrades = trades.filter(t => t.date === dateString);
+                
+                let dayPnL = 0;
+                let dayTradesCount = matchTrades.length;
+                matchTrades.forEach(t => dayPnL += t.pnl);
+
+                let bgClass = 'bg-[#030712]/40 border-slate-800/80';
+                let textPnLClass = 'text-slate-500';
+                
+                if(dayTradesCount > 0) {
+                    if(dayPnL > 0) {
+                        bgClass = 'bg-emerald-950/40 border-emerald-800/40 hover:bg-emerald-900/30';
+                        textPnLClass = 'text-emerald-400 font-bold';
+                    } else if(dayPnL < 0) {
+                        bgClass = 'bg-rose-950/40 border-rose-800/40 hover:bg-rose-900/30';
+                        textPnLClass = 'text-rose-400 font-bold';
+                    } else {
+                        bgClass = 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-700/50';
+                        textPnLClass = 'text-slate-300 font-bold';
+                    }
+                }
+
+                grid.innerHTML += `
+                    <div class="min-h-[100px] border p-3 rounded-2xl flex flex-col justify-between transition-all cursor-pointer ${bgClass}">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold ${dayTradesCount > 0 ? 'text-slate-200' : 'text-slate-500'}">${day}</span>
+                            ${dayTradesCount > 0 ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#030712]/80 text-slate-400 font-semibold rounded">${dayTradesCount} T</span>` : ''}
+                        </div>
+                        <div class="text-right text-xs ${textPnLClass}">
+                            ${dayTradesCount > 0 ? (dayPnL >= 0 ? '+' : '') + '$' + dayPnL.toFixed(1) : ''}
+                        </div>
+                    </div>`;
+            }
+        }
+
+        function prevMonth() {
+            calendarDate.setMonth(calendarDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            calendarDate.setMonth(calendarDate.getMonth() + 1);
+            renderCalendar();
+        }
     </script>
-</head>
-<body class="bg-gray-950 text-gray-100 font-sans antialiased">
-    <div class="container mx-auto p-4">
-        <h1 class="text-2xl font-bold mb-4 text-amber-500"><i class="fa-solid fa-chart-line mr-2"></i>XAU/USD Bulut Destekli Trading Journal</h1>
-        <p class="text-sm text-gray-400">Verileriniz şu anda Firebase Realtime Database ile anlık olarak senkronize edilmektedir.</p>
+
+    <!-- KULLANICI ETKİLEŞİM VE ANALİZ BLOKLARI (AZ ÖNCEKİ ENTEGRE YARDIMCILAR) -->
+    <script>
+        function setTradeType(type) {
+            document.getElementById('trade-type').value = type;
+            ['Long', 'Short'].forEach(opt => {
+                const btn = document.getElementById(`btn-type-${opt}`);
+                if (!btn) return;
+                if (opt === type) {
+                    btn.className = `flex-1 py-3 rounded-xl font-bold border ${type === 'Long' ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-rose-600 border-rose-600 text-white'}`;
+                } else {
+                    btn.className = 'flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all';
+                }
+            });
+        }
+
+        function setExitReason(reason) {
+            document.getElementById('trade-exit-reason').value = reason;
+            ['TP', 'Manuel', 'SL'].forEach(opt => {
+                const btn = document.getElementById(`btn-exit-${opt}`);
+                if (!btn) return;
+                if (opt === reason) {
+                    let colorClass = 'bg-sky-600 border-sky-600 text-white';
+                    if (reason === 'SL') colorClass = 'bg-rose-600 border-rose-600 text-white';
+                    if (reason === 'Manuel') colorClass = 'bg-slate-600 border-slate-600 text-white';
+                    btn.className = `flex-1 py-3 rounded-xl font-bold border ${colorClass}`;
+                } else {
+                    btn.className = 'flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all';
+                }
+            });
+        }
+
+        function setBias(bias) {
+            document.getElementById('trade-bias').value = bias;
+            ['Bullish', 'Bearish', 'Neutral'].forEach(opt => {
+                const btn = document.getElementById(`btn-bias-${opt}`);
+                if (!btn) return;
+                if (opt === bias) {
+                    let colorClass = 'bg-sky-600 border-sky-600 text-white';
+                    if (bias === 'Bearish') colorClass = 'bg-rose-600 border-rose-600 text-white';
+                    if (bias === 'Neutral') colorClass = 'bg-slate-600 border-slate-600 text-white';
+                    btn.className = `flex-1 py-3 rounded-xl font-bold border ${colorClass}`;
+                } else {
+                    btn.className = 'flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all';
+                }
+            });
+        }
+
+        function populateEntryTypeSelect() {
+            const select = document.getElementById('trade-entry-type');
+            if (!select) return;
+            select.innerHTML = entryTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+        }
+
+        function closeTradeModal() {
+            document.getElementById('trade-modal').classList.add('hidden');
+            document.getElementById('trade-form').reset();
+        }
+
+        function handleTradeSubmit(e) {
+            e.preventDefault();
+            const tradeId = document.getElementById('trade-id').value;
+            const date = document.getElementById('trade-date').value;
+            const time = document.getElementById('trade-time').value;
+            const symbol = document.getElementById('trade-symbol').value;
+            const type = document.getElementById('trade-type').value;
+            const bias = document.getElementById('trade-bias').value;
+            const rPercent = parseFloat(document.getElementById('trade-r-percent').value) || 0;
+            const lot = parseFloat(document.getElementById('trade-lot').value) || 0;
+            const pnl = parseFloat(document.getElementById('trade-pnl').value) || 0;
+            const exitReason = document.getElementById('trade-exit-reason').value;
+            const notesText = document.getElementById('trade-notes').value;
+            const selectedSetup = document.getElementById('trade-entry-type').value;
+
+            const calculatedKillzone = getKillzoneForDateTime(date, time);
+            
+            let riskAmount = balance * (rPercent / 100);
+            let calculatedRR = riskAmount > 0 ? (pnl / riskAmount).toFixed(1) : '-';
+
+            const tradeData = {
+                id: tradeId || 'trade_' + Date.now(),
+                date, time, symbol, type, bias, rPercent, lot, pnl, exitReason,
+                killzone: calculatedKillzone,
+                notes: notesText,
+                entryType: selectedSetup,
+                rr: calculatedRR
+            };
+
+            if (tradeId) {
+                const index = trades.findIndex(t => t.id === tradeId);
+                if (index !== -1) trades[index] = tradeData;
+            } else {
+                trades.push(tradeData);
+            }
+
+            saveCurrentAccountData();
+            closeTradeModal();
+            refreshCurrentView();
+            showToast(tradeId ? 'İşlem güncellendi' : 'Yeni işlem başarıyla kaydedildi');
+        }
+
+        function deleteTrade(id) {
+            showConfirm('İşlemi Sil', 'Bu işlemi geçmişten kalıcı olarak silmek istediğinize emin misiniz?', () => {
+                trades = trades.filter(t => t.id !== id);
+                saveCurrentAccountData();
+                refreshCurrentView();
+                closeConfirmModal();
+                showToast('İşlem silindi', 'info');
+            });
+        }
+
+        function updateStats() {
+            const totalTrades = trades.length;
+            const winTrades = trades.filter(t => t.pnl > 0).length;
+            const lossTrades = trades.filter(t => t.pnl < 0).length;
+            
+            const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
+            const winRate = totalTrades > 0 ? Math.round((winTrades / totalTrades) * 100) : 0;
+
+            const totalWinAmount = trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0);
+            const totalLossAmount = Math.abs(trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0));
+            const profitFactor = totalLossAmount > 0 ? (totalWinAmount / totalLossAmount).toFixed(2) : (totalWinAmount > 0 ? totalWinAmount.toFixed(2) : '0.00');
+
+            const avgWin = winTrades > 0 ? totalWinAmount / winTrades : 0;
+            const avgLoss = lossTrades > 0 ? totalLossAmount / lossTrades : 0;
+            const expectancy = totalTrades > 0 ? ((winRate / 100) * avgWin) - (((100 - winRate) / 100) * avgLoss) : 0;
+
+            document.getElementById('stat-total-pnl').innerText = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
+            document.getElementById('stat-total-pnl').className = `text-3xl font-bold ${totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            document.getElementById('stat-win-rate').innerText = `${winRate}%`;
+            document.getElementById('stat-profit-factor').innerText = profitFactor;
+            
+            const expElements = document.querySelectorAll('#stat-expectancy');
+            expElements.forEach(el => {
+                el.innerText = `${expectancy >= 0 ? '+' : ''}$${expectancy.toFixed(2)}`;
+                el.className = `text-3xl font-bold ${expectancy >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            });
+
+            const totalDeposit = transactions.filter(t => t.type === 'deposit').reduce((s, t) => s + t.amount, 0);
+            const totalWithdraw = transactions.filter(t => t.type === 'withdraw').reduce((s, t) => s + t.amount, 0);
+            const currentBudget = balance + totalPnL + totalDeposit - totalWithdraw;
+            
+            document.getElementById('stat-current-budget').innerText = `$${currentBudget.toFixed(2)}`;
+            
+            let currentWinStreak = 0, currentLossStreak = 0;
+            let maxWinStreak = 0, maxLossStreak = 0;
+            
+            [...trades].sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(t => {
+                if (t.pnl > 0) {
+                    currentWinStreak++;
+                    currentLossStreak = 0;
+                    if (currentWinStreak > maxWinStreak) maxWinStreak = currentWinStreak;
+                } else if (t.pnl < 0) {
+                    currentLossStreak++;
+                    currentWinStreak = 0;
+                    if (currentLossStreak > maxLossStreak) maxLossStreak = currentLossStreak;
+                }
+            });
+
+            if(document.getElementById('report-win-streak')) document.getElementById('report-win-streak').innerText = maxWinStreak;
+            if(document.getElementById('report-loss-streak')) document.getElementById('report-loss-streak').innerText = maxLossStreak;
+            
+            const validRRTrades = trades.filter(t => t.rr && t.rr !== '-').map(t => parseFloat(t.rr));
+            const avgRR = validRRTrades.length > 0 ? (validRRTrades.reduce((s, r) => s + r, 0) / validRRTrades.length).toFixed(2) : '0.00';
+            if(document.getElementById('report-rr-ratio')) document.getElementById('report-rr-ratio').innerText = `${avgRR}R`;
+        }
+
+        function renderAnalysis() {
+            updateStats();
+            
+            const ids = ['hourly-perf-body', 'daily-wr-body', 'setup-perf-body', 'bias-acc-body', 'session-perf-body'];
+            ids.forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerHTML = ''; });
+
+            // 1. Saatlik Verimlilik
+            const hourlyData = {};
+            trades.forEach(t => {
+                if(!t.time) return;
+                const hour = t.time.split(':')[0] + ':00';
+                if(!hourlyData[hour]) hourlyData[hour] = { count: 0, wins: 0, pnl: 0 };
+                hourlyData[hour].count++;
+                if(t.pnl > 0) hourlyData[hour].wins++;
+                hourlyData[hour].pnl += t.pnl;
+            });
+            Object.keys(hourlyData).sort().forEach(hour => {
+                const d = hourlyData[hour];
+                const wr = Math.round((d.wins / d.count) * 100);
+                document.getElementById('hourly-perf-body').innerHTML += `
+                    <tr>
+                        <td class="py-3 font-semibold text-slate-300">${hour}</td>
+                        <td class="py-3 text-center text-slate-400">${d.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-bold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${d.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</td>
+                    </tr>`;
+            });
+
+            // 2. Günlük Dağılım
+            const daysTr = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+            const dailyData = {};
+            trades.forEach(t => {
+                const dayName = daysTr[new Date(t.date).getDay()];
+                if(!dailyData[dayName]) dailyData[dayName] = { count: 0, wins: 0, pnl: 0 };
+                dailyData[dayName].count++;
+                if(t.pnl > 0) dailyData[dayName].wins++;
+                dailyData[dayName].pnl += t.pnl;
+            });
+            daysTr.forEach(day => {
+                const d = dailyData[day] || { count: 0, wins: 0, pnl: 0 };
+                if (d.count === 0) return;
+                const wr = Math.round((d.wins / d.count) * 100);
+                document.getElementById('daily-wr-body').innerHTML += `
+                    <tr>
+                        <td class="py-3 font-semibold text-slate-300">${day}</td>
+                        <td class="py-3 text-center text-slate-400">${d.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-bold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${d.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</td>
+                    </tr>`;
+            });
+
+            // 3. Setup Performansı
+            const setupData = {};
+            trades.forEach(t => {
+                const setup = t.entryType || 'Bilinmeyen';
+                if(!setupData[setup]) setupData[setup] = { count: 0, wins: 0, totalRR: 0, rrCount: 0 };
+                setupData[setup].count++;
+                if(t.pnl > 0) setupData[setup].wins++;
+                if(t.rr && t.rr !== '-') {
+                    setupData[setup].totalRR += parseFloat(t.rr);
+                    setupData[setup].rrCount++;
+                }
+            });
+            Object.keys(setupData).forEach(setup => {
+                const d = setupData[setup];
+                const wr = Math.round((d.wins / d.count) * 100);
+                const avgRR = d.rrCount > 0 ? (d.totalRR / d.rrCount).toFixed(1) + 'R' : '-';
+                document.getElementById('setup-perf-body').innerHTML += `
+                    <tr>
+                        <td class="py-3 font-semibold text-slate-300">${setup}</td>
+                        <td class="py-3 text-center text-slate-400">${d.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-bold">${wr}%</td>
+                        <td class="py-3 text-right font-bold text-emerald-400">${avgRR}</td>
+                    </tr>`;
+            });
+
+            // 4. Bias Doğruluğu
+            const biasData = {};
+            trades.forEach(t => {
+                const b = t.bias || 'Neutral';
+                if(!biasData[b]) biasData[b] = { count: 0, wins: 0, pnl: 0 };
+                biasData[b].count++;
+                if(t.pnl > 0) biasData[b].wins++;
+                biasData[b].pnl += t.pnl;
+            });
+            ['Bullish', 'Bearish', 'Neutral'].forEach(b => {
+                const d = biasData[b] || { count: 0, wins: 0, pnl: 0 };
+                if (d.count === 0) return;
+                const wr = Math.round((d.wins / d.count) * 100);
+                document.getElementById('bias-acc-body').innerHTML += `
+                    <tr>
+                        <td class="py-3 font-semibold text-slate-300">${b}</td>
+                        <td class="py-3 text-center text-slate-400">${d.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-bold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${d.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</td>
+                    </tr>`;
+            });
+
+            // 5. Seans Performansı
+            const sessionData = {};
+            trades.forEach(t => {
+                const kz = t.killzone || 'Outside Killzone';
+                if(!sessionData[kz]) sessionData[kz] = { count: 0, wins: 0, pnl: 0 };
+                sessionData[kz].count++;
+                if(t.pnl > 0) sessionData[kz].wins++;
+                sessionData[kz].pnl += t.pnl;
+            });
+            ['Frankfurt', 'London Open', 'NY Open', 'NY PM', 'London Close', 'Outside Killzone'].forEach(kz => {
+                const d = sessionData[kz] || { count: 0, wins: 0, pnl: 0 };
+                if (d.count === 0) return;
+                const wr = Math.round((d.wins / d.count) * 100);
+                document.getElementById('session-perf-body').innerHTML += `
+                    <tr>
+                        <td class="py-3 font-semibold text-slate-300">${kz}</td>
+                        <td class="py-3 text-center text-slate-400">${d.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-bold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${d.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</td>
+                    </tr>`;
+            });
+
+            renderEquityChart();
+        }
+
+        function renderEquityChart() {
+            const container = document.getElementById('equity-chart');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const width = container.clientWidth || 500;
+            const height = 256;
+            const margin = { top: 20, right: 30, bottom: 30, left: 50 };
+
+            let cumulativePnL = balance;
+            const data = [{ index: 0, balance: cumulativePnL }];
+
+            const sortedTrades = [...trades].sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')));
+            
+            let peak = balance;
+            let maxDD = 0;
+
+            sortedTrades.forEach((t, i) => {
+                cumulativePnL += t.pnl;
+                if (cumulativePnL > peak) peak = cumulativePnL;
+                let dd = peak > 0 ? ((peak - cumulativePnL) / peak) * 100 : 0;
+                if (dd > maxDD) maxDD = dd;
+                
+                data.push({ index: i + 1, balance: cumulativePnL });
+            });
+
+            if(document.getElementById('report-drawdown')) {
+                document.getElementById('report-drawdown').innerText = `Max DD: ${maxDD.toFixed(1)}%`;
+            }
+
+            const svg = d3.select('#equity-chart')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            const x = d3.scaleLinear()
+                .domain(d3.extent(data, d => d.index))
+                .range([margin.left, width - margin.right]);
+
+            const y = d3.scaleLinear()
+                .domain([d3.min(data, d => d.balance) * 0.95, d3.max(data, d => d.balance) * 1.05])
+                .range([height - margin.bottom, margin.top]);
+
+            const line = d3.line()
+                .x(d => x(d.index))
+                .y(d => y(d.balance))
+                .curve(d3.curveMonotoneX);
+
+            svg.append('g')
+                .attr('class', 'grid')
+                .attr('transform', `translate(0, ${height - margin.bottom})`)
+                .call(d3.axisBottom(x).ticks(5).tickSize(-height + margin.top + margin.bottom).tickFormat(''))
+                .attr('stroke', '#334155')
+                .attr('opacity', 0.2);
+
+            svg.append('g')
+                .attr('class', 'grid')
+                .attr('transform', `translate(${margin.left}, 0)`)
+                .call(d3.axisLeft(y).ticks(5).tickSize(-width + margin.left + margin.right).tickFormat(''))
+                .attr('stroke', '#334155')
+                .attr('opacity', 0.2);
+
+            svg.append('g')
+                .attr('transform', `translate(0, ${height - margin.bottom})`)
+                .call(d3.axisBottom(x).ticks(5))
+                .attr('color', '#64748b');
+
+            svg.append('g')
+                .attr('transform', `translate(${margin.left}, 0)`)
+                .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${d}`))
+                .attr('color', '#64748b');
+
+            svg.append('path')
+                .datum(data)
+                .attr('fill', 'none')
+                .attr('stroke', '#0ea5e9')
+                .attr('stroke-width', 3)
+                .attr('d', line);
+        }
+
+        function renderBalance() {
+            const tbody = document.getElementById('balance-history-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
+            const totalDeposit = transactions.filter(t => t.type === 'deposit').reduce((s, t) => s + t.amount, 0);
+            const totalWithdraw = transactions.filter(t => t.type === 'withdraw').reduce((s, t) => s + t.amount, 0);
+            const currentBalance = balance + totalPnL + totalDeposit - totalWithdraw;
+
+            document.getElementById('balance-current').innerText = `$${currentBalance.toFixed(2)}`;
+            document.getElementById('balance-total-deposit').innerText = `$${totalDeposit.toFixed(2)}`;
+            document.getElementById('balance-total-withdraw').innerText = `$${totalWithdraw.toFixed(2)}`;
+
+            if(transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-slate-500 italic">Yatırma/Çekme işlemi bulunmuyor.</td></tr>';
+                return;
+            }
+
+            [...transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(t => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-800">
+                        <td class="py-4 text-slate-400 text-sm">${new Date(t.date).toLocaleString('tr-TR')}</td>
+                        <td class="py-4 font-semibold text-sm">
+                            <span class="px-2 py-1 rounded text-[10px] font-bold ${t.type === 'deposit' ? 'bg-emerald-950 text-emerald-400' : 'bg-rose-950 text-rose-400'}">
+                                ${t.type === 'deposit' ? 'PARA YATIRMA' : 'PARA ÇEKME'}
+                            </span>
+                        </td>
+                        <td class="py-4 font-bold text-sm ${t.type === 'deposit' ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${t.type === 'deposit' ? '+' : '-'}$${t.amount.toFixed(2)}
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function saveInitialBalance() {
+            const val = parseFloat(document.getElementById('initial-balance-input').value) || 0;
+            balance = val;
+            saveCurrentAccountData();
+            updateStats();
+            if(currentView === 'balance') renderBalance();
+            showToast('Başlangıç bakiyesi güncellendi');
+        }
+
+        function executeTransaction(type) {
+            const amtInput = document.getElementById('transaction-amount-input');
+            const amount = parseFloat(amtInput.value) || 0;
+            if(amount <= 0) {
+                showToast('Geçerli bir miktar girin', 'error');
+                return;
+            }
+
+            transactions.push({
+                id: 'tx_' + Date.now(),
+                type: type,
+                amount: amount,
+                date: new Date().toISOString()
+            });
+
+            amtInput.value = '';
+            saveCurrentAccountData();
+            if(currentView === 'balance') renderBalance();
+            updateStats();
+            showToast(type === 'deposit' ? 'Para yatırma işlendi' : 'Para çekme işlendi');
+        }
+
+        function checkBalanceButton() {
+            const btn = document.getElementById('save-balance-btn');
+            if(btn && balance > 0) {
+                btn.innerText = "Bakiyeyi Güncelle";
+            }
+        }
+
+        function renderNotes() {
+            const container = document.getElementById('notes-container');
+            if(!container) return;
+            container.innerHTML = '';
+
+            if(notes.length === 0) {
+                container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 italic">Kayıtlı strateji veya ders notu bulunmuyor.</div>';
+                return;
+            }
+
+            notes.forEach((note, index) => {
+                const card = document.createElement('div');
+                card.className = 'bg-[#0b1329] p-6 rounded-3xl border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all cursor-pointer';
+                card.onclick = () => editNote(index);
+                card.innerHTML = `
+                    <div>
+                        <h5 class="text-lg font-bold text-slate-100 mb-2 truncate">${note.title}</h5>
+                        <p class="text-sm text-slate-400 line-clamp-4 whitespace-pre-wrap">${formatNoteLinks(note.content)}</p>
+                    </div>
+                    <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-800/60">
+                        <span class="text-xs text-slate-500">${new Date(note.date).toLocaleDateString('tr-TR')}</span>
+                        <button onclick="event.stopPropagation(); deleteNote(${index});" class="text-slate-500 hover:text-rose-400 transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>`;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function openNoteModal() {
+            editingNoteIndex = null;
+            document.getElementById('note-modal').classList.remove('hidden');
+            document.getElementById('note-modal-title').innerText = 'Yeni Not Ekle';
+            document.getElementById('note-title').value = '';
+            document.getElementById('note-content').value = '';
+        }
+
+        function closeNoteModal() {
+            document.getElementById('note-modal').classList.add('hidden');
+        }
+
+        function saveNote() {
+            const title = document.getElementById('note-title').value.trim();
+            const content = document.getElementById('note-content').value.trim();
+
+            if(!title || !content) {
+                showToast('Lütfen başlık ve içerik alanlarını doldurun', 'error');
+                return;
+            }
+
+            const noteData = { title, content, date: new Date().toISOString() };
+
+            if(editingNoteIndex !== null) {
+                notes[editingNoteIndex] = noteData;
+            } else {
+                notes.push(noteData);
+            }
+
+            saveCurrentAccountData();
+            closeNoteModal();
+            renderNotes();
+            showToast('Not başarıyla kaydedildi');
+        }
+
+        function editNote(index) {
+            editingNoteIndex = index;
+            const note = notes[index];
+            document.getElementById('note-modal').classList.remove('hidden');
+            document.getElementById('note-modal-title').innerText = 'Notu Düzenle';
+            document.getElementById('note-title').value = note.title;
+            document.getElementById('note-content').value = note.content;
+        }
+
+        function deleteNote(index) {
+            showConfirm('Notu Sil', 'Bu strateji notunu kalıcı olarak silmek istediğinize emin misiniz?', () => {
+                notes.splice(index, 1);
+                saveCurrentAccountData();
+                renderNotes();
+                closeConfirmModal();
+                showToast('Not silindi', 'info');
+            });
+        }
+
+        function renderEntryTypes() {
+            const list = document.getElementById('entry-types-list');
+            if(!list) return;
+            list.innerHTML = '';
+            entryTypes.forEach((type, index) => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center p-3 bg-[#030712] rounded-xl border border-slate-800">
+                        <span class="text-sm font-semibold text-slate-200">${type}</span>
+                        <button onclick="removeEntryType(${index})" class="text-slate-500 hover:text-rose-400 transition-colors">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>`;
+            });
+            lucide.createIcons();
+        }
+
+        function addEntryType() {
+            const input = document.getElementById('new-entry-type');
+            const val = input.value.trim();
+            if(!val) return;
+            if(entryTypes.includes(val)) {
+                showToast('Bu setup zaten mevcut', 'error');
+                return;
+            }
+            entryTypes.push(val);
+            localStorage.setItem('XAU_entryTypes', JSON.stringify(entryTypes));
+            input.value = '';
+            renderEntryTypes();
+            populateEntryTypeSelect();
+            showToast('Yeni setup modeli eklendi');
+        }
+
+        function removeEntryType(index) {
+            entryTypes.splice(index, 1);
+            localStorage.setItem('XAU_entryTypes', JSON.stringify(entryTypes));
+            renderEntryTypes();
+            populateEntryTypeSelect();
+            showToast('Setup modeli kaldırıldı', 'info');
+        }
+
+        function exportTrades() {
+            if(trades.length === 0) {
+                showToast('Dışa aktarılacak işlem bulunmuyor', 'error');
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(trades, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `XAU_Journal_Trades_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('İşlem geçmişi JSON olarak indirildi');
+        }
+
+        function backupData() {
+            const fullBackup = {
+                accounts: accounts,
+                entryTypes: entryTypes,
+                currentAccountId: currentAccountId
+            };
+            accounts.forEach(acc => {
+                fullBackup[`trades_${acc.id}`] = JSON.parse(localStorage.getItem(`trades_${acc.id}`)) || [];
+                fullBackup[`notes_${acc.id}`] = JSON.parse(localStorage.getItem(`notes_${acc.id}`)) || [];
+                fullBackup[`balance_${acc.id}`] = localStorage.getItem(`balance_${acc.id}`) || '0';
+                fullBackup[`transactions_${acc.id}`] = JSON.parse(localStorage.getItem(`transactions_${acc.id}`)) || [];
+            });
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullBackup, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `XAU_Trading_Journal_FullBackup.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            showToast('Tüm veritabanı başarıyla yedeklendi');
+        }
+
+        function restoreData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.accounts && Array.isArray(imported.accounts)) {
+                        localStorage.setItem('XAU_accounts', JSON.stringify(imported.accounts));
+                        if(imported.entryTypes) localStorage.setItem('XAU_entryTypes', JSON.stringify(imported.entryTypes));
+                        if(imported.currentAccountId) localStorage.setItem('XAU_currentAccountId', imported.currentAccountId);
+                        
+                        imported.accounts.forEach(acc => {
+                            if(imported[`trades_${acc.id}`]) localStorage.setItem(`trades_${acc.id}`, JSON.stringify(imported[`trades_${acc.id}`]));
+                            if(imported[`notes_${acc.id}`]) localStorage.setItem(`notes_${acc.id}`, JSON.stringify(imported[`notes_${acc.id}`]));
+                            if(imported[`balance_${acc.id}`]) localStorage.setItem(`balance_${acc.id}`, imported[`balance_${acc.id}`]);
+                            if(imported[`transactions_${acc.id}`]) localStorage.setItem(`transactions_${acc.id}`, JSON.stringify(imported[`transactions_${acc.id}`]));
+                        });
+                        
+                        showToast('Tüm sistem yedekten başarıyla geri yüklendi');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        showToast('Hatalı yedekleme dosyası formatı', 'error');
+                    }
+                } catch (err) {
+                    showToast('Dosya okunurken hata oluştu', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        let confirmCallback = null;
+        function showConfirm(title, message, callback) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            confirmCallback = callback;
+            
+            document.getElementById('confirm-action-btn').onclick = () => {
+                if(confirmCallback) confirmCallback();
+            };
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            confirmCallback = null;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            const iconEl = document.getElementById('toast-icon');
+            
+            if(!toast || !msgEl) return;
+            msgEl.innerText = message;
+
+            if (type === 'error') {
+                iconEl.setAttribute('data-lucide', 'alert-circle');
+                iconEl.className = 'w-5 h-5 text-rose-500';
+            } else if (type === 'info') {
+                iconEl.setAttribute('data-lucide', 'info');
+                iconEl.className = 'w-5 h-5 text-amber-500';
+            } else {
+                iconEl.setAttribute('data-lucide', 'check-circle');
+                iconEl.className = 'w-5 h-5 text-emerald-500';
+            }
+            
+            lucide.createIcons();
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function updateDateDisplay() {
+            const display = document.getElementById('current-date-display');
+            if (display) {
+                display.innerText = new Date().toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }
+        }
+    </script>
+
+    <!-- MODAL: STRATEJİ NOTU EKLEME PANELİ -->
+    <div id="note-modal" class="fixed inset-0 bg-[#030712]/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-[#0b1329] w-full max-w-lg rounded-3xl border border-slate-800 p-6 space-y-5 shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+                <h3 id="note-modal-title" class="text-base font-bold text-slate-100">Yeni Strateji Notu</h3>
+                <button onclick="closeNoteModal()" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-slate-400">Not Başlığı</label>
+                    <input type="text" id="note-title" placeholder="Örn: Silver Bullet Saat Kuralları veya Altın Korelasyonu" class="w-full bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-slate-400">İçerik Detayları & TV Linkleri</label>
+                    <textarea id="note-content" rows="6" placeholder="Kuralları buraya alt alta yazabilirsiniz..." class="w-full bg-[#030712] border border-slate-700/60 rounded-xl p-4 text-sm font-medium focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+            </div>
+            <div class="pt-2 flex gap-3">
+                <button onclick="closeNoteModal()" class="flex-1 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold transition-all">Kapat</button>
+                <button onclick="saveNote()" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-wider transition-all">Notu Hafızaya Kaydet</button>
+            </div>
+        </div>
     </div>
+
 </body>
 </html>
