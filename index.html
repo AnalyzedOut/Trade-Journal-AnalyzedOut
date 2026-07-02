@@ -1074,15 +1074,15 @@
                 }
             });
 
-            // Subscription to global accounts
+           // Subscription to global accounts
             const accountsRef = ref(db, "tradeJournal/6592/accounts");
             onValue(accountsRef, (snapshot) => {
                 const val = snapshot.val();
+                const isFirstFirebaseLoad = !firebaseAccountsLoaded;
                 firebaseAccountsLoaded = true;
 
                 if (val) {
                     accounts = val;
-                    // Protect and preserve existing createdAt values during local storage updates
                     accounts.forEach(acc => {
                         if (!acc.createdAt) {
                             acc.createdAt = new Date().toISOString();
@@ -1099,31 +1099,31 @@
                         subscribeToAccount(currentAccountId);
                     }
                 } else {
-                    // Firebase returned null (completely empty cloud DB)
-                    const localAccounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [];
-                    if (localAccounts.length > 0) {
-                        accounts = localAccounts;
-                        accounts.forEach(acc => {
-                            if (!acc.createdAt) {
-                                acc.createdAt = new Date().toISOString();
-                            }
-                        });
-                        set(accountsRef, accounts);
-                    } else {
-                        // Creating default account only when both Firebase and Local are completely empty
-                        const defaultAccount = {
-                            id: 'acc_' + Date.now(),
-                            name: 'Kişisel',
-                            isActive: true,
-                            createdAt: new Date().toISOString()
-                        };
-                        accounts = [defaultAccount];
-                        currentAccountId = defaultAccount.id;
-                        localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
-                        localStorage.setItem('XAU_currentAccountId', currentAccountId);
-                        
-                        set(accountsRef, accounts);
-                        loadAccountData(currentAccountId);
+                    if (isFirstFirebaseLoad && isOnline) {
+                        const localAccounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [];
+                        if (localAccounts.length > 0) {
+                            accounts = localAccounts;
+                            accounts.forEach(acc => {
+                                if (!acc.createdAt) {
+                                    acc.createdAt = new Date().toISOString();
+                                }
+                            });
+                            set(accountsRef, accounts);
+                        } else {
+                            const defaultAccount = {
+                                id: 'acc_' + Date.now(),
+                                name: 'Kişisel',
+                                isActive: true,
+                                createdAt: new Date().toISOString()
+                            };
+                            accounts = [defaultAccount];
+                            currentAccountId = defaultAccount.id;
+                            localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
+                            localStorage.setItem('XAU_currentAccountId', currentAccountId);
+                            
+                            set(accountsRef, accounts);
+                            loadAccountData(currentAccountId);
+                        }
                     }
                 }
             });
