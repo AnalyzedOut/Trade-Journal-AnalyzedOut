@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -1088,8 +1087,23 @@
                     } else {
                         subscribeToAccount(currentAccountId);
                     }
-                } else if (accounts.length > 0) {
-                    set(accountsRef, accounts);
+                } else {
+                    // CRITICAL FIX: Only create default if cloud is empty AND local is empty
+                    if (accounts.length === 0) {
+                        const defaultAccount = {
+                            id: 'acc_' + Date.now(),
+                            name: 'Kişisel',
+                            isActive: true,
+                            createdAt: new Date().toISOString()
+                        };
+                        accounts.push(defaultAccount);
+                        currentAccountId = defaultAccount.id;
+                        saveAccountsState();
+                        loadAccountData(currentAccountId);
+                    } else {
+                        // Local has data but cloud doesn't, sync local to cloud
+                        set(accountsRef, accounts);
+                    }
                 }
             });
 
@@ -1252,46 +1266,16 @@
             accounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [];
             currentAccountId = localStorage.getItem('XAU_currentAccountId') || null;
 
-            if (accounts.length === 0) {
-                const defaultAccount = {
-                    id: 'acc_' + Date.now(),
-                    name: 'Kişisel',
-                    isActive: true,
-                    createdAt: new Date().toISOString()
-                };
-                accounts.push(defaultAccount);
-                currentAccountId = defaultAccount.id;
-                
-                // Keep backward compatibility migration checks
-                const oldTrades = JSON.parse(localStorage.getItem('trades'));
-                if (oldTrades) {
-                    localStorage.setItem(`trades_${currentAccountId}`, JSON.stringify(oldTrades));
-                    localStorage.removeItem('trades');
-                }
-                const oldNotes = JSON.parse(localStorage.getItem('notes'));
-                if (oldNotes) {
-                    localStorage.setItem(`notes_${currentAccountId}`, JSON.stringify(oldNotes));
-                    localStorage.removeItem('notes');
-                }
-                const oldBalance = localStorage.getItem('balance');
-                if (oldBalance) {
-                    localStorage.setItem(`balance_${currentAccountId}`, oldBalance);
-                    localStorage.removeItem('balance');
-                }
-                const oldTransactions = JSON.parse(localStorage.getItem('transactions'));
-                if (oldTransactions) {
-                    localStorage.setItem(`transactions_${currentAccountId}`, JSON.stringify(oldTransactions));
-                    localStorage.removeItem('transactions');
-                }
-                
-                saveAccountsState();
-            }
-            
-            if (!currentAccountId || !accounts.find(a => a.id === currentAccountId)) {
+            // CRITICAL CHANGE: Do NOT create default account here if empty.
+            // Wait for Firebase to respond in initFirebaseSync.
+
+            if (accounts.length > 0 && (!currentAccountId || !accounts.find(a => a.id === currentAccountId))) {
                 currentAccountId = accounts.find(a => a.isActive)?.id || accounts[0].id;
             }
             
-            loadAccountData(currentAccountId);
+            if (currentAccountId) {
+                loadAccountData(currentAccountId);
+            }
         }
 
         function loadAccountData(accountId) {
@@ -1649,7 +1633,7 @@
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
             
-            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Aralık", "Eylül", "Ekim", "Kasım", "Aralık"];
             document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
 
             const firstDay = new Date(year, month, 1).getDay();
