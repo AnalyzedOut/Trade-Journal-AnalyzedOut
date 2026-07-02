@@ -56,7 +56,7 @@
         <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center space-y-6">
             <div class="flex items-center justify-center space-x-2 text-sky-500 font-bold text-2xl tracking-tight">
                 <i data-lucide="trending-up" class="w-8 h-8"></i>
-                <span>AnalyzedOut</span>
+                <span>XAU Trading</span>
             </div>
             <div class="space-y-2">
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Şifre</label>
@@ -143,7 +143,7 @@
 
     <!-- Main Content -->
     <main class="flex-grow overflow-y-auto h-screen scrollbar-hide relative w-full">
-        
+
         <!-- Header -->
         <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-4 sticky top-0 z-30 flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -154,7 +154,7 @@
             </div>
             <div class="flex items-center space-x-4">
                 <span id="current-date-display" class="text-sm font-medium text-slate-400 hidden sm:inline"></span>
-                
+
                 <!-- Sync Connection Indicator -->
                 <div id="sync-indicator" class="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs">
                     <span id="sync-indicator-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
@@ -169,7 +169,7 @@
 
         <!-- Sections Container -->
         <div class="p-8">
-            
+
             <!-- Home Section (Account Management) -->
             <section id="section-home" class="hidden space-y-8">
                 <div class="flex justify-between items-center">
@@ -230,7 +230,7 @@
                             <!-- Days will be injected here -->
                         </div>
                     </div>
-                    
+
                     <!-- Weekly Stats Column -->
                     <div class="space-y-4">
                         <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
@@ -278,7 +278,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div id="detailed-history-container" class="space-y-8">
                     <!-- Detailed history grouped by month will be injected here -->
                 </div>
@@ -462,7 +462,7 @@
                     </div>
                 </div>
 
-                <!-- Advanced Statistics & Session/Psychology Insights -->
+                <!-- Task 4: Advanced Statistics & Session/Psychology Insights -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <!-- Session Advanced Stats -->
                     <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-6">
@@ -757,13 +757,23 @@
 
     <!-- Trade Modal -->
     <div id="trade-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+        <div class="bg-slate-900 w-full max-w-lg rounded-3xl border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-8 border-b border-slate-800 flex justify-between items-center">
         <div class="bg-slate-900 w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div class="p-6 border-b border-slate-800 flex justify-between items-center">
                 <h3 id="modal-title" class="text-xl font-bold text-slate-100">Yeni İşlem Ekle</h3>
+                <button onclick="closeTradeModal()" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400">
                 <button onclick="closeTradeModal()" type="button" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
+            <form id="trade-form" onsubmit="handleTradeSubmit(event)" class="p-8 space-y-4">
+                <input type="hidden" id="trade-id">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Tarih</label>
+                        <input type="date" id="trade-date" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
             <form id="trade-form" onsubmit="handleTradeSubmit(event)" class="flex flex-col overflow-hidden h-full">
                 <div class="p-6 space-y-4 overflow-y-auto flex-grow scrollbar-hide" id="modal-scrollable-body">
                     <input type="hidden" id="trade-id">
@@ -778,6 +788,9 @@
                             <input type="time" id="trade-time" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
                         </div>
                     </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Saat</label>
+                        <input type="time" id="trade-time" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -796,9 +809,14 @@
                             <input type="hidden" id="trade-type" value="Long">
                         </div>
                     </div>
+                </div>
 
+                <div class="grid grid-cols-2 gap-4">
                     <!-- Trading Session -->
                     <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Parite</label>
+                        <div class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 font-bold text-lg flex items-center justify-center">
+                            XAU/USD
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Trading Session (Seans)</label>
                         <div class="grid grid-cols-4 gap-2">
                             <button type="button" onclick="setSession('Asia')" id="btn-session-Asia" class="py-2.5 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs">Asia</button>
@@ -806,19 +824,31 @@
                             <button type="button" onclick="setSession('New York')" id="btn-session-NewYork" class="py-2.5 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs">NY</button>
                             <button type="button" onclick="setSession('Kill Zone')" id="btn-session-KillZone" class="py-2.5 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs">Kill Zone</button>
                         </div>
+                        <input type="hidden" id="trade-symbol" value="XAUUSD">
                         <input type="hidden" id="trade-session" value="">
                     </div>
 
                     <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">İşlem</label>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Bias M15</label>
                         <div class="flex space-x-2">
+                            <button type="button" onclick="setTradeType('Long')" id="btn-type-Long" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Long</button>
+                            <button type="button" onclick="setTradeType('Short')" id="btn-type-Short" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Short</button>
                             <button type="button" onclick="setBias('Bullish')" id="btn-bias-Bullish" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Bullish</button>
                             <button type="button" onclick="setBias('Bearish')" id="btn-bias-Bearish" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Bearish</button>
                             <button type="button" onclick="setBias('Neutral')" id="btn-bias-Neutral" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Neutral</button>
                         </div>
+                        <input type="hidden" id="trade-type" value="Long">
                         <input type="hidden" id="trade-bias" value="">
                     </div>
+                </div>
 
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Bias M15</label>
+                    <div class="flex space-x-2">
+                        <button type="button" onclick="setBias('Bullish')" id="btn-bias-Bullish" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Bullish</button>
+                        <button type="button" onclick="setBias('Bearish')" id="btn-bias-Bearish" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Bearish</button>
+                        <button type="button" onclick="setBias('Neutral')" id="btn-bias-Neutral" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Neutral</button>
                     <div class="grid grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase mb-2">R (%)</label>
@@ -836,9 +866,14 @@
                             <input type="number" step="0.01" id="trade-pnl" required placeholder="0.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
                         </div>
                     </div>
+                    <input type="hidden" id="trade-bias" value="">
+                </div>
                     <input type="hidden" id="trade-killzone" value="Outside Killzone">
 
+                <div class="grid grid-cols-3 gap-4">
                     <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">R (%)</label>
+                        <input type="number" step="0.01" id="trade-r-percent" required placeholder="0.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Çıkış Sebebi</label>
                         <div class="flex space-x-2">
                             <button type="button" onclick="setExitReason('TP')" id="btn-exit-TP" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">TP</button>
@@ -850,6 +885,8 @@
 
                     <!-- Setup - Çıkış Sebebi'nin hemen altında -->
                     <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Lot</label>
+                        <input type="number" step="0.01" id="trade-lot" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Setup (Çoklu Seçim)</label>
                         <div class="grid grid-cols-3 gap-2" id="setup-buttons-container">
                             <!-- Setup buttons will be injected here -->
@@ -857,23 +894,53 @@
                         <input type="hidden" id="trade-setup-types" value="">
                     </div>
 
-                    <!-- Trading Psychology Field -->
+                    <!-- Trading Psychology -->
                     <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-xs font-bold text-slate-500 uppercase">PnL ($)</label>
+                            <span id="trade-rr-display" class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">RR: 0.00R</span>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Trading Psychology (Psikoloji)</label>
                         <div class="grid grid-cols-2 gap-2" id="psychology-buttons-container">
                             <!-- Psychology buttons will be injected here -->
                         </div>
+                        <input type="number" step="0.01" id="trade-pnl" required placeholder="0.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
                         <input type="hidden" id="trade-psychology" value="">
                     </div>
+                </div>
+                <input type="hidden" id="trade-killzone" value="Outside Killzone">
 
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Çıkış Sebebi</label>
+                    <div class="flex space-x-2">
+                        <button type="button" onclick="setExitReason('TP')" id="btn-exit-TP" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">TP</button>
+                        <button type="button" onclick="setExitReason('Manuel')" id="btn-exit-Manuel" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Manuel</button>
+                        <button type="button" onclick="setExitReason('SL')" id="btn-exit-SL" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">SL</button>
+                    </div>
+                    <input type="hidden" id="trade-exit-reason" value="TP">
+                </div>
                     <!-- Entry Type (Setup) - Gizli select -->
                     <select id="trade-entry-type" class="hidden"></select>
 
+                <!-- Setup - Çıkış Sebebi'nin hemen altında -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Setup (Çoklu Seçim)</label>
+                    <div class="grid grid-cols-3 gap-2" id="setup-buttons-container">
+                        <!-- Setup buttons will be injected here -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Notlar</label>
                         <textarea id="trade-notes" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none resize-none transition-all"></textarea>
                     </div>
+                    <input type="hidden" id="trade-setup-types" value="">
                 </div>
+
+                <!-- Entry Type (Setup) - Gizli select -->
+                <select id="trade-entry-type" class="hidden"></select>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Notlar</label>
+                    <textarea id="trade-notes" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none resize-none transition-all"></textarea>
+                </div>
+                <div class="pt-4">
                 
                 <div class="p-6 border-t border-slate-800 bg-slate-900/95 sticky bottom-0 z-10 flex">
                     <button type="submit" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
@@ -971,7 +1038,6 @@
         let entryTypes = [];
         let editingNoteIndex = null;
         let isOnline = false;
-        let firebaseAccountsLoaded = false; // Startup synchronization safety flag
 
         const LOCK_PASSWORD = '6592';
 
@@ -1012,6 +1078,7 @@
             return `${h}:${m}`;
         }
 
+        // connection Status Visualizer
         // Connection Status Visualizer
         function updateSyncStatus(status, customText = null) {
             isOnline = status;
@@ -1036,12 +1103,12 @@
         // On Load Routines
         window.onload = () => {
             lucide.createIcons();
-            
+
             // Immediate offline cache recovery sequence
             accounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [];
             currentAccountId = localStorage.getItem('XAU_currentAccountId') || null;
             entryTypes = JSON.parse(localStorage.getItem('XAU_entryTypes')) || ['Asia Range Sweep', 'iFVG', 'FVG', 'Breaker', 'Mitigation'];
-            
+
             if (currentAccountId) {
                 trades = JSON.parse(localStorage.getItem(`trades_${currentAccountId}`)) || [];
                 notes = JSON.parse(localStorage.getItem(`notes_${currentAccountId}`)) || [];
@@ -1066,9 +1133,7 @@
             onValue(connectedRef, (snap) => {
                 if (snap.val() === true) {
                     updateSyncStatus(true);
-                    if (firebaseAccountsLoaded) {
-                        syncLocalToFirebase();
-                    }
+                    syncLocalToFirebase();
                 } else {
                     updateSyncStatus(false);
                 }
@@ -1078,19 +1143,11 @@
             const accountsRef = ref(db, "tradeJournal/6592/accounts");
             onValue(accountsRef, (snapshot) => {
                 const val = snapshot.val();
-                firebaseAccountsLoaded = true;
-
                 if (val) {
                     accounts = val;
-                    // Protect and preserve existing createdAt values during local storage updates
-                    accounts.forEach(acc => {
-                        if (!acc.createdAt) {
-                            acc.createdAt = new Date().toISOString();
-                        }
-                    });
                     localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
                     if (currentView === 'home') renderAccounts();
-                    
+
                     if (!currentAccountId || !accounts.find(a => a.id === currentAccountId)) {
                         const activeAcc = accounts.find(a => a.isActive);
                         const targetId = activeAcc ? activeAcc.id : accounts[0].id;
@@ -1098,33 +1155,8 @@
                     } else {
                         subscribeToAccount(currentAccountId);
                     }
-                } else {
-                    // Firebase returned null (completely empty cloud DB)
-                    const localAccounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [];
-                    if (localAccounts.length > 0) {
-                        accounts = localAccounts;
-                        accounts.forEach(acc => {
-                            if (!acc.createdAt) {
-                                acc.createdAt = new Date().toISOString();
-                            }
-                        });
-                        set(accountsRef, accounts);
-                    } else {
-                        // Creating default account only when both Firebase and Local are completely empty
-                        const defaultAccount = {
-                            id: 'acc_' + Date.now(),
-                            name: 'Kişisel',
-                            isActive: true,
-                            createdAt: new Date().toISOString()
-                        };
-                        accounts = [defaultAccount];
-                        currentAccountId = defaultAccount.id;
-                        localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
-                        localStorage.setItem('XAU_currentAccountId', currentAccountId);
-                        
-                        set(accountsRef, accounts);
-                        loadAccountData(currentAccountId);
-                    }
+                } else if (accounts.length > 0) {
+                    set(accountsRef, accounts);
                 }
             });
 
@@ -1202,36 +1234,24 @@
 
         // Offline Synchronization engine
         function syncLocalToFirebase() {
-            if (!isOnline || !firebaseAccountsLoaded) return;
+            if (!isOnline) return;
 
-            // Upload unsynced accounts only if Firebase data doesn't exist
+            // Upload unsynced accounts
             if (localStorage.getItem('accounts_unsynced') === 'true' || accounts.length > 0) {
-                get(ref(db, "tradeJournal/6592/accounts")).then((snapshot) => {
-                    if (!snapshot.exists()) {
-                        set(ref(db, "tradeJournal/6592/accounts"), accounts)
-                            .then(() => localStorage.removeItem('accounts_unsynced'));
-                    } else {
-                        localStorage.removeItem('accounts_unsynced');
-                    }
-                });
+                set(ref(db, "tradeJournal/6592/accounts"), accounts)
+                    .then(() => localStorage.removeItem('accounts_unsynced'));
             }
 
-            // Upload unsynced entries types only if Firebase data doesn't exist
+            // Upload unsynced entries types
             if (localStorage.getItem('entryTypes_unsynced') === 'true' || entryTypes.length > 0) {
-                get(ref(db, "tradeJournal/6592/entryTypes")).then((snapshot) => {
-                    if (!snapshot.exists()) {
-                        set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
-                            .then(() => localStorage.removeItem('entryTypes_unsynced'));
-                    } else {
-                        localStorage.removeItem('entryTypes_unsynced');
-                    }
-                });
+                set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
+                    .then(() => localStorage.removeItem('entryTypes_unsynced'));
             }
 
-            // Iterate over local configurations to resolve queued entries safely
+            // Iterate over local configurations to resolve queued entries
             accounts.forEach(acc => {
                 const accId = acc.id;
-                
+
                 if (localStorage.getItem(`trades_${accId}_unsynced`) === 'true') {
                     const localTrades = JSON.parse(localStorage.getItem(`trades_${accId}`)) || [];
                     set(ref(db, `tradeJournal/6592/trades/${accId}`), localTrades)
@@ -1299,24 +1319,57 @@
             accounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [];
             currentAccountId = localStorage.getItem('XAU_currentAccountId') || null;
 
-            // Bypass auto-creation here; let snapshot subscription safely handle empty cloud/local states
-            if (accounts.length > 0) {
-                if (!currentAccountId || !accounts.find(a => a.id === currentAccountId)) {
-                    currentAccountId = accounts.find(a => a.isActive)?.id || accounts[0].id;
+            if (accounts.length === 0) {
+                const defaultAccount = {
+                    id: 'acc_' + Date.now(),
+                    name: 'Kişisel',
+                    isActive: true,
+                    createdAt: new Date().toISOString()
+                };
+                accounts.push(defaultAccount);
+                currentAccountId = defaultAccount.id;
+
+                // Keep backward compatibility migration checks
+                const oldTrades = JSON.parse(localStorage.getItem('trades'));
+                if (oldTrades) {
+                    localStorage.setItem(`trades_${currentAccountId}`, JSON.stringify(oldTrades));
+                    localStorage.removeItem('trades');
                 }
-                loadAccountData(currentAccountId);
+                const oldNotes = JSON.parse(localStorage.getItem('notes'));
+                if (oldNotes) {
+                    localStorage.setItem(`notes_${currentAccountId}`, JSON.stringify(oldNotes));
+                    localStorage.removeItem('notes');
+                }
+                const oldBalance = localStorage.getItem('balance');
+                if (oldBalance) {
+                    localStorage.setItem(`balance_${currentAccountId}`, oldBalance);
+                    localStorage.removeItem('balance');
+                }
+                const oldTransactions = JSON.parse(localStorage.getItem('transactions'));
+                if (oldTransactions) {
+                    localStorage.setItem(`transactions_${currentAccountId}`, JSON.stringify(oldTransactions));
+                    localStorage.removeItem('transactions');
+                }
+
+                saveAccountsState();
             }
+
+            if (!currentAccountId || !accounts.find(a => a.id === currentAccountId)) {
+                currentAccountId = accounts.find(a => a.isActive)?.id || accounts[0].id;
+            }
+
+            loadAccountData(currentAccountId);
         }
 
         function loadAccountData(accountId) {
             currentAccountId = accountId;
             localStorage.setItem('XAU_currentAccountId', currentAccountId);
-            
+
             trades = JSON.parse(localStorage.getItem(`trades_${currentAccountId}`)) || [];
             notes = JSON.parse(localStorage.getItem(`notes_${currentAccountId}`)) || [];
             balance = parseFloat(localStorage.getItem(`balance_${currentAccountId}`)) || 0;
             transactions = JSON.parse(localStorage.getItem(`transactions_${currentAccountId}`)) || [];
-            
+
             let updated = false;
             trades.forEach(t => {
                 if (t.date && t.time) {
@@ -1334,17 +1387,17 @@
                     }
                 }
             });
-            
+
             if (updated) {
                 saveCurrentAccountData();
             }
-            
+
             const account = accounts.find(a => a.id === currentAccountId);
             document.getElementById('account-badge').innerText = account ? account.name : 'MT';
-            
+
             const initialBalanceInput = document.getElementById('initial-balance-input');
             if (initialBalanceInput) initialBalanceInput.value = balance > 0 ? balance : '';
-            
+
             if (currentView !== 'home') {
                 refreshCurrentView();
             }
@@ -1354,16 +1407,10 @@
         }
 
         function saveAccountsState() {
-            // Preserve existing createdAt times during saves
-            accounts.forEach(acc => {
-                if (!acc.createdAt) {
-                    acc.createdAt = new Date().toISOString();
-                }
-            });
             localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
             localStorage.setItem('XAU_currentAccountId', currentAccountId);
 
-            if (isOnline && firebaseAccountsLoaded) {
+            if (isOnline) {
                 updateSyncStatus(true, "Eşitleniyor...");
                 set(ref(db, "tradeJournal/6592/accounts"), accounts)
                     .then(() => {
@@ -1383,14 +1430,14 @@
 
         function saveCurrentAccountData() {
             if (!currentAccountId) return;
-            
+
             // local persistence mapping
             localStorage.setItem(`trades_${currentAccountId}`, JSON.stringify(trades));
             localStorage.setItem(`notes_${currentAccountId}`, JSON.stringify(notes));
             localStorage.setItem(`balance_${currentAccountId}`, balance.toString());
             localStorage.setItem(`transactions_${currentAccountId}`, JSON.stringify(transactions));
 
-            if (isOnline && firebaseAccountsLoaded) {
+            if (isOnline) {
                 updateSyncStatus(true, "Eşitleniyor...");
                 const updates = {
                     [`tradeJournal/6592/trades/${currentAccountId}`]: trades,
@@ -1438,7 +1485,7 @@
         function switchTab(tab) {
             currentView = tab;
             toggleMobileSidebar(false);
-            
+
             document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active-tab'));
             const navBtn = document.getElementById(`nav-${tab}`);
             if (navBtn) navBtn.classList.add('active-tab');
@@ -1482,7 +1529,7 @@
         function saveAccount() {
             const nameInput = document.getElementById('account-name-input');
             const name = nameInput.value.trim();
-            
+
             if (!name) {
                 showToast('Lütfen bir hesap adı girin', 'error');
                 return;
@@ -1506,7 +1553,7 @@
             const activeList = document.getElementById('active-accounts-list');
             const passiveList = document.getElementById('passive-accounts-list');
             if (!activeList || !passiveList) return;
-            
+
             activeList.innerHTML = '';
             passiveList.innerHTML = '';
 
@@ -1522,19 +1569,11 @@
 
                 const card = document.createElement('div');
                 card.className = `p-6 rounded-2xl border transition-all cursor-pointer ${isCurrent ? 'bg-sky-900/20 border-sky-500/50 ring-1 ring-sky-500/50' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`;
-                
+
                 card.onclick = (e) => {
                     if (e.target.closest('button')) return;
                     selectAccount(acc.id);
                 };
-
-                let dateStr = 'Uygulama Başı';
-                if (acc.createdAt) {
-                    const parsed = new Date(acc.createdAt);
-                    if (!isNaN(parsed.getTime())) {
-                        dateStr = parsed.toLocaleDateString('tr-TR');
-                    }
-                }
 
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-4">
@@ -1544,7 +1583,7 @@
                             </div>
                             <div>
                                 <h5 class="font-bold text-slate-100">${acc.name}</h5>
-                                <p class="text-xs text-slate-500">${dateStr}</p>
+                                <p class="text-xs text-slate-500">${new Date(acc.createdAt).toLocaleDateString('tr-TR')}</p>
                             </div>
                         </div>
                         <div class="flex flex-col items-end">
@@ -1586,6 +1625,86 @@
             lucide.createIcons();
         }
 
+        function selectAccount(id) {
+            const acc = accounts.find(a => a.id === id);
+            if (!acc.isActive) {
+                showToast('Pasif hesaplar seçilemez. Önce aktif hale getirin.', 'error');
+                return;
+            }
+            saveCurrentAccountData();
+            loadAccountData(id);
+            switchTab('calendar');
+            showToast(`${acc.name} hesabına geçiş yapıldı`);
+        }
+
+        function toggleAccountStatus(id) {
+            const index = accounts.findIndex(a => a.id === id);
+            if (index === -1) return;
+
+            const wasActive = accounts[index].isActive;
+
+            if (wasActive && accounts.filter(a => a.isActive).length === 1) {
+                showToast('En az bir aktif hesap olmalıdır', 'error');
+                return;
+            }
+
+            accounts[index].isActive = !accounts[index].isActive;
+
+            if (!accounts[index].isActive && id === currentAccountId) {
+                const nextActive = accounts.find(a => a.isActive);
+                if (nextActive) {
+                    saveCurrentAccountData();
+                    loadAccountData(nextActive.id);
+                }
+            }
+
+            saveAccountsState();
+            renderAccounts();
+            showToast(wasActive ? 'Hesap pasif bölüme taşındı' : 'Hesap aktif hale getirildi');
+        }
+
+        function confirmDeleteAccount(id) {
+            const acc = accounts.find(a => a.id === id);
+            if (!acc) return;
+
+            if (accounts.length === 1) {
+                showToast('Son hesabı silemezsiniz', 'error');
+                return;
+            }
+
+            showConfirm(
+                'Hesabı Sil',
+                `"${acc.name}" hesabını ve tüm verilerini (işlemler, notlar, bakiye) kalıcı olarak silmek istediğinize emin misiniz?`,
+                () => deleteAccount(id)
+            );
+        }
+
+        function deleteAccount(id) {
+            const index = accounts.findIndex(a => a.id === id);
+            if (index === -1) return;
+
+            if (id === currentAccountId) {
+                const nextAcc = accounts.find((a, i) => i !== index && a.isActive) || accounts.find((a, i) => i !== index);
+                loadAccountData(nextAcc.id);
+            }
+
+            localStorage.removeItem(`trades_${id}`);
+            localStorage.removeItem(`notes_${id}`);
+            localStorage.removeItem(`balance_${id}`);
+            localStorage.removeItem(`transactions_${id}`);
+
+            remove(ref(db, `tradeJournal/6592/trades/${id}`));
+            remove(ref(db, `tradeJournal/6592/notes/${id}`));
+            remove(ref(db, `tradeJournal/6592/balance/${id}`));
+            remove(ref(db, `tradeJournal/6592/transactions/${id}`));
+
+            accounts.splice(index, 1);
+            saveAccountsState();
+            renderAccounts();
+            closeConfirmModal();
+            showToast('Hesap ve verileri silindi');
+        }
+
         function renderCalendar() {
             const daysContainer = document.getElementById('calendar-days');
             const weeklyStatsContainer = document.getElementById('weekly-stats-container');
@@ -1596,7 +1715,7 @@
 
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            
+
             const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
             document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
 
@@ -1696,12 +1815,12 @@
             const tbody = document.getElementById('monthly-trades-body');
             const statsContainer = document.getElementById('monthly-stats');
             if (!tbody || !statsContainer) return;
-            
+
             tbody.innerHTML = '';
 
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            
+
             const monthlyTrades = trades.filter(t => {
                 const tDate = new Date(t.date);
                 return tDate.getFullYear() === year && tDate.getMonth() === month;
@@ -1709,6 +1828,7 @@
 
             const monthlyPnL = monthlyTrades.reduce((sum, t) => sum + t.pnl, 0);
             statsContainer.innerText = `Toplam: ${monthlyTrades.length} İşlem | P&L: ${monthlyPnL >= 0 ? '+' : ''}$${monthlyPnL.toFixed(2)}`;
+            statsContainer.className = `text-sm font-bold ${monthlyPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
             statsContainer.className = `text-sm font-bold ${monthlyPnL >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
 
             if (monthlyTrades.length === 0) {
@@ -1771,7 +1891,7 @@
             sortedMonths.forEach(monthYear => {
                 const monthTrades = groupedTrades[monthYear].sort((a, b) => new Date(b.date) - new Date(a.date));
                 const monthPnL = monthTrades.reduce((sum, t) => sum + t.pnl, 0);
-                
+
                 const monthSection = document.createElement('div');
                 monthSection.className = 'bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-sm';
                 monthSection.innerHTML = `
@@ -1782,6 +1902,7 @@
                         </span>
                     </div>
                     <div class="overflow-x-auto">
+                        <table class="w-full text-left min-w-[1000px]">
                         <table class="w-full text-left min-w-[1200px]">
                             <thead>
                                 <tr class="text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-800">
@@ -1861,11 +1982,11 @@
             document.getElementById('trade-form').reset();
             document.getElementById('trade-id').value = trade ? trade.id : '';
             document.getElementById('modal-title').innerText = trade ? 'İşlemi Düzenle' : 'Yeni İşlem Ekle';
-            
+
             const now = new Date();
             const dateInput = document.getElementById('trade-date');
             const timeInput = document.getElementById('trade-time');
-            
+
             if (trade) {
                 dateInput.value = trade.date;
                 timeInput.value = trade.time;
@@ -1875,12 +1996,12 @@
                 document.getElementById('trade-pnl').value = trade.pnl;
                 document.getElementById('trade-lot').value = trade.lot || '';
                 document.getElementById('trade-r-percent').value = trade.rPercent || '';
-                
+
                 let kz = trade.killzone || 'Outside Killzone';
                 if (kz === 'Asia') kz = 'Asia Range';
                 if (kz === 'London') kz = 'London Open';
                 if (kz === 'no killzone') kz = 'Outside Killzone';
-                
+
                 document.getElementById('trade-killzone').value = kz;
                 document.getElementById('trade-notes').value = trade.notes || '';
                 if (trade.bias) {
@@ -1899,7 +2020,7 @@
             } else {
                 dateInput.value = date ? date : toLocalDateStr(now);
                 timeInput.value = toLocalTimeStr(now);
-                
+
                 setTradeType('Long');
                 setExitReason('TP');
                 document.getElementById('trade-bias').value = '';
@@ -1920,12 +2041,12 @@
                 // Trading Psychology clean defaults
                 renderPsychologyButtons([]);
             }
-            
+
             populateEntryTypeSelect();
             if (trade && trade.entryType) {
                 document.getElementById('trade-entry-type').value = trade.entryType;
             }
-            
+
             renderSetupButtons(trade && trade.setupTypes ? trade.setupTypes : []);
             lucide.createIcons();
             updateRRDisplay();
@@ -1934,7 +2055,7 @@
         function renderSetupButtons(selectedSetups = []) {
             const container = document.getElementById('setup-buttons-container');
             const setupList = entryTypes && entryTypes.length > 0 ? entryTypes : ['Liq.Sweep', 'OTE', 'Breaker', 'FVG', 'IFVG', 'Asia Range'];
-            
+
             container.innerHTML = setupList.map(setup => {
                 const isSelected = selectedSetups.includes(setup);
                 return `
@@ -1956,15 +2077,15 @@
         function toggleSetup(setupName) {
             const hiddenInput = document.getElementById('trade-setup-types');
             let selectedSetups = hiddenInput.value ? hiddenInput.value.split(',') : [];
-            
+
             if (selectedSetups.includes(setupName)) {
                 selectedSetups = selectedSetups.filter(s => s !== setupName);
             } else {
                 selectedSetups.push(setupName);
             }
-            
+
             hiddenInput.value = selectedSetups.join(',');
-            
+
             const button = document.getElementById(`btn-setup-${setupName}`);
             if (button) {
                 if (selectedSetups.includes(setupName)) {
@@ -2127,7 +2248,6 @@
             document.getElementById('trade-killzone').value = kz;
         }
 
-        // Output and calculation helpers
         function updateRRDisplay() {
             const pnl = parseFloat(document.getElementById('trade-pnl').value) || 0;
             const rPercent = parseFloat(document.getElementById('trade-r-percent').value) || 0;
@@ -2187,9 +2307,11 @@
 
         function updateButtonGroupUI(groupId, activeValue, options, colorMap) {
             options.forEach(opt => {
-                const btn = document.getElementById(`btn-${groupId}-${opt.replace(/\s+/g, '')}`);
+                const btn = document.getElementById(`btn-${groupId}-${opt}`);
+                const optId = opt.replace(/\s+/g, '');
+                const btn = document.getElementById(`btn-${groupId}-${optId}`);
                 if (!btn) return;
-                
+
                 const activeColor = colorMap[opt];
                 const activeBorder = activeColor.replace('bg-', 'border-');
 
@@ -2212,12 +2334,12 @@
 
         function handleTradeSubmit(e) {
             e.preventDefault();
-            
+
             const id = document.getElementById('trade-id').value;
             let pnl = parseFloat(document.getElementById('trade-pnl').value);
             const rPercent = parseFloat(document.getElementById('trade-r-percent').value) || 0;
             const exitReason = document.getElementById('trade-exit-reason').value;
-            
+
             if (!document.getElementById('trade-date').value || !document.getElementById('trade-time').value) {
                 showToast('Lütfen tarih ve saat seçin', 'alert-circle', 'rose');
                 return;
@@ -2226,11 +2348,11 @@
                 showToast('Lütfen PnL değeri girin', 'alert-circle', 'rose');
                 return;
             }
-            
+
             if (exitReason === 'SL' && pnl > 0) {
                 pnl = -pnl;
             }
-            
+
             let rrValue = '-';
             if (balance > 0 && rPercent > 0) {
                 rrValue = (pnl / (balance * (rPercent / 100))).toFixed(1);
@@ -2259,6 +2381,7 @@
                 pnl: pnl,
                 exitReason: exitReason,
                 bias: document.getElementById('trade-bias').value,
+                notes: document.getElementById('trade-notes').value
                 notes: document.getElementById('trade-notes').value,
                 session: sessionVal || '',
                 psychology: psychologyVal ? psychologyVal.split(',').map(s => s.trim()) : []
@@ -2343,13 +2466,13 @@
 
             const now = new Date();
             const todayStr = toLocalDateStr(now);
-            
+
             const dailyPnL = trades.filter(t => t.date === todayStr).reduce((sum, t) => sum + t.pnl, 0);
-            
+
             const startOfWeek = new Date(now);
             startOfWeek.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
             const weeklyPnL = trades.filter(t => new Date(t.date) >= startOfWeek).reduce((sum, t) => sum + t.pnl, 0);
-            
+
             const monthlyPnL = trades.filter(t => {
                 const d = new Date(t.date);
                 return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -2357,10 +2480,10 @@
 
             document.getElementById('report-daily-pnl').innerText = `${dailyPnL >= 0 ? '+' : ''}$${dailyPnL.toFixed(2)}`;
             document.getElementById('report-daily-pnl').className = `font-bold ${dailyPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-            
+
             document.getElementById('report-weekly-pnl').innerText = `${weeklyPnL >= 0 ? '+' : ''}$${weeklyPnL.toFixed(2)}`;
             document.getElementById('report-weekly-pnl').className = `font-bold ${weeklyPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-            
+
             document.getElementById('report-monthly-pnl').innerText = `${monthlyPnL >= 0 ? '+' : ''}$${monthlyPnL.toFixed(2)}`;
             document.getElementById('report-monthly-pnl').className = `font-bold ${monthlyPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
@@ -2369,7 +2492,7 @@
             const grossProfit = wins.reduce((sum, t) => sum + t.pnl, 0);
             const grossLoss = Math.abs(losses.reduce((sum, t) => sum + t.pnl, 0));
             const profitFactor = grossLoss === 0 ? (grossProfit > 0 ? 99.9 : 0) : (grossProfit / grossLoss);
-            
+
             document.getElementById('stat-profit-factor').innerText = profitFactor.toFixed(2);
             document.getElementById('stat-profit-factor').className = `text-3xl font-bold ${profitFactor >= 1.5 ? 'text-emerald-400' : (profitFactor >= 1 ? 'text-sky-500' : 'text-rose-400')}`;
 
@@ -2379,7 +2502,7 @@
             const avgWin = wins.length > 0 ? (grossProfit / wins.length) : 0;
             const avgLoss = losses.length > 0 ? (grossLoss / losses.length) : 0;
             const expectancy = (winRate * avgWin) - (lossRate * avgLoss);
-            
+
             const expectancyEl = document.getElementById('report-expectancy-val');
             if (expectancyEl) {
                 expectancyEl.innerText = `$${expectancy.toFixed(2)}`;
@@ -2393,7 +2516,7 @@
             let maxLossStreak = 0;
             let currentWinStreak = 0;
             let currentLossStreak = 0;
-            
+
             [...trades].sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(t => {
                 if (t.pnl > 0) {
                     currentWinStreak++;
@@ -2415,7 +2538,7 @@
             });
 
             const sortedSymbols = Object.entries(symbolStats).sort((a, b) => b[1] - a[1]);
-            
+
             const bestContainer = document.getElementById('report-best-pairs');
             const worstContainer = document.getElementById('report-worst-pairs');
             if (bestContainer && worstContainer) {
@@ -2443,11 +2566,51 @@
                 });
             }
 
+            renderInsights(profitFactor, winRateValue(), rrRatio);
+
+            drawEquityChart();
+            drawSymbolChart(symbolStats);
+            drawDayChart();
+            drawRRDistributionChart();
+            drawKillzoneWinRateChart();
+            // ================== ADVANCED STATISTICS CALCULATIONS (Task 4) ==================
+
+            renderHourlyPerformance();
+            renderDailyWinRate();
+            renderSetupPerformance();
+            renderBiasAccuracy();
+            renderSessionPerformance();
+            renderHeatmap();
+            
+            updateStats();
+        }
+
+        function winRateValue() {
+            const total = trades.length;
+            if (total === 0) return 0;
+            const wins = trades.filter(t => t.pnl > 0).length;
+            return (wins / total) * 100;
+        }
+
+        function renderHourlyPerformance() {
+            const tbody = document.getElementById('hourly-perf-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const hourlyStats = {};
+            for (let h = 0; h < 24; h++) {
+                hourlyStats[h] = { trades: 0, wins: 0, pnl: 0 };
+            }
+
             // Setup Advanced Analytics
             const setupPnL = {};
             const setupWins = {};
             const setupCounts = {};
             trades.forEach(t => {
+                const hour = parseInt(t.time.split(':')[0]);
+                hourlyStats[hour].trades++;
+                if (t.pnl > 0) hourlyStats[hour].wins++;
+                hourlyStats[hour].pnl += t.pnl;
                 getTradeSetups(t).forEach(setup => {
                     setupCounts[setup] = (setupCounts[setup] || 0) + 1;
                     setupPnL[setup] = (setupPnL[setup] || 0) + t.pnl;
@@ -2457,6 +2620,21 @@
                 });
             });
 
+            for (let h = 0; h < 24; h++) {
+                const stats = hourlyStats[h];
+                const wr = stats.trades > 0 ? (stats.wins / stats.trades * 100) : 0;
+                const wrColor = wr >= 60 ? 'text-emerald-400' : (wr >= 50 ? 'text-sky-400' : 'text-rose-400');
+                const pnlColor = stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
+
+                if (stats.trades > 0) {
+                    tbody.innerHTML += `
+                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
+                            <td class="py-3">${h.toString().padStart(2, '0')}:00</td>
+                            <td class="py-3 text-center">${stats.trades}</td>
+                            <td class="py-3 text-center font-bold ${wrColor}">${wr.toFixed(0)}%</td>
+                            <td class="py-3 text-right font-bold ${pnlColor}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+                        </tr>
+                    `;
             // 1. Most Profitable Setup
             let mostProfitableSetup = '-';
             let maxSetupPnL = -Infinity;
@@ -2465,8 +2643,17 @@
                     maxSetupPnL = pnl;
                     mostProfitableSetup = `${setup} (+$${pnl.toFixed(0)})`;
                 }
+            }
+        }
+
+        function renderDailyWinRate() {
+            const tbody = document.getElementById('daily-wr-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
             });
 
+            const dayNames = ['Paz', 'Pts', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+            const dailyStats = {};
             // 2. Highest Win Rate Setup
             let highestWRSetup = '-';
             let maxSetupWR = -1;
@@ -2478,6 +2665,9 @@
                 }
             });
 
+            for (let d = 0; d < 7; d++) {
+                dailyStats[d] = { trades: 0, wins: 0, pnl: 0 };
+            }
             // 3. Most Used Setup
             let mostUsedSetup = '-';
             let maxSetupCount = 0;
@@ -2492,12 +2682,32 @@
             const sessionPnL = { 'Asia': 0, 'London': 0, 'New York': 0, 'Kill Zone': 0 };
             const sessionTrades = { 'Asia': [], 'London': [], 'New York': [], 'Kill Zone': [] };
             trades.forEach(t => {
+                const date = new Date(t.date);
+                const dayOfWeek = date.getDay();
+                dailyStats[dayOfWeek].trades++;
+                if (t.pnl > 0) dailyStats[dayOfWeek].wins++;
+                dailyStats[dayOfWeek].pnl += t.pnl;
                 if (t.session && sessionPnL.hasOwnProperty(t.session)) {
                     sessionPnL[t.session] += t.pnl;
                     sessionTrades[t.session].push(t);
                 }
             });
 
+            for (let d = 0; d < 7; d++) {
+                const stats = dailyStats[d];
+                const wr = stats.trades > 0 ? (stats.wins / stats.trades * 100) : 0;
+                const wrColor = wr >= 60 ? 'text-emerald-400' : (wr >= 50 ? 'text-sky-400' : 'text-rose-400');
+                const pnlColor = stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
+
+                if (stats.trades > 0) {
+                    tbody.innerHTML += `
+                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
+                            <td class="py-3">${dayNames[d]}</td>
+                            <td class="py-3 text-center">${stats.trades}</td>
+                            <td class="py-3 text-center font-bold ${wrColor}">${wr.toFixed(0)}%</td>
+                            <td class="py-3 text-right font-bold ${pnlColor}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+                        </tr>
+                    `;
             // 4. Best & Worst Trading Session
             let bestSession = '-';
             let bestSessionPnL = -Infinity;
@@ -2517,8 +2727,14 @@
                         worstSession = `${sess} ($${pnl.toFixed(0)})`;
                     }
                 }
+            }
+        }
             });
 
+        function renderSetupPerformance() {
+            const tbody = document.getElementById('setup-perf-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
             // 5. Win Rate, Average RR, and Average Profit by Session
             const sessionMetrics = {};
             ['Asia', 'London', 'New York', 'Kill Zone'].forEach(sess => {
@@ -2536,6 +2752,8 @@
                 sessionMetrics[sess] = { count, wr, avgRR, avgProfit };
             });
 
+            const setupStats = {};
+            const allSetups = entryTypes && entryTypes.length > 0 ? entryTypes : ['Liq.Sweep', 'OTE', 'Breaker', 'FVG', 'IFVG', 'Asia Range'];
             // HTF Bias Analytics
             const biasWins = { 'Bullish': 0, 'Bearish': 0, 'Neutral': 0 };
             const biasCounts = { 'Bullish': 0, 'Bearish': 0, 'Neutral': 0 };
@@ -2548,6 +2766,8 @@
                 }
             });
 
+            allSetups.forEach(setup => {
+                setupStats[setup] = { trades: 0, wins: 0, rrSum: 0 };
             // 6. Highest & Lowest Win Rate HTF Bias
             let highestWRBias = '-';
             let maxBiasWR = -1;
@@ -2574,6 +2794,13 @@
             const psychCounts = {};
             const psychWins = {};
             trades.forEach(t => {
+                if (t.setupTypes && t.setupTypes.length > 0) {
+                    t.setupTypes.forEach(setup => {
+                        if (setupStats[setup]) {
+                            setupStats[setup].trades++;
+                            if (t.pnl > 0) setupStats[setup].wins++;
+                            const rr = parseFloat(t.rr) || 0;
+                            setupStats[setup].rrSum += rr;
                 if (t.psychology && Array.isArray(t.psychology)) {
                     t.psychology.forEach(item => {
                         psychCounts[item] = (psychCounts[item] || 0) + 1;
@@ -2584,6 +2811,21 @@
                 }
             });
 
+            Object.entries(setupStats).forEach(([setup, stats]) => {
+                if (stats.trades > 0) {
+                    const wr = (stats.wins / stats.trades * 100);
+                    const avgRr = stats.rrSum / stats.trades;
+                    const wrColor = wr >= 60 ? 'text-emerald-400' : (wr >= 50 ? 'text-sky-400' : 'text-rose-400');
+                    const rrColor = avgRr >= 1.5 ? 'text-emerald-400' : (avgRr >= 1 ? 'text-sky-400' : 'text-rose-400');
+
+                    tbody.innerHTML += `
+                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
+                            <td class="py-3">${setup}</td>
+                            <td class="py-3 text-center">${stats.trades}</td>
+                            <td class="py-3 text-center font-bold ${wrColor}">${wr.toFixed(0)}%</td>
+                            <td class="py-3 text-right font-bold ${rrColor}">${avgRr.toFixed(2)}R</td>
+                        </tr>
+                    `;
             // 7. Most Common Psychology Mistake
             let commonMistake = '-';
             let maxMistakeCount = 0;
@@ -2594,7 +2836,20 @@
                     commonMistake = `${m} (${count} kez)`;
                 }
             });
+        }
 
+        function renderBiasAccuracy() {
+            const tbody = document.getElementById('bias-acc-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const biasStats = { 'Bullish': { trades: 0, wins: 0, pnl: 0 }, 'Bearish': { trades: 0, wins: 0, pnl: 0 }, 'Neutral': { trades: 0, wins: 0, pnl: 0 } };
+
+            trades.forEach(t => {
+                if (t.bias && biasStats[t.bias]) {
+                    biasStats[t.bias].trades++;
+                    if (t.pnl > 0) biasStats[t.bias].wins++;
+                    biasStats[t.bias].pnl += t.pnl;
             // 8. Most Common Positive Psychology
             let commonPositive = '-';
             let maxPositiveCount = 0;
@@ -2606,6 +2861,19 @@
                 }
             });
 
+            Object.entries(biasStats).forEach(([bias, stats]) => {
+                if (stats.trades > 0) {
+                    const wr = (stats.wins / stats.trades * 100);
+                    const wrColor = wr >= 60 ? 'text-emerald-400' : (wr >= 50 ? 'text-sky-400' : 'text-rose-400');
+                    const pnlColor = stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
+
+                    tbody.innerHTML += `
+                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
+                            <td class="py-3">${bias}</td>
+                            <td class="py-3 text-center">${stats.trades}</td>
+                            <td class="py-3 text-center font-bold ${wrColor}">${wr.toFixed(0)}%</td>
+                            <td class="py-3 text-right font-bold ${pnlColor}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+                        </tr>
             // 9. Win Rate by Psychology HTML Generation
             let psychologyWRHTML = '';
             psychologyList.forEach(item => {
@@ -2621,6 +2889,25 @@
                     `;
                 }
             });
+        }
+
+        function renderSessionPerformance() {
+            const tbody = document.getElementById('session-perf-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const sessions = [
+                { name: 'Asia', start: 0, end: 8 },
+                { name: 'London Open', start: 10, end: 13 },
+                { name: 'NY Open', start: 15, end: 17 },
+                { name: 'NY PM', start: 17, end: 18 },
+                { name: 'London Close', start: 18, end: 20 }
+            ];
+
+            const sessionStats = {};
+            sessions.forEach(s => {
+                sessionStats[s.name] = { trades: 0, wins: 0, pnl: 0 };
+            });
             if (!psychologyWRHTML) {
                 psychologyWRHTML = '<p class="text-xs text-slate-500 italic text-center py-2">Henüz psikolojik analiz verisi bulunmuyor.</p>';
             }
@@ -2628,16 +2915,29 @@
             // 10. Average Monthly Session Performance
             const monthlySessionPerformance = {};
             trades.forEach(t => {
+                const hour = parseInt(t.time.split(':')[0]);
+                sessions.forEach(s => {
+                    if (hour >= s.start && hour < s.end) {
+                        sessionStats[s.name].trades++;
+                        if (t.pnl > 0) sessionStats[s.name].wins++;
+                        sessionStats[s.name].pnl += t.pnl;
                 if (t.session && ['Asia', 'London', 'New York', 'Kill Zone'].includes(t.session)) {
                     const d = new Date(t.date);
                     const monthYear = d.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
                     if (!monthlySessionPerformance[monthYear]) {
                         monthlySessionPerformance[monthYear] = { 'Asia': 0, 'London': 0, 'New York': 0, 'Kill Zone': 0 };
                     }
+                });
                     monthlySessionPerformance[monthYear][t.session] += t.pnl;
                 }
             });
 
+            sessions.forEach(s => {
+                const stats = sessionStats[s.name];
+                if (stats.trades > 0) {
+                    const wr = (stats.wins / stats.trades * 100);
+                    const wrColor = wr >= 60 ? 'text-emerald-400' : (wr >= 50 ? 'text-sky-400' : 'text-rose-400');
+                    const pnlColor = stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
             // Push computations into Advanced UI Nodes
             document.getElementById('stat-profitable-setup').innerText = mostProfitableSetup;
             document.getElementById('stat-wr-setup').innerText = highestWRSetup;
@@ -2646,6 +2946,7 @@
             document.getElementById('stat-best-session').innerText = bestSession;
             document.getElementById('stat-worst-session').innerText = worstSession;
 
+                    tbody.innerHTML += `
             const sTbody = document.getElementById('session-adv-body');
             if (sTbody) {
                 sTbody.innerHTML = ['Asia', 'London', 'New York', 'Kill Zone'].map(sess => {
@@ -2653,6 +2954,10 @@
                     const profitColor = parseFloat(metrics.avgProfit) >= 0 ? 'text-emerald-400' : 'text-rose-400';
                     return `
                         <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
+                            <td class="py-3">${s.name}</td>
+                            <td class="py-3 text-center">${stats.trades}</td>
+                            <td class="py-3 text-center font-bold ${wrColor}">${wr.toFixed(0)}%</td>
+                            <td class="py-3 text-right font-bold ${pnlColor}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
                             <td class="py-2.5 font-medium">${sess}</td>
                             <td class="py-2.5 text-center">${metrics.count}</td>
                             <td class="py-2.5 text-center font-bold text-sky-400">${metrics.wr}%</td>
@@ -2660,6 +2965,22 @@
                             <td class="py-2.5 text-right font-bold ${profitColor}">$${metrics.avgProfit}</td>
                         </tr>
                     `;
+                }
+            });
+        }
+
+        function renderHeatmap() {
+            const container = document.getElementById('heatmap-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const dayNames = ['Paz', 'Pts', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+            const heatmapData = {};
+
+            for (let d = 0; d < 7; d++) {
+                for (let h = 0; h < 24; h++) {
+                    heatmapData[`${d}-${h}`] = { count: 0, wins: 0, pnl: 0 };
+                }
                 }).join('');
             }
 
@@ -2688,27 +3009,108 @@
                 mSessionContainer.innerHTML = mSessHTML || '<p class="text-slate-500 italic text-center py-2">Seans verisi bulunan işlem yok.</p>';
             }
 
+            trades.forEach(t => {
+                const date = new Date(t.date);
+                const dayOfWeek = date.getDay();
+                const hour = parseInt(t.time.split(':')[0]);
+                const key = `${dayOfWeek}-${hour}`;
+                if (heatmapData[key]) {
+                    heatmapData[key].count++;
+                    if (t.pnl > 0) heatmapData[key].wins++;
+                    heatmapData[key].pnl += t.pnl;
+                }
+            });
             document.getElementById('stat-psych-mistake').innerText = commonMistake;
             document.getElementById('stat-psych-positive').innerText = commonPositive;
 
+            let maxPnL = 0;
+            let minPnL = 0;
+            Object.values(heatmapData).forEach(cell => {
+                if (cell.pnl > maxPnL) maxPnL = cell.pnl;
+                if (cell.pnl < minPnL) minPnL = cell.pnl;
+            });
             document.getElementById('stat-bias-best-wr').innerText = highestWRBias;
             document.getElementById('stat-bias-worst-wr').innerText = lowestWRBias;
 
+            let html = '<table class="w-full border-collapse text-xs"><thead><tr><th class="p-1">Saat</th>';
+            dayNames.forEach(day => html += `<th class="p-1 border border-slate-700">${day}</th>`);
+            html += '</tr></thead><tbody>';
+
+            for (let h = 0; h < 24; h++) {
+                html += `<tr><td class="p-1 border border-slate-700 text-slate-400 font-bold">${h.toString().padStart(2, '0')}</td>`;
+                for (let d = 0; d < 7; d++) {
+                    const key = `${d}-${h}`;
+                    const cell = heatmapData[key];
+                    if (cell.count === 0) {
+                        html += `<td class="p-1 border border-slate-700 bg-slate-800/30 text-center">-</td>`;
+                    } else {
+                        const pnlNormalized = maxPnL !== minPnL ? (cell.pnl - minPnL) / (maxPnL - minPnL) : 0.5;
+                        const hue = cell.pnl >= 0 ? 120 : 0;
+                        const lightness = 25 + (pnlNormalized * 15);
+                        const bgColor = `hsl(${hue}, 80%, ${lightness}%)`;
+
+                        html += `<td class="p-1 border border-slate-700 text-white font-bold text-center cursor-help" style="background-color: ${bgColor};" title="İşlem: ${cell.count}, WR: ${cell.count > 0 ? (cell.wins/cell.count*100).toFixed(0) : 0}%, PnL: ${cell.pnl.toFixed(0)}">
+                            ${cell.count}
+                        </td>`;
+                    }
+                }
+                html += '</tr>';
             const psychWRContainer = document.getElementById('psychology-wr-list');
             if (psychWRContainer) {
                 psychWRContainer.innerHTML = psychologyWRHTML;
             }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
 
+        function renderInsights(pf, wr, rr) {
+            const insights = document.getElementById('report-insights');
+            if (!insights) return;
+            let html = '';
             // ================== END OF ADVANCED STATISTICS ==================
 
+            if (pf > 2 && wr > 60) {
+                html = '<p class="text-emerald-400 font-bold">Mükemmel Performans!</p><p>Stratejiniz oldukça verimli çalışıyor. Risk yönetiminizi koruyarak pozisyon büyüklüklerini kademeli artırmayı düşünebilirsiniz.</p>';
+            } else if (pf > 1.2 && rr > 1.5) {
+                html = '<p class="text-sky-400 font-bold">Yüksek Verimlilik</p><p>Kârlı bir sisteminiz var ve R:R oranınız sağlıklı. Win rate oranınızı artırmak için giriş sinyallerinizi filtrelemeye odaklanın.</p>';
+            } else if (pf < 1) {
+                html = '<p class="text-rose-400 font-bold">Risk Uyarısı</p><p>Sisteminiz şu an zarar üretiyor. İşlem sıklığını azaltın ve stop-loss seviyelerinizi gözden geçirin. Psikolojik disiplin önceliğiniz olmalı.</p>';
+            } else if (rr < 1 && wr > 50) {
+                html = '<p class="text-amber-400 font-bold">R:R Problemi</p><p>Sık kazanıyorsunuz ancak kayıplarınız kazançlarınızdan büyük. "Zararı kes, kârı sür" prensibini uygulamaya çalışın.</p>';
+            } else {
+                html = '<p class="text-slate-300 font-bold">Gelişim Alanı</p><p>Başa baş bir durumdasınız. İşlem maliyetlerini (komisyon/spread) hesaba katarak risk/ödül oranınızı (R:R) iyileştirmeye çalışın.</p>';
+            }
             renderInsights(profitFactor, winRateValue(), rrRatio);
 
+            const worstSym = Object.entries(trades.reduce((acc, t) => { if(t.pnl < 0) acc[t.symbol] = (acc[t.symbol] || 0) + 1; return acc; }, {})).sort((a,b) => b[1]-a[1])[0]?.[0];
             drawEquityChart();
             drawSymbolChart(symbolStats);
             drawDayChart();
             drawRRDistributionChart();
             drawKillzoneWinRateChart();
-            
+
+            const kzStats = ["London Open", "NY Open", "London Close", "NY PM"].map(kz => {
+                const kzTrades = trades.filter(t => t.killzone === kz);
+                const wins = kzTrades.filter(t => t.pnl > 0).length;
+                const wrVal = kzTrades.length > 0 ? (wins / kzTrades.length) * 100 : 0;
+                return { name: kz, wr: wrVal, count: kzTrades.length };
+            });
+
+            let kzAdvice = '';
+            if (kzStats[0].count > 0 && kzStats[1].count > 0) {
+                const bestKz = kzStats[0].wr > kzStats[1].wr ? kzStats[0] : kzStats[1];
+                const worstKz = kzStats[0].wr > kzStats[1].wr ? kzStats[1] : kzStats[0];
+                if (bestKz.wr - worstKz.wr > 20) {
+                    kzAdvice = `<p class="mt-2 text-sky-400 font-semibold">Seans Verimliliği: ${bestKz.name} seansında %${bestKz.wr.toFixed(0)} win-rate ile çok daha başarılısınız. ${worstKz.name} seansındaki işlemleri azaltmayı veya stratejinizi gözden geçirmeyi düşünebilirsiniz.</p>`;
+                }
+            }
+
+            html += `<div class="mt-4 pt-4 border-t border-slate-800 space-y-2">
+                ${kzAdvice}
+                <p class="italic text-xs text-slate-500">Öneri: ${worstSym ? worstSym + ' paritesinde çok sık hata yapıyorsunuz, bu sembolü bir süre izlemeye alın.' : 'İşlem disiplininizi koruyun.'}</p>
+            </div>`;
+
+            insights.innerHTML = html;
             renderHourlyPerformance();
             renderDailyWinRate();
             renderSetupPerformance();
@@ -2728,11 +3130,11 @@
             const width = container.clientWidth - margin.left - margin.right;
             const height = container.clientHeight - margin.top - margin.bottom;
             if (width <= 0 || height <= 0) return; // Layout Guard
-            
+
             const sortedTrades = [...trades].sort((a, b) => new Date(a.date) - new Date(b.date));
             let cumulative = balance;
             const data = [{ date: new Date(sortedTrades[0]?.date || new Date()), value: cumulative }];
-            
+
             let maxEquity = cumulative;
             let maxDD = 0;
 
@@ -2781,18 +3183,18 @@
                 .attr("stroke", "#0ea5e9")
                 .attr("stroke-width", 3)
                 .attr("d", line);
-                
+
             const area = d3.area()
                 .x(d => x(d.date))
                 .y0(height)
                 .y1(d => y(d.value))
                 .curve(d3.curveMonotoneX);
-                
+
             svg.append("path")
                 .datum(data)
                 .attr("fill", "url(#equity-gradient)")
                 .attr("d", area);
-                
+
             const defs = svg.append("defs");
             const gradient = defs.append("linearGradient")
                 .attr("id", "equity-gradient")
@@ -2811,10 +3213,10 @@
             const width = container.clientWidth - margin.left - margin.right;
             const height = container.clientHeight - margin.top - margin.bottom;
             if (width <= 0 || height <= 0) return; // Layout Guard
-            
+
             const days = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
             const dayPnL = [0, 0, 0, 0, 0, 0, 0];
-            
+
             trades.forEach(t => {
                 const day = new Date(t.date).getDay();
                 dayPnL[day] += t.pnl;
@@ -2868,7 +3270,7 @@
             const width = container.clientWidth - margin.left - margin.right;
             const height = container.clientHeight - margin.top - margin.bottom;
             if (width <= 0 || height <= 0) return; // Layout Guard
-            
+
             const rrValues = trades
                 .filter(t => t.pnl > 0 && t.rr && t.rr !== '-')
                 .map(t => parseFloat(t.rr));
@@ -2930,7 +3332,7 @@
             const width = container.clientWidth - margin.left - margin.right;
             const height = container.clientHeight - margin.top - margin.bottom;
             if (width <= 0 || height <= 0) return; // Layout Guard
-            
+
             const killzones = ["London Open", "NY Open", "London Close", "NY PM", "Outside Killzone"];
             const stats = killzones.map(kz => {
                 const kzTrades = trades.filter(t => t.killzone === kz);
@@ -2997,7 +3399,7 @@
             const width = container.clientWidth - margin.left - margin.right;
             const height = container.clientHeight - margin.top - margin.bottom;
             if (width <= 0 || height <= 0) return; // Layout Guard
-            
+
             const data = Object.entries(symbolStats)
                 .map(([name, value]) => ({ name, value }))
                 .sort((a, b) => b.value - a.value);
@@ -3073,12 +3475,12 @@
                 data.push({ date: endOfYear, value: currentBalance });
             } else {
                 data.push({ date: startOfYear, value: currentBalance });
-                
+
                 year2026Events.forEach(e => {
                     currentBalance += e.amount;
                     data.push({ date: e.date, value: currentBalance, eventType: e.type });
                 });
-                
+
                 const today = new Date();
                 if (today.getFullYear() === 2026) {
                     data.push({ date: today, value: currentBalance });
@@ -3140,7 +3542,7 @@
                 .attr("d", line);
 
             const transactionData = data.filter(d => d.eventType === 'deposit' || d.eventType === 'withdraw');
-            
+
             svg.selectAll(".transaction-icon")
                 .data(transactionData)
                 .enter()
@@ -3160,10 +3562,16 @@
 
         function updateStats() {
             const totalTrades = trades.length;
+            const wins = trades.filter(t => t.pnl > 0).length;
+            const winRate = totalTrades > 0 ? Math.round((wins / totalTrades) * 100) : 0;
             const winsCount = trades.filter(t => t.pnl > 0).length;
             const winRate = totalTrades > 0 ? Math.round((winsCount / totalTrades) * 100) : 0;
             const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
-            
+
+            const avgWin = wins > 0 ? (trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0) / wins) : 0;
+            const losses = totalTrades - wins;
+            const avgLoss = losses > 0 ? (Math.abs(trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0)) / losses) : 0;
+            const expectancy = ( (wins/totalTrades) * avgWin ) - ( (losses/totalTrades) * avgLoss );
             const avgWin = winsCount > 0 ? (trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0) / winsCount) : 0;
             const lossesCount = totalTrades - winsCount;
             const avgLoss = lossesCount > 0 ? (Math.abs(trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0)) / lossesCount) : 0;
@@ -3338,7 +3746,22 @@
 
             entryTypes.push(value);
             localStorage.setItem('XAU_entryTypes', JSON.stringify(entryTypes));
-            
+
+            if (isOnline) {
+                updateSyncStatus(true, "Eşitleniyor...");
+                set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
+                    .then(() => {
+                        localStorage.removeItem('entryTypes_unsynced');
+                        updateSyncStatus(true);
+                    })
+                    .catch(() => {
+                        localStorage.setItem('entryTypes_unsynced', 'true');
+                        updateSyncStatus(false);
+                    });
+            } else {
+                localStorage.setItem('entryTypes_unsynced', 'true');
+                updateSyncStatus(false);
+            }
             updateSyncStatus(isOnline, "Eşitleniyor...");
             set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
                 .then(() => {
@@ -3362,7 +3785,22 @@
         function deleteEntryType(index) {
             entryTypes.splice(index, 1);
             localStorage.setItem('XAU_entryTypes', JSON.stringify(entryTypes));
-            
+
+            if (isOnline) {
+                updateSyncStatus(true, "Eşitleniyor...");
+                set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
+                    .then(() => {
+                        localStorage.removeItem('entryTypes_unsynced');
+                        updateSyncStatus(true);
+                    })
+                    .catch(() => {
+                        localStorage.setItem('entryTypes_unsynced', 'true');
+                        updateSyncStatus(false);
+                    });
+            } else {
+                localStorage.setItem('entryTypes_unsynced', 'true');
+                updateSyncStatus(false);
+            }
             updateSyncStatus(isOnline, "Eşitleniyor...");
             set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
                 .then(() => {
@@ -3432,7 +3870,7 @@
         function executeTransaction(type) {
             const amountInput = document.getElementById('transaction-amount-input');
             const amount = parseFloat(amountInput.value);
-            
+
             if (isNaN(amount) || amount <= 0) {
                 showToast('Lütfen geçerli bir tutar girin', 'alert-circle', 'rose');
                 return;
@@ -3469,14 +3907,14 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            
+
             const account = accounts.find(acc => acc.id === currentAccountId);
             const accountName = account ? account.name.replace(/\s+/g, '') : 'Hesap';
             const date = new Date();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
             a.download = `${accountName}-${month}-${year}.json`;
-            
+
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -3492,7 +3930,7 @@
             reader.onload = function(e) {
                 try {
                     const backup = JSON.parse(e.target.result);
-                    
+
                     if (backup.accounts) {
                         localStorage.setItem('XAU_accounts', JSON.stringify(backup.accounts));
                         accounts = backup.accounts;
@@ -3505,7 +3943,7 @@
                         localStorage.setItem('XAU_entryTypes', JSON.stringify(backup.entryTypes));
                         entryTypes = backup.entryTypes;
                     }
-                    
+
                     const updates = {};
                     if (backup.accounts) updates["tradeJournal/6592/accounts"] = backup.accounts;
                     if (backup.entryTypes) updates["tradeJournal/6592/entryTypes"] = backup.entryTypes;
@@ -3514,7 +3952,7 @@
                         Object.keys(backup.data).forEach(key => {
                             const val = backup.data[key];
                             localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
-                            
+
                             const match = key.match(/^(trades|notes|balance|transactions)_(acc_\d+)$/);
                             if (match) {
                                 const [_, type, accId] = match;
@@ -3564,7 +4002,7 @@
             }
             confirmCallback = callback;
             document.getElementById('confirm-modal').classList.remove('hidden');
-            
+
             const actionBtn = document.getElementById('confirm-action-btn');
             if (actionBtn) {
                 actionBtn.onclick = () => {
@@ -3575,7 +4013,6 @@
         }
 
         function closeConfirmModal() {
-            document.body.classList.remove('overflow-hidden');
             document.getElementById('confirm-modal').classList.add('hidden');
             confirmCallback = null;
         }
@@ -3640,9 +4077,7 @@
             editTrade,
             deleteTrade,
             selectAccount,
-            toggleSetup,
-            setSession,
-            togglePsychology
+            toggleSetup
         };
 
         Object.keys(globalFunctions).forEach(key => {
