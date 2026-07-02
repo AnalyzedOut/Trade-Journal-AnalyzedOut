@@ -462,6 +462,101 @@
                     </div>
                 </div>
 
+                <!-- Task 4: Advanced Statistics & Session/Psychology Insights -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Session Advanced Stats -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-6">
+                        <h4 class="text-lg font-bold text-slate-100 border-b border-slate-800 pb-4">Gelişmiş Seans Analizi</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Kârlı Seans</p>
+                                <p id="stat-best-session" class="text-sm font-bold text-emerald-400">-</p>
+                            </div>
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Zararlı Seans</p>
+                                <p id="stat-worst-session" class="text-sm font-bold text-rose-400">-</p>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left">
+                                <thead>
+                                    <tr class="text-slate-500 border-b border-slate-800/50 pb-2">
+                                        <th class="pb-2 font-semibold">Seans</th>
+                                        <th class="pb-2 text-center font-semibold">İşlem</th>
+                                        <th class="pb-2 text-center font-semibold">WR %</th>
+                                        <th class="pb-2 text-center font-semibold">Ort RR</th>
+                                        <th class="pb-2 text-right font-semibold">Ort PnL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="session-adv-body" class="divide-y divide-slate-800/30">
+                                    <!-- Session Adv Rows Injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Monthly Session Performance breakdown -->
+                        <div class="pt-4 border-t border-slate-800">
+                            <h5 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Aylara Göre Seans Performansı</h5>
+                            <div id="monthly-session-perf" class="space-y-2 max-h-48 overflow-y-auto scrollbar-hide pr-1 text-xs">
+                                <!-- Monthly session rows -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Psychology & HTF Bias Stats -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-6">
+                        <h4 class="text-lg font-bold text-slate-100 border-b border-slate-800 pb-4">Psikoloji & HTF Bias Analizi</h4>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Çok Yapılan Hata (Psikoloji)</p>
+                                <p id="stat-psych-mistake" class="text-sm font-bold text-rose-400">-</p>
+                            </div>
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Sık Pozitif Psikoloji</p>
+                                <p id="stat-psych-positive" class="text-sm font-bold text-emerald-400">-</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Yüksek WR HTF Bias</p>
+                                <p id="stat-bias-best-wr" class="text-sm font-bold text-emerald-400">-</p>
+                            </div>
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Düşük WR HTF Bias</p>
+                                <p id="stat-bias-worst-wr" class="text-sm font-bold text-rose-400">-</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h5 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Setup Metrikleri</h5>
+                            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                                <div class="bg-slate-950/20 p-2.5 rounded-xl border border-slate-800/60">
+                                    <p class="text-slate-500 text-[10px] uppercase font-bold mb-1">En Çok Kazandıran</p>
+                                    <p id="stat-profitable-setup" class="font-bold text-slate-200">-</p>
+                                </div>
+                                <div class="bg-slate-950/20 p-2.5 rounded-xl border border-slate-800/60">
+                                    <p class="text-slate-500 text-[10px] uppercase font-bold mb-1">En Yüksek WR Setup</p>
+                                    <p id="stat-wr-setup" class="font-bold text-slate-200">-</p>
+                                </div>
+                                <div class="bg-slate-950/20 p-2.5 rounded-xl border border-slate-800/60">
+                                    <p class="text-slate-500 text-[10px] uppercase font-bold mb-1">En Sık Kullanılan</p>
+                                    <p id="stat-used-setup" class="font-bold text-slate-200">-</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-800">
+                            <h5 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Psikolojik Kazanma Oranı (Win Rate)</h5>
+                            <div id="psychology-wr-list" class="space-y-1 max-h-32 overflow-y-auto scrollbar-hide pr-1">
+                                <!-- Psychology win rates Injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Detailed Analysis Report -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- Periodical & Risk Performance -->
@@ -662,101 +757,125 @@
 
     <!-- Trade Modal -->
     <div id="trade-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
-        <div class="bg-slate-900 w-full max-w-lg rounded-3xl border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div class="p-8 border-b border-slate-800 flex justify-between items-center">
+        <div class="bg-slate-900 w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
                 <h3 id="modal-title" class="text-xl font-bold text-slate-100">Yeni İşlem Ekle</h3>
-                <button onclick="closeTradeModal()" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400">
+                <button onclick="closeTradeModal()" type="button" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <form id="trade-form" onsubmit="handleTradeSubmit(event)" class="p-8 space-y-4">
-                <input type="hidden" id="trade-id">
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Tarih</label>
-                        <input type="date" id="trade-date" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Saat</label>
-                        <input type="time" id="trade-time" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Parite</label>
-                        <div class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 font-bold text-lg flex items-center justify-center">
-                            XAU/USD
+            <form id="trade-form" onsubmit="handleTradeSubmit(event)" class="flex flex-col overflow-hidden h-full">
+                <div class="p-6 space-y-4 overflow-y-auto flex-grow scrollbar-hide" id="modal-scrollable-body">
+                    <input type="hidden" id="trade-id">
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Tarih</label>
+                            <input type="date" id="trade-date" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
                         </div>
-                        <input type="hidden" id="trade-symbol" value="XAUUSD">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Saat</label>
+                            <input type="time" id="trade-time" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
                     </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Parite</label>
+                            <div class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 font-bold text-lg flex items-center justify-center">
+                                XAU/USD
+                            </div>
+                            <input type="hidden" id="trade-symbol" value="XAUUSD">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">İşlem</label>
+                            <div class="flex space-x-2">
+                                <button type="button" onclick="setTradeType('Long')" id="btn-type-Long" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Long</button>
+                                <button type="button" onclick="setTradeType('Short')" id="btn-type-Short" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Short</button>
+                            </div>
+                            <input type="hidden" id="trade-type" value="Long">
+                        </div>
+                    </div>
+
+                    <!-- Trading Session -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">İşlem</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Trading Session (Seans)</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button type="button" onclick="setSession('Asia')" id="btn-session-Asia" class="py-2.5 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs">Asia</button>
+                            <button type="button" onclick="setSession('London')" id="btn-session-London" class="py-2.5 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs">London</button>
+                            <button type="button" onclick="setSession('New York')" id="btn-session-NewYork" class="py-2.5 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs">NY</button>
+                            <button type="button" onclick="setSession('Kill Zone')" id="btn-session-KillZone" class="py-2.5 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs">Kill Zone</button>
+                        </div>
+                        <input type="hidden" id="trade-session" value="">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Bias M15</label>
                         <div class="flex space-x-2">
-                            <button type="button" onclick="setTradeType('Long')" id="btn-type-Long" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Long</button>
-                            <button type="button" onclick="setTradeType('Short')" id="btn-type-Short" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Short</button>
+                            <button type="button" onclick="setBias('Bullish')" id="btn-bias-Bullish" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Bullish</button>
+                            <button type="button" onclick="setBias('Bearish')" id="btn-bias-Bearish" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Bearish</button>
+                            <button type="button" onclick="setBias('Neutral')" id="btn-bias-Neutral" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Neutral</button>
                         </div>
-                        <input type="hidden" id="trade-type" value="Long">
+                        <input type="hidden" id="trade-bias" value="">
                     </div>
-                </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Bias M15</label>
-                    <div class="flex space-x-2">
-                        <button type="button" onclick="setBias('Bullish')" id="btn-bias-Bullish" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Bullish</button>
-                        <button type="button" onclick="setBias('Bearish')" id="btn-bias-Bearish" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Bearish</button>
-                        <button type="button" onclick="setBias('Neutral')" id="btn-bias-Neutral" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Neutral</button>
-                    </div>
-                    <input type="hidden" id="trade-bias" value="">
-                </div>
-
-                <div class="grid grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">R (%)</label>
-                        <input type="number" step="0.01" id="trade-r-percent" required placeholder="0.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Lot</label>
-                        <input type="number" step="0.01" id="trade-lot" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="block text-xs font-bold text-slate-500 uppercase">PnL ($)</label>
-                            <span id="trade-rr-display" class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">RR: 0.00R</span>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">R (%)</label>
+                            <input type="number" step="0.01" id="trade-r-percent" required placeholder="0.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
                         </div>
-                        <input type="number" step="0.01" id="trade-pnl" required placeholder="0.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Lot</label>
+                            <input type="number" step="0.01" id="trade-lot" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase">PnL ($)</label>
+                                <span id="trade-rr-display" class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">RR: 0.00R</span>
+                            </div>
+                            <input type="number" step="0.01" id="trade-pnl" required placeholder="0.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                    </div>
+                    <input type="hidden" id="trade-killzone" value="Outside Killzone">
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Çıkış Sebebi</label>
+                        <div class="flex space-x-2">
+                            <button type="button" onclick="setExitReason('TP')" id="btn-exit-TP" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">TP</button>
+                            <button type="button" onclick="setExitReason('Manuel')" id="btn-exit-Manuel" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Manuel</button>
+                            <button type="button" onclick="setExitReason('SL')" id="btn-exit-SL" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">SL</button>
+                        </div>
+                        <input type="hidden" id="trade-exit-reason" value="TP">
+                    </div>
+
+                    <!-- Setup - Çıkış Sebebi'nin hemen altında -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Setup (Çoklu Seçim)</label>
+                        <div class="grid grid-cols-3 gap-2" id="setup-buttons-container">
+                            <!-- Setup buttons will be injected here -->
+                        </div>
+                        <input type="hidden" id="trade-setup-types" value="">
+                    </div>
+
+                    <!-- Trading Psychology -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Trading Psychology (Psikoloji)</label>
+                        <div class="grid grid-cols-2 gap-2" id="psychology-buttons-container">
+                            <!-- Psychology buttons will be injected here -->
+                        </div>
+                        <input type="hidden" id="trade-psychology" value="">
+                    </div>
+
+                    <!-- Entry Type (Setup) - Gizli select -->
+                    <select id="trade-entry-type" class="hidden"></select>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Notlar</label>
+                        <textarea id="trade-notes" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none resize-none transition-all"></textarea>
                     </div>
                 </div>
-                <input type="hidden" id="trade-killzone" value="Outside Killzone">
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Çıkış Sebebi</label>
-                    <div class="flex space-x-2">
-                        <button type="button" onclick="setExitReason('TP')" id="btn-exit-TP" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">TP</button>
-                        <button type="button" onclick="setExitReason('Manuel')" id="btn-exit-Manuel" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Manuel</button>
-                        <button type="button" onclick="setExitReason('SL')" id="btn-exit-SL" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">SL</button>
-                    </div>
-                    <input type="hidden" id="trade-exit-reason" value="TP">
-                </div>
-
-                <!-- Setup - Çıkış Sebebi'nin hemen altında -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Setup (Çoklu Seçim)</label>
-                    <div class="grid grid-cols-3 gap-2" id="setup-buttons-container">
-                        <!-- Setup buttons will be injected here -->
-                    </div>
-                    <input type="hidden" id="trade-setup-types" value="">
-                </div>
-
-                <!-- Entry Type (Setup) - Gizli select -->
-                <select id="trade-entry-type" class="hidden"></select>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Notlar</label>
-                    <textarea id="trade-notes" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none resize-none transition-all"></textarea>
-                </div>
-                <div class="pt-4">
+                
+                <div class="p-6 border-t border-slate-800 bg-slate-900/95 sticky bottom-0 z-10 flex">
                     <button type="submit" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
                         Kaydet
                     </button>
@@ -855,6 +974,11 @@
 
         const LOCK_PASSWORD = '6592';
 
+        const psychologyList = [
+            'FOMO', 'Revenge Trade', 'Fear', 'Greed', 'Overconfidence',
+            'Patient', 'Discipline', 'Perfect Execution', 'Early Exit', 'Late Entry'
+        ];
+
         // Firebase active subscriptions mapping (safeguards against leaks)
         let activeUnsubscribes = {
             trades: null,
@@ -887,7 +1011,7 @@
             return `${h}:${m}`;
         }
 
-        // connection Status Visualizer
+        // Connection Status Visualizer
         function updateSyncStatus(status, customText = null) {
             isOnline = status;
             const dot = document.getElementById('sync-indicator-dot');
@@ -1323,11 +1447,13 @@
         }
 
         function openAccountModal() {
+            document.body.classList.add('overflow-hidden');
             document.getElementById('account-modal').classList.remove('hidden');
             document.getElementById('account-name-input').focus();
         }
 
         function closeAccountModal() {
+            document.body.classList.remove('overflow-hidden');
             document.getElementById('account-modal').classList.add('hidden');
             document.getElementById('account-name-input').value = '';
         }
@@ -1634,7 +1760,7 @@
 
             const monthlyPnL = monthlyTrades.reduce((sum, t) => sum + t.pnl, 0);
             statsContainer.innerText = `Toplam: ${monthlyTrades.length} İşlem | P&L: ${monthlyPnL >= 0 ? '+' : ''}$${monthlyPnL.toFixed(2)}`;
-            statsContainer.className = `text-sm font-bold ${monthlyPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            statsContainer.className = `text-sm font-bold ${monthlyPnL >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
 
             if (monthlyTrades.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400 italic">Bu ay henüz işlem girilmemiş.</td></tr>';
@@ -1707,16 +1833,18 @@
                         </span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left min-w-[1000px]">
+                        <table class="w-full text-left min-w-[1200px]">
                             <thead>
                                 <tr class="text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-800">
                                     <th class="px-8 py-4">Tarih</th>
                                     <th class="px-4 py-4">Parite</th>
                                     <th class="px-4 py-4">Lot</th>
                                     <th class="px-4 py-4">İşlem</th>
+                                    <th class="px-4 py-4">Seans</th>
                                     <th class="px-4 py-4">Bias M15</th>
                                     <th class="px-4 py-4">Killzone</th>
                                     <th class="px-4 py-4">Setup</th>
+                                    <th class="px-4 py-4">Psikoloji</th>
                                     <th class="px-4 py-4">Çıkış Sebebi</th>
                                     <th class="px-4 py-4">R (%)</th>
                                     <th class="px-4 py-4">RR</th>
@@ -1733,6 +1861,7 @@
                                         <td class="px-4 py-4">
                                             <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${t.type === 'Long' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-rose-900/30 text-rose-400'}">${t.type}</span>
                                         </td>
+                                        <td class="px-4 py-4 text-xs text-slate-400">${t.session || '-'}</td>
                                         <td class="px-4 py-4 text-xs text-slate-400/60">${t.bias || '-'}</td>
                                         <td class="px-4 py-4 text-xs text-slate-400">${t.killzone || '-'}</td>
                                         <td class="px-4 py-4 text-xs text-slate-400">
@@ -1742,6 +1871,9 @@
                                                 }
                                                 return setup;
                                             }).join(', ') : (t.entryType || '-')}
+                                        </td>
+                                        <td class="px-4 py-4 text-xs text-slate-400 max-w-[120px] truncate" title="${t.psychology ? t.psychology.join(', ') : ''}">
+                                            ${t.psychology && t.psychology.length > 0 ? t.psychology.join(', ') : '-'}
                                         </td>
                                         <td class="px-4 py-4">
                                             <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${t.exitReason === 'TP' ? 'bg-sky-900/30 text-sky-400' : (t.exitReason === 'SL' ? 'bg-rose-900/30 text-rose-400' : 'bg-slate-800 text-slate-400')}">${t.exitReason || '-'}</span>
@@ -1775,6 +1907,7 @@
         }
 
         function openTradeModal(date = null, trade = null) {
+            document.body.classList.add('overflow-hidden');
             document.getElementById('trade-modal').classList.remove('hidden');
             document.getElementById('trade-form').reset();
             document.getElementById('trade-id').value = trade ? trade.id : '';
@@ -1806,6 +1939,14 @@
                 } else {
                     document.getElementById('trade-bias').value = '';
                 }
+
+                // Trading Session loader
+                document.getElementById('trade-session').value = trade.session || '';
+                setSession(trade.session || '');
+
+                // Trading Psychology loader
+                const selectedPsych = trade.psychology || [];
+                renderPsychologyButtons(selectedPsych);
             } else {
                 dateInput.value = date ? date : toLocalDateStr(now);
                 timeInput.value = toLocalTimeStr(now);
@@ -1822,6 +1963,13 @@
                 });
                 document.getElementById('trade-r-percent').value = 1;
                 updateKillzone();
+
+                // Trading Session clean defaults
+                document.getElementById('trade-session').value = '';
+                setSession('');
+
+                // Trading Psychology clean defaults
+                renderPsychologyButtons([]);
             }
             
             populateEntryTypeSelect();
@@ -1874,6 +2022,71 @@
                     button.className = 'py-3 rounded-xl font-bold border transition-all bg-sky-600 border-sky-600 text-white';
                 } else {
                     button.className = 'py-3 rounded-xl font-bold border transition-all border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700';
+                }
+            }
+        }
+
+        // Trading Session Selector
+        function setSession(session) {
+            if (!session) {
+                document.getElementById('trade-session').value = '';
+                ['Asia','London','New York','Kill Zone'].forEach(opt => {
+                    const idSafe = opt.replace(/\s+/g, '');
+                    const btn = document.getElementById(`btn-session-${idSafe}`);
+                    if (!btn) return;
+                    btn.classList.remove('bg-sky-600','text-white','border-sky-600');
+                    btn.classList.add('bg-slate-800','text-slate-400','border-slate-700');
+                });
+                return;
+            }
+            document.getElementById('trade-session').value = session;
+            updateButtonGroupUI('session', session, ['Asia', 'London', 'New York', 'Kill Zone'], {
+                'Asia': 'bg-sky-600',
+                'London': 'bg-sky-600',
+                'New York': 'bg-sky-600',
+                'Kill Zone': 'bg-sky-600'
+            });
+        }
+
+        // Trading Psychology Multi-Select Engine
+        function renderPsychologyButtons(selectedPsych = []) {
+            const container = document.getElementById('psychology-buttons-container');
+            if (!container) return;
+            container.innerHTML = psychologyList.map(item => {
+                const isSelected = selectedPsych.includes(item);
+                const idSafe = item.replace(/\s+/g, '');
+                return `
+                    <button type="button" 
+                            onclick="togglePsychology('${item}')" 
+                            id="btn-psych-${idSafe}"
+                            class="py-2.5 px-2 rounded-xl font-bold border text-xs transition-all ${
+                                isSelected 
+                                    ? 'bg-sky-600 border-sky-600 text-white' 
+                                    : 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            }">
+                        ${item}
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('trade-psychology').value = selectedPsych.join(',');
+        }
+
+        function togglePsychology(item) {
+            const hiddenInput = document.getElementById('trade-psychology');
+            let selected = hiddenInput.value ? hiddenInput.value.split(',') : [];
+            if (selected.includes(item)) {
+                selected = selected.filter(x => x !== item);
+            } else {
+                selected.push(item);
+            }
+            hiddenInput.value = selected.join(',');
+            const idSafe = item.replace(/\s+/g, '');
+            const btn = document.getElementById(`btn-psych-${idSafe}`);
+            if (btn) {
+                if (selected.includes(item)) {
+                    btn.className = 'py-2.5 px-2 rounded-xl font-bold border text-xs transition-all bg-sky-600 border-sky-600 text-white';
+                } else {
+                    btn.className = 'py-2.5 px-2 rounded-xl font-bold border text-xs transition-all border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700';
                 }
             }
         }
@@ -2024,7 +2237,8 @@
 
         function updateButtonGroupUI(groupId, activeValue, options, colorMap) {
             options.forEach(opt => {
-                const btn = document.getElementById(`btn-${groupId}-${opt}`);
+                const optId = opt.replace(/\s+/g, '');
+                const btn = document.getElementById(`btn-${groupId}-${optId}`);
                 if (!btn) return;
                 
                 const activeColor = colorMap[opt];
@@ -2043,6 +2257,7 @@
         }
 
         function closeTradeModal() {
+            document.body.classList.remove('overflow-hidden');
             document.getElementById('trade-modal').classList.add('hidden');
         }
 
@@ -2077,6 +2292,9 @@
                 setupTypes = 'Hislerim';
             }
 
+            const sessionVal = document.getElementById('trade-session').value;
+            const psychologyVal = document.getElementById('trade-psychology').value;
+
             const tradeData = {
                 id: id || Date.now().toString(),
                 symbol: 'XAUUSD',
@@ -2092,7 +2310,9 @@
                 pnl: pnl,
                 exitReason: exitReason,
                 bias: document.getElementById('trade-bias').value,
-                notes: document.getElementById('trade-notes').value
+                notes: document.getElementById('trade-notes').value,
+                session: sessionVal || '',
+                psychology: psychologyVal ? psychologyVal.split(',').map(s => s.trim()) : []
             };
 
             if (id) {
@@ -2142,10 +2362,33 @@
             showToast('İşlemler dışa aktarıldı');
         }
 
+        // Helper to retrieve setup types safely from trades
+        function getTradeSetups(t) {
+            if (t.setupTypes && t.setupTypes.length > 0) {
+                return t.setupTypes;
+            }
+            if (t.entryType) {
+                return [t.entryType];
+            }
+            return [];
+        }
+
         function renderAnalysis() {
             if (trades.length === 0) {
                 const reportElement = document.getElementById('report-insights');
                 if (reportElement) reportElement.innerHTML = '<p class="italic">Henüz analiz edilecek işlem bulunmuyor.</p>';
+                
+                ['stat-best-session', 'stat-worst-session', 'stat-psych-mistake', 'stat-psych-positive',
+                 'stat-bias-best-wr', 'stat-bias-worst-wr', 'stat-profitable-setup', 'stat-wr-setup', 'stat-used-setup'].forEach(id => {
+                     const el = document.getElementById(id);
+                     if (el) el.innerText = '-';
+                 });
+                const sTbody = document.getElementById('session-adv-body');
+                if (sTbody) sTbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-500 italic">Veri bulunmuyor</td></tr>';
+                const mSessionContainer = document.getElementById('monthly-session-perf');
+                if (mSessionContainer) mSessionContainer.innerHTML = '<p class="text-slate-500 italic text-center py-2">Veri bulunmuyor</p>';
+                const psychWRContainer = document.getElementById('psychology-wr-list');
+                if (psychWRContainer) psychWRContainer.innerHTML = '<p class="text-slate-500 italic text-center py-2">Veri bulunmuyor</p>';
                 return;
             }
 
@@ -2251,6 +2494,266 @@
                 });
             }
 
+            // ================== ADVANCED STATISTICS CALCULATIONS (Task 4) ==================
+            
+            // Setup Advanced Analytics
+            const setupPnL = {};
+            const setupWins = {};
+            const setupCounts = {};
+            trades.forEach(t => {
+                getTradeSetups(t).forEach(setup => {
+                    setupCounts[setup] = (setupCounts[setup] || 0) + 1;
+                    setupPnL[setup] = (setupPnL[setup] || 0) + t.pnl;
+                    if (t.pnl > 0) {
+                        setupWins[setup] = (setupWins[setup] || 0) + 1;
+                    }
+                });
+            });
+
+            // 1. Most Profitable Setup
+            let mostProfitableSetup = '-';
+            let maxSetupPnL = -Infinity;
+            Object.entries(setupPnL).forEach(([setup, pnl]) => {
+                if (pnl > maxSetupPnL) {
+                    maxSetupPnL = pnl;
+                    mostProfitableSetup = `${setup} (+$${pnl.toFixed(0)})`;
+                }
+            });
+
+            // 2. Highest Win Rate Setup
+            let highestWRSetup = '-';
+            let maxSetupWR = -1;
+            Object.entries(setupCounts).forEach(([setup, count]) => {
+                const wr = (setupWins[setup] || 0) / count;
+                if (wr > maxSetupWR) {
+                    maxSetupWR = wr;
+                    highestWRSetup = `${setup} (%${(wr * 100).toFixed(0)})`;
+                }
+            });
+
+            // 3. Most Used Setup
+            let mostUsedSetup = '-';
+            let maxSetupCount = 0;
+            Object.entries(setupCounts).forEach(([setup, count]) => {
+                if (count > maxSetupCount) {
+                    maxSetupCount = count;
+                    mostUsedSetup = `${setup} (${count} kez)`;
+                }
+            });
+
+            // Session Advanced Analytics
+            const sessionPnL = { 'Asia': 0, 'London': 0, 'New York': 0, 'Kill Zone': 0 };
+            const sessionTrades = { 'Asia': [], 'London': [], 'New York': [], 'Kill Zone': [] };
+            trades.forEach(t => {
+                if (t.session && sessionPnL.hasOwnProperty(t.session)) {
+                    sessionPnL[t.session] += t.pnl;
+                    sessionTrades[t.session].push(t);
+                }
+            });
+
+            // 4. Best & Worst Trading Session
+            let bestSession = '-';
+            let bestSessionPnL = -Infinity;
+            let worstSession = '-';
+            let worstSessionPnL = Infinity;
+            let hasSessionData = false;
+
+            Object.entries(sessionPnL).forEach(([sess, pnl]) => {
+                if (sessionTrades[sess].length > 0) {
+                    hasSessionData = true;
+                    if (pnl > bestSessionPnL) {
+                        bestSessionPnL = pnl;
+                        bestSession = `${sess} (+$${pnl.toFixed(0)})`;
+                    }
+                    if (pnl < worstSessionPnL) {
+                        worstSessionPnL = pnl;
+                        worstSession = `${sess} ($${pnl.toFixed(0)})`;
+                    }
+                }
+            });
+
+            // 5. Win Rate, Average RR, and Average Profit by Session
+            const sessionMetrics = {};
+            ['Asia', 'London', 'New York', 'Kill Zone'].forEach(sess => {
+                const sTrades = sessionTrades[sess] || [];
+                const count = sTrades.length;
+                const winsCount = sTrades.filter(t => t.pnl > 0).length;
+                const wr = count > 0 ? ((winsCount / count) * 100).toFixed(0) : '0';
+                
+                const totalRR = sTrades.reduce((acc, t) => acc + (parseFloat(t.rr) || 0), 0);
+                const avgRR = count > 0 ? (totalRR / count).toFixed(2) : '0.00';
+                
+                const totalProfit = sTrades.reduce((acc, t) => acc + t.pnl, 0);
+                const avgProfit = count > 0 ? (totalProfit / count).toFixed(2) : '0.00';
+                
+                sessionMetrics[sess] = { count, wr, avgRR, avgProfit };
+            });
+
+            // HTF Bias Analytics
+            const biasWins = { 'Bullish': 0, 'Bearish': 0, 'Neutral': 0 };
+            const biasCounts = { 'Bullish': 0, 'Bearish': 0, 'Neutral': 0 };
+            trades.forEach(t => {
+                if (t.bias && biasCounts.hasOwnProperty(t.bias)) {
+                    biasCounts[t.bias]++;
+                    if (t.pnl > 0) {
+                        biasWins[t.bias]++;
+                    }
+                }
+            });
+
+            // 6. Highest & Lowest Win Rate HTF Bias
+            let highestWRBias = '-';
+            let maxBiasWR = -1;
+            let lowestWRBias = '-';
+            let minBiasWR = Infinity;
+
+            Object.entries(biasCounts).forEach(([bias, count]) => {
+                if (count > 0) {
+                    const wr = biasWins[bias] / count;
+                    if (wr > maxBiasWR) {
+                        maxBiasWR = wr;
+                        highestWRBias = `${bias} (%${(wr * 100).toFixed(0)})`;
+                    }
+                    if (wr < minBiasWR) {
+                        minBiasWR = wr;
+                        lowestWRBias = `${bias} (%${(wr * 100).toFixed(0)})`;
+                    }
+                }
+            });
+
+            // Psychology Analytics
+            const mistakeList = ['FOMO', 'Revenge Trade', 'Fear', 'Greed', 'Overconfidence', 'Early Exit', 'Late Entry'];
+            const positiveList = ['Patient', 'Discipline', 'Perfect Execution'];
+            const psychCounts = {};
+            const psychWins = {};
+            trades.forEach(t => {
+                if (t.psychology && Array.isArray(t.psychology)) {
+                    t.psychology.forEach(item => {
+                        psychCounts[item] = (psychCounts[item] || 0) + 1;
+                        if (t.pnl > 0) {
+                            psychWins[item] = (psychWins[item] || 0) + 1;
+                        }
+                    });
+                }
+            });
+
+            // 7. Most Common Psychology Mistake
+            let commonMistake = '-';
+            let maxMistakeCount = 0;
+            mistakeList.forEach(m => {
+                const count = psychCounts[m] || 0;
+                if (count > maxMistakeCount) {
+                    maxMistakeCount = count;
+                    commonMistake = `${m} (${count} kez)`;
+                }
+            });
+
+            // 8. Most Common Positive Psychology
+            let commonPositive = '-';
+            let maxPositiveCount = 0;
+            positiveList.forEach(p => {
+                const count = psychCounts[p] || 0;
+                if (count > maxPositiveCount) {
+                    maxPositiveCount = count;
+                    commonPositive = `${p} (${count} kez)`;
+                }
+            });
+
+            // 9. Win Rate by Psychology HTML Generation
+            let psychologyWRHTML = '';
+            psychologyList.forEach(item => {
+                const count = psychCounts[item] || 0;
+                if (count > 0) {
+                    const winsCount = psychWins[item] || 0;
+                    const wr = ((winsCount / count) * 100).toFixed(0);
+                    psychologyWRHTML += `
+                        <div class="flex justify-between items-center text-sm py-1 border-b border-slate-800/30">
+                            <span class="text-slate-400">${item}</span>
+                            <span class="font-bold ${wr >= 50 ? 'text-emerald-400' : 'text-rose-400'}">%${wr} (${count} İşlem)</span>
+                        </div>
+                    `;
+                }
+            });
+            if (!psychologyWRHTML) {
+                psychologyWRHTML = '<p class="text-xs text-slate-500 italic text-center py-2">Henüz psikolojik analiz verisi bulunmuyor.</p>';
+            }
+
+            // 10. Average Monthly Session Performance
+            const monthlySessionPerformance = {};
+            trades.forEach(t => {
+                if (t.session && ['Asia', 'London', 'New York', 'Kill Zone'].includes(t.session)) {
+                    const d = new Date(t.date);
+                    const monthYear = d.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
+                    if (!monthlySessionPerformance[monthYear]) {
+                        monthlySessionPerformance[monthYear] = { 'Asia': 0, 'London': 0, 'New York': 0, 'Kill Zone': 0 };
+                    }
+                    monthlySessionPerformance[monthYear][t.session] += t.pnl;
+                }
+            });
+
+            // Push computations into Advanced UI Nodes
+            document.getElementById('stat-profitable-setup').innerText = mostProfitableSetup;
+            document.getElementById('stat-wr-setup').innerText = highestWRSetup;
+            document.getElementById('stat-used-setup').innerText = mostUsedSetup;
+
+            document.getElementById('stat-best-session').innerText = bestSession;
+            document.getElementById('stat-worst-session').innerText = worstSession;
+
+            const sTbody = document.getElementById('session-adv-body');
+            if (sTbody) {
+                sTbody.innerHTML = ['Asia', 'London', 'New York', 'Kill Zone'].map(sess => {
+                    const metrics = sessionMetrics[sess];
+                    const profitColor = parseFloat(metrics.avgProfit) >= 0 ? 'text-emerald-400' : 'text-rose-400';
+                    return `
+                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
+                            <td class="py-2.5 font-medium">${sess}</td>
+                            <td class="py-2.5 text-center">${metrics.count}</td>
+                            <td class="py-2.5 text-center font-bold text-sky-400">${metrics.wr}%</td>
+                            <td class="py-2.5 text-center font-semibold">${metrics.avgRR}R</td>
+                            <td class="py-2.5 text-right font-bold ${profitColor}">$${metrics.avgProfit}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            const mSessionContainer = document.getElementById('monthly-session-perf');
+            if (mSessionContainer) {
+                let mSessHTML = '';
+                Object.entries(monthlySessionPerformance).sort((a,b) => b[0].localeCompare(a[0])).forEach(([mYear, sessions]) => {
+                    mSessHTML += `
+                        <div class="bg-slate-950/20 p-2.5 rounded-xl border border-slate-800/50 space-y-2">
+                            <div class="font-bold text-slate-300">${mYear}</div>
+                            <div class="grid grid-cols-4 gap-2 text-center text-[10px]">
+                                ${['Asia', 'London', 'New York', 'Kill Zone'].map(s => {
+                                    const val = sessions[s] || 0;
+                                    const valColor = val >= 0 ? 'text-emerald-400' : 'text-rose-400';
+                                    return `
+                                        <div>
+                                            <span class="text-slate-500 font-medium block">${s}</span>
+                                            <span class="font-bold ${valColor}">${val >= 0 ? '+' : ''}$${val.toFixed(0)}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                mSessionContainer.innerHTML = mSessHTML || '<p class="text-slate-500 italic text-center py-2">Seans verisi bulunan işlem yok.</p>';
+            }
+
+            document.getElementById('stat-psych-mistake').innerText = commonMistake;
+            document.getElementById('stat-psych-positive').innerText = commonPositive;
+
+            document.getElementById('stat-bias-best-wr').innerText = highestWRBias;
+            document.getElementById('stat-bias-worst-wr').innerText = lowestWRBias;
+
+            const psychWRContainer = document.getElementById('psychology-wr-list');
+            if (psychWRContainer) {
+                psychWRContainer.innerHTML = psychologyWRHTML;
+            }
+
+            // ================== END OF ADVANCED STATISTICS ==================
+
             renderInsights(profitFactor, winRateValue(), rrRatio);
 
             drawEquityChart();
@@ -2267,317 +2770,6 @@
             renderHeatmap();
             
             updateStats();
-        }
-
-        function winRateValue() {
-            const total = trades.length;
-            if (total === 0) return 0;
-            const wins = trades.filter(t => t.pnl > 0).length;
-            return (wins / total) * 100;
-        }
-
-        function renderHourlyPerformance() {
-            const tbody = document.getElementById('hourly-perf-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            const hourlyStats = {};
-            for (let h = 0; h < 24; h++) {
-                hourlyStats[h] = { trades: 0, wins: 0, pnl: 0 };
-            }
-
-            trades.forEach(t => {
-                const hour = parseInt(t.time.split(':')[0]);
-                hourlyStats[hour].trades++;
-                if (t.pnl > 0) hourlyStats[hour].wins++;
-                hourlyStats[hour].pnl += t.pnl;
-            });
-
-            for (let h = 0; h < 24; h++) {
-                const stats = hourlyStats[h];
-                const wr = stats.trades > 0 ? (stats.wins / stats.trades * 100) : 0;
-                const wrColor = wr >= 60 ? 'text-emerald-400' : (wr >= 50 ? 'text-sky-400' : 'text-rose-400');
-                const pnlColor = stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
-
-                if (stats.trades > 0) {
-                    tbody.innerHTML += `
-                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
-                            <td class="py-3">${h.toString().padStart(2, '0')}:00</td>
-                            <td class="py-3 text-center">${stats.trades}</td>
-                            <td class="py-3 text-center font-bold ${wrColor}">${wr.toFixed(0)}%</td>
-                            <td class="py-3 text-right font-bold ${pnlColor}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
-                        </tr>
-                    `;
-                }
-            }
-        }
-
-        function renderDailyWinRate() {
-            const tbody = document.getElementById('daily-wr-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            const dayNames = ['Paz', 'Pts', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
-            const dailyStats = {};
-
-            for (let d = 0; d < 7; d++) {
-                dailyStats[d] = { trades: 0, wins: 0, pnl: 0 };
-            }
-
-            trades.forEach(t => {
-                const date = new Date(t.date);
-                const dayOfWeek = date.getDay();
-                dailyStats[dayOfWeek].trades++;
-                if (t.pnl > 0) dailyStats[dayOfWeek].wins++;
-                dailyStats[dayOfWeek].pnl += t.pnl;
-            });
-
-            for (let d = 0; d < 7; d++) {
-                const stats = dailyStats[d];
-                const wr = stats.trades > 0 ? (stats.wins / stats.trades * 100) : 0;
-                const wrColor = wr >= 60 ? 'text-emerald-400' : (wr >= 50 ? 'text-sky-400' : 'text-rose-400');
-                const pnlColor = stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
-
-                if (stats.trades > 0) {
-                    tbody.innerHTML += `
-                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
-                            <td class="py-3">${dayNames[d]}</td>
-                            <td class="py-3 text-center">${stats.trades}</td>
-                            <td class="py-3 text-center font-bold ${wrColor}">${wr.toFixed(0)}%</td>
-                            <td class="py-3 text-right font-bold ${pnlColor}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
-                        </tr>
-                    `;
-                }
-            }
-        }
-
-        function renderSetupPerformance() {
-            const tbody = document.getElementById('setup-perf-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            const setupStats = {};
-            const allSetups = entryTypes && entryTypes.length > 0 ? entryTypes : ['Liq.Sweep', 'OTE', 'Breaker', 'FVG', 'IFVG', 'Asia Range'];
-
-            allSetups.forEach(setup => {
-                setupStats[setup] = { trades: 0, wins: 0, rrSum: 0 };
-            });
-
-            trades.forEach(t => {
-                if (t.setupTypes && t.setupTypes.length > 0) {
-                    t.setupTypes.forEach(setup => {
-                        if (setupStats[setup]) {
-                            setupStats[setup].trades++;
-                            if (t.pnl > 0) setupStats[setup].wins++;
-                            const rr = parseFloat(t.rr) || 0;
-                            setupStats[setup].rrSum += rr;
-                        }
-                    });
-                }
-            });
-
-            Object.entries(setupStats).forEach(([setup, stats]) => {
-                if (stats.trades > 0) {
-                    const wr = (stats.wins / stats.trades * 100);
-                    const avgRr = stats.rrSum / stats.trades;
-                    const wrColor = wr >= 60 ? 'text-emerald-400' : (wr >= 50 ? 'text-sky-400' : 'text-rose-400');
-                    const rrColor = avgRr >= 1.5 ? 'text-emerald-400' : (avgRr >= 1 ? 'text-sky-400' : 'text-rose-400');
-
-                    tbody.innerHTML += `
-                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
-                            <td class="py-3">${setup}</td>
-                            <td class="py-3 text-center">${stats.trades}</td>
-                            <td class="py-3 text-center font-bold ${wrColor}">${wr.toFixed(0)}%</td>
-                            <td class="py-3 text-right font-bold ${rrColor}">${avgRr.toFixed(2)}R</td>
-                        </tr>
-                    `;
-                }
-            });
-        }
-
-        function renderBiasAccuracy() {
-            const tbody = document.getElementById('bias-acc-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            const biasStats = { 'Bullish': { trades: 0, wins: 0, pnl: 0 }, 'Bearish': { trades: 0, wins: 0, pnl: 0 }, 'Neutral': { trades: 0, wins: 0, pnl: 0 } };
-
-            trades.forEach(t => {
-                if (t.bias && biasStats[t.bias]) {
-                    biasStats[t.bias].trades++;
-                    if (t.pnl > 0) biasStats[t.bias].wins++;
-                    biasStats[t.bias].pnl += t.pnl;
-                }
-            });
-
-            Object.entries(biasStats).forEach(([bias, stats]) => {
-                if (stats.trades > 0) {
-                    const wr = (stats.wins / stats.trades * 100);
-                    const wrColor = wr >= 60 ? 'text-emerald-400' : (wr >= 50 ? 'text-sky-400' : 'text-rose-400');
-                    const pnlColor = stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
-
-                    tbody.innerHTML += `
-                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
-                            <td class="py-3">${bias}</td>
-                            <td class="py-3 text-center">${stats.trades}</td>
-                            <td class="py-3 text-center font-bold ${wrColor}">${wr.toFixed(0)}%</td>
-                            <td class="py-3 text-right font-bold ${pnlColor}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
-                        </tr>
-                    `;
-                }
-            });
-        }
-
-        function renderSessionPerformance() {
-            const tbody = document.getElementById('session-perf-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            const sessions = [
-                { name: 'Asia', start: 0, end: 8 },
-                { name: 'London Open', start: 10, end: 13 },
-                { name: 'NY Open', start: 15, end: 17 },
-                { name: 'NY PM', start: 17, end: 18 },
-                { name: 'London Close', start: 18, end: 20 }
-            ];
-
-            const sessionStats = {};
-            sessions.forEach(s => {
-                sessionStats[s.name] = { trades: 0, wins: 0, pnl: 0 };
-            });
-
-            trades.forEach(t => {
-                const hour = parseInt(t.time.split(':')[0]);
-                sessions.forEach(s => {
-                    if (hour >= s.start && hour < s.end) {
-                        sessionStats[s.name].trades++;
-                        if (t.pnl > 0) sessionStats[s.name].wins++;
-                        sessionStats[s.name].pnl += t.pnl;
-                    }
-                });
-            });
-
-            sessions.forEach(s => {
-                const stats = sessionStats[s.name];
-                if (stats.trades > 0) {
-                    const wr = (stats.wins / stats.trades * 100);
-                    const wrColor = wr >= 60 ? 'text-emerald-400' : (wr >= 50 ? 'text-sky-400' : 'text-rose-400');
-                    const pnlColor = stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
-
-                    tbody.innerHTML += `
-                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
-                            <td class="py-3">${s.name}</td>
-                            <td class="py-3 text-center">${stats.trades}</td>
-                            <td class="py-3 text-center font-bold ${wrColor}">${wr.toFixed(0)}%</td>
-                            <td class="py-3 text-right font-bold ${pnlColor}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
-                        </tr>
-                    `;
-                }
-            });
-        }
-
-        function renderHeatmap() {
-            const container = document.getElementById('heatmap-container');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const dayNames = ['Paz', 'Pts', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
-            const heatmapData = {};
-
-            for (let d = 0; d < 7; d++) {
-                for (let h = 0; h < 24; h++) {
-                    heatmapData[`${d}-${h}`] = { count: 0, wins: 0, pnl: 0 };
-                }
-            }
-
-            trades.forEach(t => {
-                const date = new Date(t.date);
-                const dayOfWeek = date.getDay();
-                const hour = parseInt(t.time.split(':')[0]);
-                const key = `${dayOfWeek}-${hour}`;
-                if (heatmapData[key]) {
-                    heatmapData[key].count++;
-                    if (t.pnl > 0) heatmapData[key].wins++;
-                    heatmapData[key].pnl += t.pnl;
-                }
-            });
-
-            let maxPnL = 0;
-            let minPnL = 0;
-            Object.values(heatmapData).forEach(cell => {
-                if (cell.pnl > maxPnL) maxPnL = cell.pnl;
-                if (cell.pnl < minPnL) minPnL = cell.pnl;
-            });
-
-            let html = '<table class="w-full border-collapse text-xs"><thead><tr><th class="p-1">Saat</th>';
-            dayNames.forEach(day => html += `<th class="p-1 border border-slate-700">${day}</th>`);
-            html += '</tr></thead><tbody>';
-
-            for (let h = 0; h < 24; h++) {
-                html += `<tr><td class="p-1 border border-slate-700 text-slate-400 font-bold">${h.toString().padStart(2, '0')}</td>`;
-                for (let d = 0; d < 7; d++) {
-                    const key = `${d}-${h}`;
-                    const cell = heatmapData[key];
-                    if (cell.count === 0) {
-                        html += `<td class="p-1 border border-slate-700 bg-slate-800/30 text-center">-</td>`;
-                    } else {
-                        const pnlNormalized = maxPnL !== minPnL ? (cell.pnl - minPnL) / (maxPnL - minPnL) : 0.5;
-                        const hue = cell.pnl >= 0 ? 120 : 0;
-                        const lightness = 25 + (pnlNormalized * 15);
-                        const bgColor = `hsl(${hue}, 80%, ${lightness}%)`;
-
-                        html += `<td class="p-1 border border-slate-700 text-white font-bold text-center cursor-help" style="background-color: ${bgColor};" title="İşlem: ${cell.count}, WR: ${cell.count > 0 ? (cell.wins/cell.count*100).toFixed(0) : 0}%, PnL: ${cell.pnl.toFixed(0)}">
-                            ${cell.count}
-                        </td>`;
-                    }
-                }
-                html += '</tr>';
-            }
-            html += '</tbody></table>';
-            container.innerHTML = html;
-        }
-
-        function renderInsights(pf, wr, rr) {
-            const insights = document.getElementById('report-insights');
-            if (!insights) return;
-            let html = '';
-
-            if (pf > 2 && wr > 60) {
-                html = '<p class="text-emerald-400 font-bold">Mükemmel Performans!</p><p>Stratejiniz oldukça verimli çalışıyor. Risk yönetiminizi koruyarak pozisyon büyüklüklerini kademeli artırmayı düşünebilirsiniz.</p>';
-            } else if (pf > 1.2 && rr > 1.5) {
-                html = '<p class="text-sky-400 font-bold">Yüksek Verimlilik</p><p>Kârlı bir sisteminiz var ve R:R oranınız sağlıklı. Win rate oranınızı artırmak için giriş sinyallerinizi filtrelemeye odaklanın.</p>';
-            } else if (pf < 1) {
-                html = '<p class="text-rose-400 font-bold">Risk Uyarısı</p><p>Sisteminiz şu an zarar üretiyor. İşlem sıklığını azaltın ve stop-loss seviyelerinizi gözden geçirin. Psikolojik disiplin önceliğiniz olmalı.</p>';
-            } else if (rr < 1 && wr > 50) {
-                html = '<p class="text-amber-400 font-bold">R:R Problemi</p><p>Sık kazanıyorsunuz ancak kayıplarınız kazançlarınızdan büyük. "Zararı kes, kârı sür" prensibini uygulamaya çalışın.</p>';
-            } else {
-                html = '<p class="text-slate-300 font-bold">Gelişim Alanı</p><p>Başa baş bir durumdasınız. İşlem maliyetlerini (komisyon/spread) hesaba katarak risk/ödül oranınızı (R:R) iyileştirmeye çalışın.</p>';
-            }
-
-            const worstSym = Object.entries(trades.reduce((acc, t) => { if(t.pnl < 0) acc[t.symbol] = (acc[t.symbol] || 0) + 1; return acc; }, {})).sort((a,b) => b[1]-a[1])[0]?.[0];
-            
-            const kzStats = ["London Open", "NY Open", "London Close", "NY PM"].map(kz => {
-                const kzTrades = trades.filter(t => t.killzone === kz);
-                const wins = kzTrades.filter(t => t.pnl > 0).length;
-                const wrVal = kzTrades.length > 0 ? (wins / kzTrades.length) * 100 : 0;
-                return { name: kz, wr: wrVal, count: kzTrades.length };
-            });
-
-            let kzAdvice = '';
-            if (kzStats[0].count > 0 && kzStats[1].count > 0) {
-                const bestKz = kzStats[0].wr > kzStats[1].wr ? kzStats[0] : kzStats[1];
-                const worstKz = kzStats[0].wr > kzStats[1].wr ? kzStats[1] : kzStats[0];
-                if (bestKz.wr - worstKz.wr > 20) {
-                    kzAdvice = `<p class="mt-2 text-sky-400 font-semibold">Seans Verimliliği: ${bestKz.name} seansında %${bestKz.wr.toFixed(0)} win-rate ile çok daha başarılısınız. ${worstKz.name} seansındaki işlemleri azaltmayı veya stratejinizi gözden geçirmeyi düşünebilirsiniz.</p>`;
-                }
-            }
-
-            html += `<div class="mt-4 pt-4 border-t border-slate-800 space-y-2">
-                ${kzAdvice}
-                <p class="italic text-xs text-slate-500">Öneri: ${worstSym ? worstSym + ' paritesinde çok sık hata yapıyorsunuz, bu sembolü bir süre izlemeye alın.' : 'İşlem disiplininizi koruyun.'}</p>
-            </div>`;
-
-            insights.innerHTML = html;
         }
 
         function drawEquityChart() {
@@ -3021,14 +3213,14 @@
 
         function updateStats() {
             const totalTrades = trades.length;
-            const wins = trades.filter(t => t.pnl > 0).length;
-            const winRate = totalTrades > 0 ? Math.round((wins / totalTrades) * 100) : 0;
+            const winsCount = trades.filter(t => t.pnl > 0).length;
+            const winRate = totalTrades > 0 ? Math.round((winsCount / totalTrades) * 100) : 0;
             const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
             
-            const avgWin = wins > 0 ? (trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0) / wins) : 0;
-            const losses = totalTrades - wins;
-            const avgLoss = losses > 0 ? (Math.abs(trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0)) / losses) : 0;
-            const expectancy = ( (wins/totalTrades) * avgWin ) - ( (losses/totalTrades) * avgLoss );
+            const avgWin = winsCount > 0 ? (trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0) / winsCount) : 0;
+            const lossesCount = totalTrades - winsCount;
+            const avgLoss = lossesCount > 0 ? (Math.abs(trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0)) / lossesCount) : 0;
+            const expectancy = ( (winsCount/totalTrades) * avgWin ) - ( (lossesCount/totalTrades) * avgLoss );
 
             const totalTransactions = transactions.reduce((sum, t) => t.type === 'deposit' ? sum + t.amount : sum - t.amount, 0);
             const currentBudget = balance + totalPnL + totalTransactions;
@@ -3109,6 +3301,7 @@
         }
 
         function openNoteModal(index = null) {
+            document.body.classList.add('overflow-hidden');
             editingNoteIndex = index;
             const modal = document.getElementById('note-modal');
             const titleInput = document.getElementById('note-title');
@@ -3131,6 +3324,7 @@
         }
 
         function closeNoteModal() {
+            document.body.classList.remove('overflow-hidden');
             document.getElementById('note-modal').classList.add('hidden');
         }
 
@@ -3198,21 +3392,16 @@
             entryTypes.push(value);
             localStorage.setItem('XAU_entryTypes', JSON.stringify(entryTypes));
             
-            if (isOnline) {
-                updateSyncStatus(true, "Eşitleniyor...");
-                set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
-                    .then(() => {
-                        localStorage.removeItem('entryTypes_unsynced');
-                        updateSyncStatus(true);
-                    })
-                    .catch(() => {
-                        localStorage.setItem('entryTypes_unsynced', 'true');
-                        updateSyncStatus(false);
-                    });
-            } else {
-                localStorage.setItem('entryTypes_unsynced', 'true');
-                updateSyncStatus(false);
-            }
+            updateSyncStatus(isOnline, "Eşitleniyor...");
+            set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
+                .then(() => {
+                    localStorage.removeItem('entryTypes_unsynced');
+                    updateSyncStatus(true);
+                })
+                .catch(() => {
+                    localStorage.setItem('entryTypes_unsynced', 'true');
+                    updateSyncStatus(false);
+                });
 
             input.value = '';
             renderEntryTypes();
@@ -3227,21 +3416,16 @@
             entryTypes.splice(index, 1);
             localStorage.setItem('XAU_entryTypes', JSON.stringify(entryTypes));
             
-            if (isOnline) {
-                updateSyncStatus(true, "Eşitleniyor...");
-                set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
-                    .then(() => {
-                        localStorage.removeItem('entryTypes_unsynced');
-                        updateSyncStatus(true);
-                    })
-                    .catch(() => {
-                        localStorage.setItem('entryTypes_unsynced', 'true');
-                        updateSyncStatus(false);
-                    });
-            } else {
-                localStorage.setItem('entryTypes_unsynced', 'true');
-                updateSyncStatus(false);
-            }
+            updateSyncStatus(isOnline, "Eşitleniyor...");
+            set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
+                .then(() => {
+                    localStorage.removeItem('entryTypes_unsynced');
+                    updateSyncStatus(true);
+                })
+                .catch(() => {
+                    localStorage.setItem('entryTypes_unsynced', 'true');
+                    updateSyncStatus(false);
+                });
 
             renderEntryTypes();
             const modal = document.getElementById('trade-modal');
@@ -3424,6 +3608,7 @@
         let confirmCallback = null;
 
         function showConfirm(title, message, callback) {
+            document.body.classList.add('overflow-hidden');
             const confirmTitleEl = document.getElementById('confirm-title');
             const confirmMsgEl = document.getElementById('confirm-message');
             if (confirmTitleEl && confirmMsgEl) {
@@ -3439,80 +3624,3 @@
                     if (confirmCallback) confirmCallback();
                     closeConfirmModal();
                 };
-            }
-        }
-
-        function closeConfirmModal() {
-            document.getElementById('confirm-modal').classList.add('hidden');
-            confirmCallback = null;
-        }
-
-        function showToast(message, icon = 'check-circle', color = 'sky') {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toast-message');
-            const toastIcon = document.getElementById('toast-icon');
-            if (!toast || !toastMsg || !toastIcon) return;
-            
-            toastMsg.innerText = message;
-            toastIcon.setAttribute('data-lucide', icon);
-            toastIcon.className = `w-5 h-5 text-${color}-500`;
-            
-            toast.classList.remove('hidden');
-            lucide.createIcons();
-            
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
-        }
-
-        function updateDateDisplay() {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const el = document.getElementById('current-date-display');
-            if (el) el.innerText = new Date().toLocaleDateString('tr-TR', options);
-        }
-
-        // Module Bindings mapping directly to the global HTML window object
-        const globalFunctions = {
-            checkLockPassword,
-            toggleMobileSidebar,
-            switchTab,
-            backupData,
-            restoreData,
-            lockApp,
-            openAccountModal,
-            closeAccountModal,
-            saveAccount,
-            changeMonth,
-            openTradeModal,
-            exportTrades,
-            closeTradeModal,
-            handleTradeSubmit,
-            setTradeType,
-            setBias,
-            updateKillzone,
-            updateRRDisplay,
-            setExitReason,
-            openNoteModal,
-            closeNoteModal,
-            saveNote,
-            deleteNote,
-            addEntryType,
-            deleteEntryType,
-            saveInitialBalance,
-            executeTransaction,
-            closeConfirmModal,
-            toggleAccountStatus,
-            confirmDeleteAccount,
-            deleteAccount,
-            editTrade,
-            deleteTrade,
-            selectAccount,
-            toggleSetup
-        };
-
-        Object.keys(globalFunctions).forEach(key => {
-            window[key] = globalFunctions[key];
-        });
-    </script>
-</body>
-</html>
