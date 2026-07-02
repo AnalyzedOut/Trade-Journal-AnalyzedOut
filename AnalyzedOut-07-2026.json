@@ -1,0 +1,44 @@
+{
+  "accounts": [
+    {
+      "id": "acc_1782993229561",
+      "name": "AnalyzedOut",
+      "isActive": true,
+      "createdAt": "2026-07-02T11:53:49.561Z"
+    }
+  ],
+  "currentAccountId": "acc_1782993229561",
+  "entryTypes": [
+    "Asia Range Sweep",
+    "iFVG",
+    "FVG",
+    "Breaker",
+    "Mitigation"
+  ],
+  "data": {
+    "trades_acc_1782993229561": [
+      {
+        "id": "1782993275752",
+        "symbol": "XAUUSD",
+        "date": "2026-07-02",
+        "time": "14:53",
+        "type": "Long",
+        "entryType": "Asia Range Sweep",
+        "setupTypes": [
+          "iFVG"
+        ],
+        "killzone": "Outside Killzone",
+        "rPercent": 1,
+        "rr": "-",
+        "lot": 0.01,
+        "pnl": 10,
+        "exitReason": "Manuel",
+        "bias": "Bullish",
+        "notes": "Tester OB FVG CISD"
+      }
+    ],
+    "notes_acc_1782993229561": [],
+    "balance_acc_1782993229561": "0",
+    "transactions_acc_1782993229561": []
+  }
+}
