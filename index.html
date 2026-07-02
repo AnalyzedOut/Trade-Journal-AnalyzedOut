@@ -7,42 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    
-    <!-- Instant Lock Screen Script (Network-independent) -->
-    <script>
-        const LOCK_PASSWORD = '6592';
-        function checkLockPassword() {
-            const input = document.getElementById('lock-password-input');
-            const error = document.getElementById('lock-error');
-            if (input && input.value === LOCK_PASSWORD) {
-                localStorage.setItem('XAU_unlocked', 'true');
-                if (error) error.classList.add('hidden');
-                unlockApp();
-            } else if (error) {
-                error.classList.remove('hidden');
-                if (input) {
-                    input.value = '';
-                    input.focus();
-                }
-            }
-        }
-        function unlockApp() {
-            const lockScreen = document.getElementById('lock-screen');
-            if (lockScreen) lockScreen.classList.add('hidden');
-            if (typeof window.initAccounts === 'function') {
-                window.initAccounts();
-            }
-            if (typeof window.updateDateDisplay === 'function') {
-                window.updateDateDisplay();
-            }
-            if (typeof window.switchTab === 'function') {
-                window.switchTab('home');
-            }
-        }
-        window.checkLockPassword = checkLockPassword;
-        window.unlockApp = unlockApp;
-    </script>
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&display=swap');
         body {
@@ -1069,8 +1033,8 @@
             }
         }
 
-        // Defer-safe app initialization sequence
-        function initApp() {
+        // On Load Routines
+        window.onload = () => {
             lucide.createIcons();
             
             // Immediate offline cache recovery sequence
@@ -1088,19 +1052,12 @@
             if (localStorage.getItem('XAU_unlocked') === 'true') {
                 unlockApp();
             } else {
-                const pwdInp = document.getElementById('lock-password-input');
-                if (pwdInp) pwdInp.focus();
+                document.getElementById('lock-password-input').focus();
             }
 
             // Sync Database Handlers
             initFirebaseSync();
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
-        }
+        };
 
         // Firebase Sync Initialize Routines
         function initFirebaseSync() {
@@ -1121,11 +1078,11 @@
             const accountsRef = ref(db, "tradeJournal/6592/accounts");
             onValue(accountsRef, (snapshot) => {
                 const val = snapshot.val();
-                const isFirstFirebaseLoad = !firebaseAccountsLoaded;
                 firebaseAccountsLoaded = true;
 
                 if (val) {
                     accounts = val;
+                    // Protect and preserve existing createdAt values during local storage updates
                     accounts.forEach(acc => {
                         if (!acc.createdAt) {
                             acc.createdAt = new Date().toISOString();
@@ -1142,31 +1099,31 @@
                         subscribeToAccount(currentAccountId);
                     }
                 } else {
-                    if (isFirstFirebaseLoad && isOnline) {
-                        const localAccounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [];
-                        if (localAccounts.length > 0) {
-                            accounts = localAccounts;
-                            accounts.forEach(acc => {
-                                if (!acc.createdAt) {
-                                    acc.createdAt = new Date().toISOString();
-                                }
-                            });
-                            set(accountsRef, accounts);
-                        } else {
-                            const defaultAccount = {
-                                id: 'acc_' + Date.now(),
-                                name: 'Kişisel',
-                                isActive: true,
-                                createdAt: new Date().toISOString()
-                            };
-                            accounts = [defaultAccount];
-                            currentAccountId = defaultAccount.id;
-                            localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
-                            localStorage.setItem('XAU_currentAccountId', currentAccountId);
-                            
-                            set(accountsRef, accounts);
-                            loadAccountData(currentAccountId);
-                        }
+                    // Firebase returned null (completely empty cloud DB)
+                    const localAccounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [];
+                    if (localAccounts.length > 0) {
+                        accounts = localAccounts;
+                        accounts.forEach(acc => {
+                            if (!acc.createdAt) {
+                                acc.createdAt = new Date().toISOString();
+                            }
+                        });
+                        set(accountsRef, accounts);
+                    } else {
+                        // Creating default account only when both Firebase and Local are completely empty
+                        const defaultAccount = {
+                            id: 'acc_' + Date.now(),
+                            name: 'Kişisel',
+                            isActive: true,
+                            createdAt: new Date().toISOString()
+                        };
+                        accounts = [defaultAccount];
+                        currentAccountId = defaultAccount.id;
+                        localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
+                        localStorage.setItem('XAU_currentAccountId', currentAccountId);
+                        
+                        set(accountsRef, accounts);
+                        loadAccountData(currentAccountId);
                     }
                 }
             });
@@ -1296,6 +1253,46 @@
                         .then(() => localStorage.removeItem(`transactions_${accId}_unsynced`));
                 }
             });
+        }
+
+        function checkLockPassword() {
+            const input = document.getElementById('lock-password-input');
+            const error = document.getElementById('lock-error');
+            if (input.value === LOCK_PASSWORD) {
+                localStorage.setItem('XAU_unlocked', 'true');
+                error.classList.add('hidden');
+                unlockApp();
+            } else {
+                error.classList.remove('hidden');
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        function unlockApp() {
+            document.getElementById('lock-screen').classList.add('hidden');
+            initAccounts();
+            updateDateDisplay();
+            switchTab('home');
+        }
+
+        function lockApp() {
+            showConfirm('Çıkış Yap', 'Uygulamadan çıkmak istediğinize emin misiniz?', () => {
+                localStorage.removeItem('XAU_unlocked');
+                location.reload();
+            });
+        }
+
+        function toggleMobileSidebar(show) {
+            const sidebar = document.getElementById('sidebar-menu');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (show) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
         }
 
         function initAccounts() {
@@ -3116,9 +3113,6 @@
                 .attr("color", "#475569");
 
             svg.append("g")
-                .class = "grid";
-
-            svg.append("g")
                 .attr("class", "grid")
                 .call(d3.axisLeft(y).ticks(5).tickSize(-width).tickFormat(""))
                 .attr("stroke-opacity", 0.05)
@@ -3612,8 +3606,7 @@
 
         // Module Bindings mapping directly to the global HTML window object
         const globalFunctions = {
-            checkLockPassword: window.checkLockPassword,
-            unlockApp: window.unlockApp,
+            checkLockPassword,
             toggleMobileSidebar,
             switchTab,
             backupData,
