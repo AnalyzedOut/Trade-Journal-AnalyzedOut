@@ -9,6 +9,42 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Instant Lock Screen Script (Network-independent) -->
+    <script>
+        const LOCK_PASSWORD = '6592';
+        function checkLockPassword() {
+            const input = document.getElementById('lock-password-input');
+            const error = document.getElementById('lock-error');
+            if (input && input.value === LOCK_PASSWORD) {
+                localStorage.setItem('XAU_unlocked', 'true');
+                if (error) error.classList.add('hidden');
+                unlockApp();
+            } else if (error) {
+                error.classList.remove('hidden');
+                if (input) {
+                    input.value = '';
+                    input.focus();
+                }
+            }
+        }
+        function unlockApp() {
+            const lockScreen = document.getElementById('lock-screen');
+            if (lockScreen) lockScreen.classList.add('hidden');
+            if (typeof window.initAccounts === 'function') {
+                window.initAccounts();
+            }
+            if (typeof window.updateDateDisplay === 'function') {
+                window.updateDateDisplay();
+            }
+            if (typeof window.switchTab === 'function') {
+                window.switchTab('home');
+            }
+        }
+        window.checkLockPassword = checkLockPassword;
+        window.unlockApp = unlockApp;
+    </script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&display=swap');
         body {
