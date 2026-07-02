@@ -9,34 +9,56 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; color: #f8fafc; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
-        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .active-tab { background-color: #0ea5e9; color: white !important; }
-        .active-tab i, .active-tab span { color: white !important; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .dark-card { background-color: #0f172a; border: 1px solid #1e293b; }
-        .dark-input { background-color: #1e293b; border: 1px solid #334155; color: #f8fafc; }
-        .dark-input:focus { border-color: #0ea5e9; ring: 2px; ring-color: #0ea5e9; }
-        
-        /* Bulut Yükleme Ekranı */
-        #cloud-loader {
-            position: fixed; inset: 0; background: #020617; z-index: 9999;
-            display: flex; flex-direction: column; items-center; justify-content: center;
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
         }
-        .loading-spinner {
-            width: 50px; height: 50px; border: 5px solid #1e293b; border-top: 5px solid #0ea5e9;
-            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .glass {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .active-tab {
+            background-color: #0ea5e9; /* Sky 500 */
+            color: white !important;
+        }
+        .active-tab i, .active-tab span {
+            color: white !important;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .dark-card {
+            background-color: #0f172a;
+            border: 1px solid #1e293b;
+        }
+        .dark-input {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            color: #f8fafc;
+        }
+        .dark-input:focus {
+            border-color: #0ea5e9;
+            ring: 2px;
+            ring-color: #0ea5e9;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex overflow-hidden relative">
 
-    <!-- Yükleme Ekranı: Firebase verisi gelene kadar her şeyi gizler -->
-    <div id="cloud-loader">
-        <div class="loading-spinner"></div>
-        <p class="text-sky-500 font-bold tracking-widest animate-pulse uppercase">Veriler Buluttan Çekiliyor...</p>
+    <!-- Cloud Loader Screen (Race Condition Fix) -->
+    <div id="cloud-loader" class="fixed inset-0 bg-slate-950 z-[110] flex flex-col items-center justify-center p-6 space-y-4">
+        <div class="flex items-center space-x-2 text-sky-500 font-bold text-3xl tracking-tight animate-pulse mb-2">
+            <i data-lucide="trending-up" class="w-10 h-10"></i>
+            <span>AnalyzedOut</span>
+        </div>
+        <div class="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-slate-400 font-medium text-sm">Bulut verileri eşitleniyor, lütfen bekleyin...</p>
     </div>
 
     <!-- Lock Screen -->
@@ -59,7 +81,10 @@
         </div>
     </div>
 
-    <!-- Sidebar & Main Content (HTML Yapınız Birebir Aynı Kaldı) -->
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 hidden lg:hidden"></div>
+
+    <!-- Sidebar -->
     <aside id="sidebar-menu" class="fixed lg:static inset-y-0 left-0 w-64 min-w-[256px] shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col h-screen z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
         <div class="p-6 flex items-center justify-between">
             <div class="flex items-center space-x-2 text-sky-500 font-bold text-xl tracking-tight">
@@ -104,10 +129,31 @@
                 </button>
             </div>
         </nav>
-        <!-- Diğer sidebar butonları... -->
+
+        <div id="bottom-home-nav" class="hidden px-4 mb-2">
+            <button onclick="switchTab('home')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                <span class="font-semibold">Ana Sayfa</span>
+            </button>
+        </div>
+
+        <div class="p-4 border-t border-slate-800 flex justify-around items-center">
+            <button onclick="backupData()" class="p-3 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-sky-400 transition-all" title="Verileri Yedekle">
+                <i data-lucide="save" class="w-5 h-5"></i>
+            </button>
+            <button onclick="document.getElementById('restore-input').click()" class="p-3 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-emerald-400 transition-all" title="Yedekten Geri Yükle">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+            </button>
+            <button onclick="lockApp()" class="p-3 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-rose-400 transition-all" title="Çıkış Yap">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+            </button>
+            <input type="file" id="restore-input" class="hidden" accept=".json" onchange="restoreData(event)">
+        </div>
     </aside>
 
+    <!-- Main Content -->
     <main class="flex-grow overflow-y-auto h-screen scrollbar-hide relative w-full">
+        
         <!-- Header -->
         <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-4 sticky top-0 z-30 flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -118,16 +164,23 @@
             </div>
             <div class="flex items-center space-x-4">
                 <span id="current-date-display" class="text-sm font-medium text-slate-400 hidden sm:inline"></span>
+                
+                <!-- Sync Connection Indicator -->
                 <div id="sync-indicator" class="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs">
                     <span id="sync-indicator-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                     <span id="sync-indicator-text" class="text-slate-400 font-medium">Bağlanıyor...</span>
                 </div>
-                <div id="account-badge" class="px-3 py-1.5 rounded-full bg-sky-900/50 flex items-center justify-center text-sky-400 font-bold border border-sky-800 text-sm">MT</div>
+
+                <div id="account-badge" class="px-3 py-1.5 rounded-full bg-sky-900/50 flex items-center justify-center text-sky-400 font-bold border border-sky-800 text-sm">
+                    MT
+                </div>
             </div>
         </header>
 
+        <!-- Sections Container -->
         <div class="p-8">
-            <!-- SECTION HOME -->
+            
+            <!-- Home Section (Account Management) -->
             <section id="section-home" class="hidden space-y-8">
                 <div class="flex justify-between items-center">
                     <h3 class="text-2xl font-bold text-slate-100">Hesaplar</h3>
@@ -136,19 +189,25 @@
                         <span>Yeni Hesap Ekle</span>
                     </button>
                 </div>
+
                 <div class="space-y-6">
                     <div>
                         <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Aktif Hesaplar</h4>
-                        <div id="active-accounts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                        <div id="active-accounts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Active accounts will be injected here -->
+                        </div>
                     </div>
+
                     <div>
                         <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Pasif Hesaplar</h4>
-                        <div id="passive-accounts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                        <div id="passive-accounts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Passive accounts will be injected here -->
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- SECTION CALENDAR -->
+            <!-- Calendar Section -->
             <section id="section-calendar" class="space-y-6">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center space-x-4">
@@ -165,6 +224,7 @@
                         <span>Yeni İşlem</span>
                     </button>
                 </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     <div class="lg:col-span-3 bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-sm">
                         <div class="calendar-grid bg-slate-800/50 border-b border-slate-800">
@@ -176,21 +236,67 @@
                             <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest text-sky-500/70">Cmt</div>
                             <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest text-sky-500/70">Paz</div>
                         </div>
-                        <div id="calendar-days" class="calendar-grid divide-x divide-y divide-slate-800"></div>
+                        <div id="calendar-days" class="calendar-grid divide-x divide-y divide-slate-800">
+                            <!-- Days will be injected here -->
+                        </div>
                     </div>
+                    
+                    <!-- Weekly Stats Column -->
                     <div class="space-y-4">
                         <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
                             <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Hafta</h4>
-                            <div id="weekly-stats-container" class="space-y-4"></div>
+                            <div id="weekly-stats-container" class="space-y-4">
+                                <!-- Weekly stats will be injected here -->
+                            </div>
                         </div>
                     </div>
                 </div>
-                <!-- Aylık İşlem Geçmişi Tablosu... -->
+
+                <!-- Monthly Trade History -->
+                <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="text-lg font-bold text-slate-100">Aylık İşlem Geçmişi</h4>
+                        <div id="monthly-stats" class="text-sm font-semibold text-slate-400"></div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-slate-500 text-sm border-b border-slate-800">
+                                    <th class="pb-4 font-semibold">Tarih</th>
+                                    <th class="pb-4 font-semibold">Parite</th>
+                                    <th class="pb-4 font-semibold">İşlem (Long/short)</th>
+                                    <th class="pb-4 font-semibold">PnL</th>
+                                    <th class="pb-4 font-semibold">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthly-trades-body" class="divide-y divide-slate-800">
+                                <!-- Monthly trades will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
 
-            <!-- ANALYSIS SECTION (3600 satırlık dev yapı burada duruyor) -->
+            <!-- History Section -->
+            <section id="section-history" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-slate-100">İşlemler</h3>
+                    <div class="flex space-x-2">
+                        <button onclick="exportTrades()" class="bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-semibold hover:bg-slate-700 transition-all flex items-center space-x-2">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Dışa Aktar</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="detailed-history-container" class="space-y-8">
+                    <!-- Detailed history grouped by month will be injected here -->
+                </div>
+            </section>
+
+            <!-- Analysis Section -->
             <section id="section-analysis" class="hidden space-y-8">
-                <!-- Burası Equity Curve, Isı Haritası vb. her şeyi içerir -->
+                <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
                     <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
                         <p class="text-sm font-medium text-slate-500 mb-1">Anlık Bütçe</p>
@@ -204,27 +310,649 @@
                         <p class="text-sm font-medium text-slate-500 mb-1">Win Rate</p>
                         <p id="stat-win-rate" class="text-3xl font-bold text-sky-500">0%</p>
                     </div>
-                    <!-- ... Diğer kartlar ... -->
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Profit Factor</p>
+                        <p id="stat-profit-factor" class="text-3xl font-bold text-slate-100">0.00</p>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Expectancy</p>
+                        <p id="stat-expectancy" class="text-3xl font-bold text-slate-100">$0.00</p>
+                    </div>
                 </div>
+
+                <!-- Charts Row 1 -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
                         <div class="flex justify-between items-center mb-6">
-                            <h4 class="text-lg font-bold text-slate-100">Equity Curve</h4>
+                            <h4 class="text-lg font-bold text-slate-100">Equity Curve (Sermaye Eğrisi)</h4>
                             <span id="report-drawdown" class="text-xs font-bold text-rose-500 bg-rose-500/10 px-2 py-1 rounded-lg">Max DD: 0%</span>
                         </div>
                         <div id="equity-chart" class="w-full h-64 bg-slate-950/50 rounded-2xl overflow-hidden"></div>
                     </div>
-                    <!-- ... Orijinal tüm tablolarınız ... -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">P&L Dağılımı (Sembol Bazlı)</h4>
+                        <div id="symbol-chart" class="w-full h-64 bg-slate-950/50 rounded-2xl overflow-hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 2 -->
+                <div class="grid grid-cols-1 gap-8">
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Günlere Göre Performans</h4>
+                        <div id="day-chart" class="w-full h-64 bg-slate-950/50 rounded-2xl overflow-hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Hourly Performance & Daily Win Rate -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Hourly Performance -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Saatlik Verimliliği</h4>
+                        <div id="hourly-performance-table" class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-slate-500 border-b border-slate-800">
+                                        <th class="pb-3 text-left font-semibold">Saat</th>
+                                        <th class="pb-3 text-center font-semibold">İşlem</th>
+                                        <th class="pb-3 text-center font-semibold">WR %</th>
+                                        <th class="pb-3 text-right font-semibold">PnL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hourly-perf-body" class="divide-y divide-slate-800">
+                                    <!-- Hourly data injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Daily Win Rate -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Günlük Win Rate</h4>
+                        <div id="daily-winrate-table" class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-slate-500 border-b border-slate-800">
+                                        <th class="pb-3 text-left font-semibold">Gün</th>
+                                        <th class="pb-3 text-center font-semibold">İşlem</th>
+                                        <th class="pb-3 text-center font-semibold">WR %</th>
+                                        <th class="pb-3 text-right font-semibold">PnL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="daily-wr-body" class="divide-y divide-slate-800">
+                                    <!-- Daily WR data injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setup Performance & Bias Accuracy -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Setup Performance -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Setup Performansı</h4>
+                        <div id="setup-performance-table" class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-slate-500 border-b border-slate-800">
+                                        <th class="pb-3 text-left font-semibold">Setup</th>
+                                        <th class="pb-3 text-center font-semibold">İşlem</th>
+                                        <th class="pb-3 text-center font-semibold">WR %</th>
+                                        <th class="pb-3 text-right font-semibold">Ort RR</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="setup-perf-body" class="divide-y divide-slate-800">
+                                    <!-- Setup data injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Bias Accuracy -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Bias M15 Doğruluğu</h4>
+                        <div id="bias-accuracy-table" class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-slate-500 border-b border-slate-800">
+                                        <th class="pb-3 text-left font-semibold">Bias</th>
+                                        <th class="pb-3 text-center font-semibold">İşlem</th>
+                                        <th class="pb-3 text-center font-semibold">WR %</th>
+                                        <th class="pb-3 text-right font-semibold">PnL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bias-acc-body" class="divide-y divide-slate-800">
+                                    <!-- Bias accuracy data injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Analysis & Heatmap -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Session Performance -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Seans Performansı (TR Saati)</h4>
+                        <div id="session-performance-table" class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-slate-500 border-b border-slate-800">
+                                        <th class="pb-3 text-left font-semibold">Seans</th>
+                                        <th class="pb-3 text-center font-semibold">İşlem</th>
+                                        <th class="pb-3 text-center font-semibold">WR %</th>
+                                        <th class="pb-3 text-right font-semibold">PnL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="session-perf-body" class="divide-y divide-slate-800">
+                                    <!-- Session data injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Heatmap -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Isı Haritası (Gün × Saat)</h4>
+                        <div id="heatmap-container" class="overflow-x-auto">
+                            <!-- Heatmap grid injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 3 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">RR Dağılımı (Histogram)</h4>
+                        <div id="rr-distribution-chart" class="w-full h-64 bg-slate-950/50 rounded-2xl overflow-hidden"></div>
+                    </div>
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Killzone/Seans Analizi (Win Rate)</h4>
+                        <div id="killzone-winrate-chart" class="w-full h-64 bg-slate-950/50 rounded-2xl overflow-hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Advanced Statistics & Session/Psychology Insights -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Session Advanced Stats -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-6">
+                        <h4 class="text-lg font-bold text-slate-100 border-b border-slate-800 pb-4">Gelişmiş Seans Analizi</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Kârlı Seans</p>
+                                <p id="stat-best-session" class="text-sm font-bold text-emerald-400">-</p>
+                            </div>
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Zararlı Seans</p>
+                                <p id="stat-worst-session" class="text-sm font-bold text-rose-400">-</p>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left">
+                                <thead>
+                                    <tr class="text-slate-500 border-b border-slate-800/50 pb-2">
+                                        <th class="pb-2 font-semibold">Seans</th>
+                                        <th class="pb-2 text-center font-semibold">İşlem</th>
+                                        <th class="pb-2 text-center font-semibold">WR %</th>
+                                        <th class="pb-2 text-center font-semibold">Ort RR</th>
+                                        <th class="pb-2 text-right font-semibold">Ort PnL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="session-adv-body" class="divide-y divide-slate-800/30">
+                                    <!-- Session Adv Rows Injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Monthly Session Performance breakdown -->
+                        <div class="pt-4 border-t border-slate-800">
+                            <h5 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Aylara Göre Seans Performansı</h5>
+                            <div id="monthly-session-perf" class="space-y-2 max-h-48 overflow-y-auto scrollbar-hide pr-1 text-xs">
+                                <!-- Monthly session rows -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Psychology & HTF Bias Stats -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-6">
+                        <h4 class="text-lg font-bold text-slate-100 border-b border-slate-800 pb-4">Psikoloji & HTF Bias Analizi</h4>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Çok Yapılan Hata (Psikoloji)</p>
+                                <p id="stat-psych-mistake" class="text-sm font-bold text-rose-400">-</p>
+                            </div>
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Sık Pozitif Psikoloji</p>
+                                <p id="stat-psych-positive" class="text-sm font-bold text-emerald-400">-</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Yüksek WR HTF Bias</p>
+                                <p id="stat-bias-best-wr" class="text-sm font-bold text-emerald-400">-</p>
+                            </div>
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">En Düşük WR HTF Bias</p>
+                                <p id="stat-bias-worst-wr" class="text-sm font-bold text-rose-400">-</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h5 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Setup Metrikleri</h5>
+                            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                                <div class="bg-slate-950/20 p-2.5 rounded-xl border border-slate-800/60">
+                                    <p class="text-slate-500 text-[10px] uppercase font-bold mb-1">En Çok Kazandıran</p>
+                                    <p id="stat-profitable-setup" class="font-bold text-slate-200">-</p>
+                                </div>
+                                <div class="bg-slate-950/20 p-2.5 rounded-xl border border-slate-800/60">
+                                    <p class="text-slate-500 text-[10px] uppercase font-bold mb-1">En Yüksek WR Setup</p>
+                                    <p id="stat-wr-setup" class="font-bold text-slate-200">-</p>
+                                </div>
+                                <div class="bg-slate-950/20 p-2.5 rounded-xl border border-slate-800/60">
+                                    <p class="text-slate-500 text-[10px] uppercase font-bold mb-1">En Sık Kullanılan</p>
+                                    <p id="stat-used-setup" class="font-bold text-slate-200">-</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-800">
+                            <h5 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Psikolojik Kazanma Oranı (Win Rate)</h5>
+                            <div id="psychology-wr-list" class="space-y-1 max-h-32 overflow-y-auto scrollbar-hide pr-1">
+                                <!-- Psychology win rates Injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Analysis Report -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Periodical & Risk Performance -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-6">
+                        <h4 class="text-lg font-bold text-slate-100 border-b border-slate-800 pb-4">Risk & Verimlilik</h4>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">Günlük P&L</span>
+                                <span id="report-daily-pnl" class="font-bold">$0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">Haftalık P&L</span>
+                                <span id="report-weekly-pnl" class="font-bold">$0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">Aylık P&L</span>
+                                <span id="report-monthly-pnl" class="font-bold">$0</span>
+                            </div>
+                            <div class="pt-4 border-t border-slate-800 space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">Ort. Kazanç / Kayıp (R:R)</span>
+                                    <span id="report-rr-ratio" class="font-bold text-sky-500">0.00</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">Expectancy (Beklenti)</span>
+                                    <span id="report-expectancy-val" class="font-bold text-slate-100">$0</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">Max Win Streak</span>
+                                    <span id="report-win-streak" class="font-bold text-emerald-500">0</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">Max Loss Streak</span>
+                                    <span id="report-loss-streak" class="font-bold text-rose-500">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Best/Worst Pairs -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-6">
+                        <h4 class="text-lg font-bold text-slate-100 border-b border-slate-800 pb-4">Sembol Analizi</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase mb-2">En Başarılı Pariteler</p>
+                                <div id="report-best-pairs" class="space-y-2">
+                                    <!-- Best pairs injected here -->
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase mb-2">En Başarısız Pariteler</p>
+                                <div id="report-worst-pairs" class="space-y-2">
+                                    <!-- Worst pairs injected here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trading Insights & Plan -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-6">
+                        <h4 class="text-lg font-bold text-slate-100 border-b border-slate-800 pb-4">Yol Planı & Öngörüler</h4>
+                        <div id="report-insights" class="space-y-4 text-sm text-slate-400 leading-relaxed">
+                            <!-- Insights injected here -->
+                        </div>
+                    </div>
                 </div>
             </section>
+
+            <!-- Balance Section -->
+            <section id="section-balance" class="hidden space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Anlık Bakiye</p>
+                        <p id="balance-current" class="text-3xl font-bold text-slate-100">$0</p>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Toplam Yatırılan</p>
+                        <p id="balance-total-deposit" class="text-3xl font-bold text-emerald-400">$0</p>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Toplam Çekilen</p>
+                        <p id="balance-total-withdraw" class="text-3xl font-bold text-rose-400">$0</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                    <h4 class="text-lg font-bold text-slate-100 mb-6">2026 Yılı Bakiye / Aylık</h4>
+                    <div id="balance-chart" class="w-full h-80 bg-slate-950/50 rounded-2xl overflow-hidden"></div>
+                </div>
+
+                <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                    <h4 class="text-lg font-bold text-slate-100 mb-6">İşlem Geçmişi (Yatırma/Çekme)</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-slate-500 text-sm border-b border-slate-800">
+                                    <th class="pb-4 font-semibold">Tarih</th>
+                                    <th class="pb-4 font-semibold">İşlem Tipi</th>
+                                    <th class="pb-4 font-semibold">Miktar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="balance-history-body" class="divide-y divide-slate-800">
+                                <!-- Balance history will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notes Section -->
+            <section id="section-notes" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-slate-100">Strateji Notları</h3>
+                    <button onclick="openNoteModal()" class="bg-sky-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-sky-700 transition-all flex items-center space-x-2 shadow-lg shadow-sky-900/20">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                        <span>Not Ekle</span>
+                    </button>
+                </div>
+                <div id="notes-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Notes will be injected here -->
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="section-settings" class="hidden space-y-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Setup Management -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Setup Yönetimi</h4>
+                        <div class="space-y-4">
+                            <div class="flex space-x-2">
+                                <input type="text" id="new-entry-type" placeholder="Yeni Setup..." class="flex-grow px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                                <button onclick="addEntryType()" class="bg-sky-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-sky-700 transition-all">
+                                    <i data-lucide="plus" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                            <div id="entry-types-list" class="space-y-2 max-h-64 overflow-y-auto pr-2 scrollbar-hide">
+                                <!-- Entry types will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Balance Management -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Bakiye Yönetimi</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-400 mb-2">Başlangıç Bakiyesi ($)</label>
+                                <input type="number" id="initial-balance-input" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all mb-4">
+                                <button id="save-balance-btn" onclick="saveInitialBalance()" class="w-full bg-sky-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-sky-700 transition-all">
+                                    Bakiyeyi Gir
+                                </button>
+                            </div>
+                            <div class="pt-4 border-t border-slate-800">
+                                <label class="block text-sm font-semibold text-slate-400 mb-2">Miktar ($)</label>
+                                <input type="number" id="transaction-amount-input" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all mb-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <button onclick="executeTransaction('deposit')" class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-6 py-3 rounded-xl font-bold hover:bg-emerald-600/30 transition-all flex items-center justify-center space-x-2">
+                                        <i data-lucide="arrow-down-left" class="w-5 h-5"></i>
+                                        <span>Para Yatır</span>
+                                    </button>
+                                    <button onclick="executeTransaction('withdraw')" class="bg-rose-600/20 text-rose-400 border border-rose-500/30 px-6 py-3 rounded-xl font-bold hover:bg-rose-600/30 transition-all flex items-center justify-center space-x-2">
+                                        <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+                                        <span>Para Çek</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </div>
     </main>
 
-    <!-- Script Kısmı (KRİTİK DEĞİŞİKLİKLER) -->
+    <!-- Account Modal -->
+    <div id="account-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+        <div class="bg-slate-900 w-full max-w-md rounded-3xl border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <h3 class="text-xl font-bold text-slate-100">Yeni Hesap Oluştur</h3>
+                <button onclick="closeAccountModal()" class="p-2 hover:bg-slate-800 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+                </button>
+            </div>
+            <div class="p-8 space-y-6">
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase">Hesap Adı</label>
+                    <input type="text" id="account-name-input" placeholder="Örn: Kişisel, Fon Hesabı..." class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                </div>
+            </div>
+            <div class="p-8 border-t border-slate-800 bg-slate-900/50">
+                <button onclick="saveAccount()" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
+                    Hesabı Oluştur
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trade Modal -->
+    <div id="trade-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+        <div class="bg-slate-900 w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                <h3 id="modal-title" class="text-xl font-bold text-slate-100">Yeni İşlem Ekle</h3>
+                <button onclick="closeTradeModal()" type="button" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <form id="trade-form" onsubmit="handleTradeSubmit(event)" class="flex flex-col overflow-hidden h-full">
+                <div class="p-6 space-y-4 overflow-y-auto flex-grow scrollbar-hide" id="modal-scrollable-body">
+                    <input type="hidden" id="trade-id">
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Tarih</label>
+                            <input type="date" id="trade-date" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Saat</label>
+                            <input type="time" id="trade-time" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Parite</label>
+                            <div class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 font-bold text-lg flex items-center justify-center">
+                                XAU/USD
+                            </div>
+                            <input type="hidden" id="trade-symbol" value="XAUUSD">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">İşlem</label>
+                            <div class="flex space-x-2">
+                                <button type="button" onclick="setTradeType('Long')" id="btn-type-Long" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Long</button>
+                                <button type="button" onclick="setTradeType('Short')" id="btn-type-Short" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Short</button>
+                            </div>
+                            <input type="hidden" id="trade-type" value="Long">
+                        </div>
+                    </div>
+
+                    <!-- Trading Session -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Trading Session (Seans)</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button type="button" onclick="setSession('Asia')" id="btn-session-Asia" class="py-2.5 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs">Asia</button>
+                            <button type="button" onclick="setSession('London')" id="btn-session-London" class="py-2.5 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs">London</button>
+                            <button type="button" onclick="setSession('New York')" id="btn-session-NewYork" class="py-2.5 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs">NY</button>
+                            <button type="button" onclick="setSession('Kill Zone')" id="btn-session-KillZone" class="py-2.5 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs">Kill Zone</button>
+                        </div>
+                        <input type="hidden" id="trade-session" value="">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Bias M15</label>
+                        <div class="flex space-x-2">
+                            <button type="button" onclick="setBias('Bullish')" id="btn-bias-Bullish" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Bullish</button>
+                            <button type="button" onclick="setBias('Bearish')" id="btn-bias-Bearish" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Bearish</button>
+                            <button type="button" onclick="setBias('Neutral')" id="btn-bias-Neutral" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Neutral</button>
+                        </div>
+                        <input type="hidden" id="trade-bias" value="">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">R (%)</label>
+                            <input type="number" step="0.01" id="trade-r-percent" required placeholder="0.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Lot</label>
+                            <input type="number" step="0.01" id="trade-lot" required placeholder="0.00" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase">PnL ($)</label>
+                                <span id="trade-rr-display" class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">RR: 0.00R</span>
+                            </div>
+                            <input type="number" step="0.01" id="trade-pnl" required placeholder="0.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                    </div>
+                    <input type="hidden" id="trade-killzone" value="Outside Killzone">
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Çıkış Sebebi</label>
+                        <div class="flex space-x-2">
+                            <button type="button" onclick="setExitReason('TP')" id="btn-exit-TP" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">TP</button>
+                            <button type="button" onclick="setExitReason('Manuel')" id="btn-exit-Manuel" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Manuel</button>
+                            <button type="button" onclick="setExitReason('SL')" id="btn-exit-SL" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">SL</button>
+                        </div>
+                        <input type="hidden" id="trade-exit-reason" value="TP">
+                    </div>
+
+                    <!-- Setup - Çıkış Sebebi'nin hemen altında -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Setup (Çoklu Seçim)</label>
+                        <div class="grid grid-cols-3 gap-2" id="setup-buttons-container">
+                            <!-- Setup buttons will be injected here -->
+                        </div>
+                        <input type="hidden" id="trade-setup-types" value="">
+                    </div>
+
+                    <!-- Trading Psychology Field -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Trading Psychology (Psikoloji)</label>
+                        <div class="grid grid-cols-2 gap-2" id="psychology-buttons-container">
+                            <!-- Psychology buttons will be injected here -->
+                        </div>
+                        <input type="hidden" id="trade-psychology" value="">
+                    </div>
+
+                    <!-- Entry Type (Setup) - Gizli select -->
+                    <select id="trade-entry-type" class="hidden"></select>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Notlar</label>
+                        <textarea id="trade-notes" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none resize-none transition-all"></textarea>
+                    </div>
+                </div>
+                
+                <div class="p-6 border-t border-slate-800 bg-slate-900/95 sticky bottom-0 z-10 flex">
+                    <button type="submit" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="note-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+        <div class="bg-slate-900 w-full max-w-3xl h-[80vh] rounded-3xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-8 border-b border-slate-800 flex justify-between items-center">
+                <h3 id="note-modal-title" class="text-xl font-bold text-slate-100">Not Ekle</h3>
+                <button onclick="closeNoteModal()" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-8 flex-grow flex flex-col space-y-4 overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Başlık</label>
+                    <input type="text" id="note-title" placeholder="Not Başlığı" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all font-bold text-lg">
+                </div>
+                <div class="flex-grow flex flex-col">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">İçerik</label>
+                    <textarea id="note-content" placeholder="Stratejinizi, hatalarınızı veya öğrenimlerinizi buraya yazın..." class="flex-grow w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none resize-none transition-all"></textarea>
+                </div>
+            </div>
+            <div class="p-8 border-t border-slate-800 bg-slate-900/50">
+                <button onclick="saveNote()" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
+                    Notu Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-6">
+        <div class="bg-slate-900 w-full max-w-sm rounded-3xl border border-slate-800 shadow-2xl p-8 space-y-6 animate-in fade-in zoom-in duration-200">
+            <div class="text-center space-y-2">
+                <h3 id="confirm-title" class="text-xl font-bold text-slate-100">Emin misiniz?</h3>
+                <p id="confirm-message" class="text-slate-400 text-sm">Bu işlem geri alınamaz.</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeConfirmModal()" class="flex-1 px-6 py-3 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">
+                    İptal
+                </button>
+                <button id="confirm-action-btn" class="flex-1 px-6 py-3 rounded-xl font-bold bg-rose-600 text-white hover:bg-rose-700 transition-all">
+                    Sil
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 right-8 z-[70] hidden animate-in slide-in-from-bottom-4 duration-300">
+        <div class="bg-slate-800 border border-slate-700 text-slate-100 px-6 py-3 rounded-2xl shadow-2xl flex items-center space-x-3">
+            <i id="toast-icon" data-lucide="info" class="w-5 h-5 text-sky-500"></i>
+            <span id="toast-message" class="font-medium">İşlem başarılı</span>
+        </div>
+    </div>
+
+    <!-- Firebase Logic & Core Module Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, update, get, onValue, remove, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyC0U6uXDpb_herXOtUxQDgU90sFqHCseVw",
             authDomain: "analyzedout-4bf8e.firebaseapp.com",
@@ -236,206 +964,2822 @@
             measurementId: "G-S6KK4GXZG0"
         };
 
+        // Initialize Firebase Core
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // State Management - (localStorage tamamen kaldırıldı)
+        // State Management
+        let currentView = 'home';
+        let currentDate = new Date();
         let accounts = [];
         let currentAccountId = null;
-        let subscribedAccountId = null;
         let trades = [];
         let notes = [];
         let balance = 0;
         let transactions = [];
         let entryTypes = [];
+        let editingNoteIndex = null;
         let isOnline = false;
-        let currentView = 'home';
-        let currentDate = new Date();
+
+        // Global Real-time State Objects (Removes local dependencies)
+        let allTrades = {};
+        let allNotes = {};
+        let allBalances = {};
+        let allTransactions = {};
+
         const LOCK_PASSWORD = '6592';
 
-        // Firebase Aboneliklerini Yöneten Obje
-        let activeListeners = { accounts: null, trades: null, notes: null, balance: null, transactions: null };
+        const psychologyList = [
+            'FOMO', 'Revenge Trade', 'Fear', 'Greed', 'Overconfidence',
+            'Patient', 'Discipline', 'Perfect Execution', 'Early Exit', 'Late Entry'
+        ];
 
+        // Connection Flag Tracker
+        let accountsLoaded = false;
+        let entryTypesLoaded = false;
+        let tradesLoaded = false;
+        let notesLoaded = false;
+        let balancesLoaded = false;
+        let transactionsLoaded = false;
+
+        // Date Parsing Helper (Safeguards iOS/Safari against Invalid Date)
+        function safeParseDate(dateStr) {
+            if (!dateStr) return new Date();
+            if (dateStr instanceof Date) return dateStr;
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            }
+            return new Date(dateStr);
+        }
+
+        // Utility: URL Parser
+        function formatNoteLinks(text) {
+            if (!text) return '-';
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, url =>
+                `<a href="${url}" target="_blank" rel="noopener noreferrer"
+                    class="text-sky-400 hover:text-sky-300 underline underline-offset-2 break-all"
+                    onclick="event.stopPropagation()">${url}</a>`
+            );
+        }
+
+        function toLocalDateStr(d) {
+            const yr  = d.getFullYear();
+            const mo  = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${yr}-${mo}-${day}`;
+        }
+
+        function toLocalTimeStr(d) {
+            const h  = String(d.getHours()).padStart(2, '0');
+            const m  = String(d.getMinutes()).padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        // Connection Status Visualizer
+        function updateSyncStatus(status, customText = null) {
+            isOnline = status;
+            const dot = document.getElementById('sync-indicator-dot');
+            const text = document.getElementById('sync-indicator-text');
+            if (!dot || !text) return;
+
+            if (status) {
+                dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-none";
+                if (customText) {
+                    text.innerText = customText;
+                } else {
+                    const timeStr = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    text.innerText = `Senkronize (${timeStr})`;
+                }
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-rose-500 animate-pulse";
+                text.innerText = "Çevrimdışı (Yerel)";
+            }
+        }
+
+        // On Load Routines
         window.onload = () => {
             lucide.createIcons();
-            // Başlangıçta kilit ekranını kontrol et
-            if (sessionStorage.getItem('XAU_unlocked') === 'true') {
-                unlockApp();
-            }
+            document.getElementById('lock-password-input').focus();
+            initFirebaseSync();
         };
 
-        function initFirebaseSync() {
-            // Loader'ı göster
-            document.getElementById('cloud-loader').style.display = 'flex';
+        // Cloud Loader Guard logic
+        function checkInitialLoadComplete() {
+            if (accountsLoaded && entryTypesLoaded && tradesLoaded && notesLoaded && balancesLoaded && transactionsLoaded) {
+                const loader = document.getElementById('cloud-loader');
+                if (loader) {
+                    loader.classList.add('hidden');
+                }
+            }
+        }
 
+        // Firebase Sync Initialize Routines
+        function initFirebaseSync() {
+            // Monitor Online connectivity
             const connectedRef = ref(db, ".info/connected");
             onValue(connectedRef, (snap) => {
-                isOnline = snap.val() === true;
-                updateSyncStatus(isOnline);
+                if (snap.val() === true) {
+                    updateSyncStatus(true);
+                } else {
+                    updateSyncStatus(false);
+                }
             });
 
-            // Master Listener: Hesapları çek
+            // 1. Subscription to global accounts
             const accountsRef = ref(db, "tradeJournal/6592/accounts");
             onValue(accountsRef, (snapshot) => {
-                const cloudAccounts = snapshot.val();
-                
-                if (cloudAccounts && cloudAccounts.length > 0) {
-                    accounts = cloudAccounts;
-                    
-                    // Eğer seçili hesap yoksa aktif olanı bul
-                    if (!currentAccountId) {
+                const val = snapshot.val();
+                if (val && val.length > 0) {
+                    accounts = val;
+                    if (!currentAccountId || !accounts.find(a => a.id === currentAccountId)) {
                         const activeAcc = accounts.find(a => a.isActive);
                         currentAccountId = activeAcc ? activeAcc.id : accounts[0].id;
                     }
-                    
-                    loadAccountData(currentAccountId);
+                    accountsLoaded = true;
+                    updateStatsAndRefresh();
+                    checkInitialLoadComplete();
                 } else {
-                    // Bulut boşsa, ilk kez "Ana Hesap" oluştur
+                    // Seed initial account directly to Database
                     const defaultAccount = {
                         id: 'acc_' + Date.now(),
-                        name: 'Ana Hesap',
+                        name: 'Kişisel',
                         isActive: true,
                         createdAt: new Date().toISOString()
                     };
                     accounts = [defaultAccount];
                     currentAccountId = defaultAccount.id;
-                    saveAccountsState();
-                    loadAccountData(currentAccountId);
+                    set(accountsRef, accounts).then(() => {
+                        accountsLoaded = true;
+                        updateStatsAndRefresh();
+                        checkInitialLoadComplete();
+                    });
                 }
-                
-                // Loader'ı kapat ve arayüzü çiz
-                document.getElementById('cloud-loader').style.display = 'none';
-                renderAccounts();
             });
 
-            // Setup Türlerini Çek
-            const etRef = ref(db, "tradeJournal/6592/entryTypes");
-            onValue(etRef, (snapshot) => {
-                entryTypes = snapshot.val() || ['Asia Range Sweep', 'iFVG', 'FVG', 'Breaker', 'Mitigation'];
-                renderEntryTypes();
+            // 2. Subscription to custom setup options
+            const entryTypesRef = ref(db, "tradeJournal/6592/entryTypes");
+            onValue(entryTypesRef, (snapshot) => {
+                const val = snapshot.val();
+                if (val && val.length > 0) {
+                    entryTypes = val;
+                    entryTypesLoaded = true;
+                    if (currentView === 'settings') renderEntryTypes();
+                    checkInitialLoadComplete();
+                } else {
+                    entryTypes = ['Asia Range Sweep', 'iFVG', 'FVG', 'Breaker', 'Mitigation'];
+                    set(entryTypesRef, entryTypes).then(() => {
+                        entryTypesLoaded = true;
+                        if (currentView === 'settings') renderEntryTypes();
+                        checkInitialLoadComplete();
+                    });
+                }
+            });
+
+            // 3. Subscription to all Trades
+            const tradesRef = ref(db, "tradeJournal/6592/trades");
+            onValue(tradesRef, (snapshot) => {
+                allTrades = snapshot.val() || {};
+                tradesLoaded = true;
+                updateStatsAndRefresh();
+                checkInitialLoadComplete();
+            });
+
+            // 4. Subscription to all Notes
+            const notesRef = ref(db, "tradeJournal/6592/notes");
+            onValue(notesRef, (snapshot) => {
+                allNotes = snapshot.val() || {};
+                notesLoaded = true;
+                updateStatsAndRefresh();
+                checkInitialLoadComplete();
+            });
+
+            // 5. Subscription to all Balances
+            const balancesRef = ref(db, "tradeJournal/6592/balance");
+            onValue(balancesRef, (snapshot) => {
+                allBalances = snapshot.val() || {};
+                balancesLoaded = true;
+                updateStatsAndRefresh();
+                checkInitialLoadComplete();
+            });
+
+            // 6. Subscription to all Transactions
+            const transactionsRef = ref(db, "tradeJournal/6592/transactions");
+            onValue(transactionsRef, (snapshot) => {
+                allTransactions = snapshot.val() || {};
+                transactionsLoaded = true;
+                updateStatsAndRefresh();
+                checkInitialLoadComplete();
             });
         }
 
-        function loadAccountData(accountId) {
-            currentAccountId = accountId;
-            const account = accounts.find(a => a.id === accountId);
-            if (account) document.getElementById('account-badge').innerText = account.name;
-
-            // Alt verileri dinle (Trades, Notes, Balance, Transactions)
-            subscribeToAccountData(accountId);
+        // Data Access Getters (Binds current state variables)
+        function getTrades() {
+            return allTrades[currentAccountId] || [];
+        }
+        function getNotes() {
+            return allNotes[currentAccountId] || [];
+        }
+        function getBalance() {
+            return allBalances[currentAccountId] !== undefined ? parseFloat(allBalances[currentAccountId]) : 0;
+        }
+        function getTransactions() {
+            return allTransactions[currentAccountId] || [];
         }
 
-        function subscribeToAccountData(accountId) {
-            const paths = ['trades', 'notes', 'balance', 'transactions'];
-            
-            paths.forEach(path => {
-                const dataRef = ref(db, `tradeJournal/6592/${path}/${accountId}`);
-                onValue(dataRef, (snap) => {
-                    const val = snap.val();
-                    if (path === 'trades') trades = val || [];
-                    if (path === 'notes') notes = val || [];
-                    if (path === 'balance') balance = parseFloat(val) || 0;
-                    if (path === 'transactions') transactions = val || [];
-                    
-                    refreshCurrentView();
-                });
-            });
-        }
+        // Live Re-rendering Controller
+        function updateStatsAndRefresh() {
+            if (!currentAccountId) return;
+            trades = getTrades();
+            notes = getNotes();
+            balance = getBalance();
+            transactions = getTransactions();
 
-        // Veri Kayıt Fonksiyonları (Sadece Firebase'e yazar)
-        function saveAccountsState() {
-            if (!isOnline) return;
-            set(ref(db, "tradeJournal/6592/accounts"), accounts);
-        }
+            const account = accounts.find(a => a.id === currentAccountId);
+            document.getElementById('account-badge').innerText = account ? account.name : 'MT';
 
-        function saveCurrentAccountData() {
-            if (!currentAccountId || !isOnline) return;
-            const updates = {};
-            updates[`tradeJournal/6592/trades/${currentAccountId}`] = trades;
-            updates[`tradeJournal/6592/notes/${currentAccountId}`] = notes;
-            updates[`tradeJournal/6592/balance/${currentAccountId}`] = balance;
-            updates[`tradeJournal/6592/transactions/${currentAccountId}`] = transactions;
-            update(ref(db), updates);
-        }
+            const initialBalanceInput = document.getElementById('initial-balance-input');
+            if (initialBalanceInput) initialBalanceInput.value = balance > 0 ? balance : '';
 
-        // --- RENDER VE ANALİZ FONKSİYONLARI ---
-        // (Burada 3600 satırdaki tüm orijinal renderCalendar, renderAnalysis, drawCharts fonksiyonlarınız yer alır)
-        
-        function refreshCurrentView() {
-            if (currentView === 'home') renderAccounts();
+            checkBalanceButton();
+            updateStats();
+
             if (currentView === 'calendar') renderCalendar();
             if (currentView === 'history') renderHistory();
             if (currentView === 'analysis') renderAnalysis();
             if (currentView === 'balance') renderBalance();
             if (currentView === 'notes') renderNotes();
             if (currentView === 'settings') renderEntryTypes();
-            updateStats();
+            if (currentView === 'home') renderAccounts();
         }
 
-        // Orijinal "renderAccounts" fonksiyonuna invalid date düzeltmesi
+        function checkLockPassword() {
+            const input = document.getElementById('lock-password-input');
+            const error = document.getElementById('lock-error');
+            if (input.value === LOCK_PASSWORD) {
+                error.classList.add('hidden');
+                unlockApp();
+            } else {
+                error.classList.remove('hidden');
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        function unlockApp() {
+            document.getElementById('lock-screen').classList.add('hidden');
+            updateDateDisplay();
+            switchTab('home');
+        }
+
+        function lockApp() {
+            showConfirm('Çıkış Yap', 'Uygulamadan çıkmak istediğinize emin misiniz?', () => {
+                location.reload();
+            });
+        }
+
+        function toggleMobileSidebar(show) {
+            const sidebar = document.getElementById('sidebar-menu');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (show) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function loadAccountData(accountId) {
+            currentAccountId = accountId;
+            updateStatsAndRefresh();
+        }
+
+        function saveAccountsState() {
+            if (isOnline) {
+                updateSyncStatus(true, "Eşitleniyor...");
+                set(ref(db, "tradeJournal/6592/accounts"), accounts)
+                    .then(() => {
+                        updateSyncStatus(true);
+                    })
+                    .catch(err => {
+                        console.error("Firebase accounts save failed:", err);
+                        updateSyncStatus(false);
+                    });
+            } else {
+                updateSyncStatus(false);
+            }
+        }
+
+        function saveCurrentAccountData() {
+            if (!currentAccountId) return;
+            
+            if (isOnline) {
+                updateSyncStatus(true, "Eşitleniyor...");
+                const updates = {
+                    [`tradeJournal/6592/trades/${currentAccountId}`]: trades,
+                    [`tradeJournal/6592/notes/${currentAccountId}`]: notes,
+                    [`tradeJournal/6592/balance/${currentAccountId}`]: balance,
+                    [`tradeJournal/6592/transactions/${currentAccountId}`]: transactions
+                };
+
+                update(ref(db), updates)
+                    .then(() => {
+                        updateSyncStatus(true);
+                    })
+                    .catch(err => {
+                        console.error("Firebase sync error:", err);
+                        updateSyncStatus(false);
+                    });
+            } else {
+                updateSyncStatus(false);
+            }
+        }
+
+        function refreshCurrentView() {
+            updateStatsAndRefresh();
+        }
+
+        function switchTab(tab) {
+            currentView = tab;
+            toggleMobileSidebar(false);
+            
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active-tab'));
+            const navBtn = document.getElementById(`nav-${tab}`);
+            if (navBtn) navBtn.classList.add('active-tab');
+
+            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+
+            const accountNav = document.getElementById('account-nav');
+            const navHome = document.getElementById('nav-home');
+            const bottomHomeNav = document.getElementById('bottom-home-nav');
+
+            if (tab === 'home') {
+                accountNav.classList.add('hidden');
+                navHome.classList.add('hidden');
+                bottomHomeNav.classList.add('hidden');
+            } else {
+                accountNav.classList.remove('hidden');
+                navHome.classList.add('hidden');
+                bottomHomeNav.classList.remove('hidden');
+            }
+
+            const titles = { home: 'Ana Sayfa', calendar: 'Takvim', history: 'İşlemler', analysis: 'Analiz', balance: 'Bakiye', notes: 'Notlar', settings: 'Ayarlar' };
+            document.getElementById('page-title').innerText = titles[tab];
+
+            updateStatsAndRefresh();
+            lucide.createIcons();
+        }
+
+        function openAccountModal() {
+            document.body.classList.add('overflow-hidden');
+            document.getElementById('account-modal').classList.remove('hidden');
+            document.getElementById('account-name-input').focus();
+        }
+
+        function closeAccountModal() {
+            document.body.classList.remove('overflow-hidden');
+            document.getElementById('account-modal').classList.add('hidden');
+            document.getElementById('account-name-input').value = '';
+        }
+
+        function saveAccount() {
+            const nameInput = document.getElementById('account-name-input');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                showToast('Lütfen bir hesap adı girin', 'error');
+                return;
+            }
+
+            const newAccount = {
+                id: 'acc_' + Date.now(),
+                name: name,
+                isActive: true,
+                createdAt: new Date().toISOString()
+            };
+
+            accounts.push(newAccount);
+            saveAccountsState();
+            closeAccountModal();
+            showToast('Hesap başarıyla oluşturuldu');
+        }
+
         function renderAccounts() {
             const activeList = document.getElementById('active-accounts-list');
             const passiveList = document.getElementById('passive-accounts-list');
-            if (!activeList) return;
-            activeList.innerHTML = ''; passiveList.innerHTML = '';
+            if (!activeList || !passiveList) return;
+            
+            activeList.innerHTML = '';
+            passiveList.innerHTML = '';
 
             accounts.forEach(acc => {
                 const isCurrent = acc.id === currentAccountId;
-                // Tarih formatlama (iOS Hatası için güvenli metod)
-                let dateStr = "---";
-                if (acc.createdAt) {
-                    const d = new Date(acc.createdAt);
-                    dateStr = !isNaN(d) ? d.toLocaleDateString('tr-TR') : "03.07.2026";
-                }
+                const accStartBalance  = allBalances[acc.id] !== undefined ? parseFloat(allBalances[acc.id]) : 0;
+                const accTrades        = allTrades[acc.id] || [];
+                const accTransactions  = allTransactions[acc.id] || [];
+                const accTotalPnL      = accTrades.reduce((s, t) => s + (parseFloat(t.pnl) || 0), 0);
+                const accTotalDeposit  = accTransactions.filter(t => t.type === 'deposit').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+                const accTotalWithdraw = accTransactions.filter(t => t.type === 'withdraw').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+                const accBalance       = accStartBalance + accTotalPnL + accTotalDeposit - accTotalWithdraw;
 
                 const card = document.createElement('div');
-                card.className = `p-6 rounded-2xl border cursor-pointer transition-all ${isCurrent ? 'bg-sky-900/20 border-sky-500' : 'bg-slate-800/50 border-slate-700'}`;
-                card.onclick = () => { currentAccountId = acc.id; loadAccountData(acc.id); switchTab('calendar'); };
+                card.className = `p-6 rounded-2xl border transition-all cursor-pointer ${isCurrent ? 'bg-sky-900/20 border-sky-500/50 ring-1 ring-sky-500/50' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`;
+                
+                card.onclick = (e) => {
+                    if (e.target.closest('button')) return;
+                    selectAccount(acc.id);
+                };
+
                 card.innerHTML = `
-                    <div class="flex justify-between items-start">
+                    <div class="flex justify-between items-start mb-4">
                         <div class="flex items-center space-x-3">
-                             <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-sky-400">
-                                <i data-lucide="wallet"></i>
+                            <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-sky-400">
+                                <i data-lucide="wallet" class="w-5 h-5"></i>
                             </div>
-                            <div><h5 class="font-bold">${acc.name}</h5><p class="text-xs text-slate-500">${dateStr}</p></div>
+                            <div>
+                                <h5 class="font-bold text-slate-100">${acc.name}</h5>
+                                <p class="text-xs text-slate-500">${new Date(acc.createdAt).toLocaleDateString('tr-TR')}</p>
+                            </div>
                         </div>
-                        <div class="text-right"><span class="text-sm font-bold text-slate-100">$${balance.toFixed(2)}</span></div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-sm font-bold text-slate-100">$${accBalance.toFixed(2)}</span>
+                            <span class="text-[10px] text-slate-500 mt-0.5">anlık bakiye</span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 justify-end">
+                        ${acc.isActive ? `
+                            <button onclick="toggleAccountStatus('${acc.id}')" class="p-2 bg-slate-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-500 rounded-lg transition-all" title="Sil (Pasife Taşı)">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        ` : `
+                            <button onclick="toggleAccountStatus('${acc.id}')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold transition-all flex items-center space-x-2">
+                                <i data-lucide="unarchive" class="w-4 h-4"></i>
+                                <span>Aktif Et</span>
+                            </button>
+                            <button onclick="confirmDeleteAccount('${acc.id}')" class="p-2 bg-slate-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-500 rounded-lg transition-all" title="Kalıcı Olarak Sil">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        `}
                     </div>
                 `;
-                acc.isActive ? activeList.appendChild(card) : passiveList.appendChild(card);
+
+                if (acc.isActive) {
+                    activeList.appendChild(card);
+                } else {
+                    passiveList.appendChild(card);
+                }
+            });
+
+            if (activeList.children.length === 0) {
+                activeList.innerHTML = '<div class="col-span-full py-8 text-center text-slate-500 italic">Aktif hesap bulunamadı.</div>';
+            }
+            if (passiveList.children.length === 0) {
+                passiveList.innerHTML = '<div class="col-span-full py-8 text-center text-slate-500 italic">Pasif hesap bulunamadı.</div>';
+            }
+
+            lucide.createIcons();
+        }
+
+        function selectAccount(id) {
+            const acc = accounts.find(a => a.id === id);
+            if (!acc.isActive) {
+                showToast('Pasif hesaplar seçilemez. Önce aktif hale getirin.', 'error');
+                return;
+            }
+            loadAccountData(id);
+            switchTab('calendar');
+            showToast(`${acc.name} hesabına geçiş yapıldı`);
+        }
+
+        function toggleAccountStatus(id) {
+            const index = accounts.findIndex(a => a.id === id);
+            if (index === -1) return;
+            
+            const wasActive = accounts[index].isActive;
+
+            if (wasActive && accounts.filter(a => a.isActive).length === 1) {
+                showToast('En az bir aktif hesap olmalıdır', 'error');
+                return;
+            }
+
+            accounts[index].isActive = !accounts[index].isActive;
+            
+            if (!accounts[index].isActive && id === currentAccountId) {
+                const nextActive = accounts.find(a => a.isActive);
+                if (nextActive) {
+                    loadAccountData(nextActive.id);
+                }
+            }
+            
+            saveAccountsState();
+            showToast(wasActive ? 'Hesap pasif bölüme taşındı' : 'Hesap aktif hale getirildi');
+        }
+
+        function confirmDeleteAccount(id) {
+            const acc = accounts.find(a => a.id === id);
+            if (!acc) return;
+            
+            if (accounts.length === 1) {
+                showToast('Son hesabı silemezsiniz', 'error');
+                return;
+            }
+
+            showConfirm(
+                'Hesabı Sil',
+                `"${acc.name}" hesabını ve tüm verilerini (işlemler, notlar, bakiye) kalıcı olarak silmek istediğinize emin misiniz?`,
+                () => deleteAccount(id)
+            );
+        }
+
+        function deleteAccount(id) {
+            const index = accounts.findIndex(a => a.id === id);
+            if (index === -1) return;
+
+            if (id === currentAccountId) {
+                const nextAcc = accounts.find((a, i) => i !== index && a.isActive) || accounts.find((a, i) => i !== index);
+                loadAccountData(nextAcc.id);
+            }
+
+            remove(ref(db, `tradeJournal/6592/trades/${id}`));
+            remove(ref(db, `tradeJournal/6592/notes/${id}`));
+            remove(ref(db, `tradeJournal/6592/balance/${id}`));
+            remove(ref(db, `tradeJournal/6592/transactions/${id}`));
+
+            accounts.splice(index, 1);
+            saveAccountsState();
+            closeConfirmModal();
+            showToast('Hesap ve verileri silindi');
+        }
+
+        function renderCalendar() {
+            const daysContainer = document.getElementById('calendar-days');
+            const weeklyStatsContainer = document.getElementById('weekly-stats-container');
+            if (!daysContainer || !weeklyStatsContainer) return;
+
+            daysContainer.innerHTML = '';
+            weeklyStatsContainer.innerHTML = '';
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            let startDay = firstDay === 0 ? 6 : firstDay - 1;
+
+            let weeklyStats = [];
+            let currentWeekPnL = 0;
+            let currentWeekCount = 0;
+
+            for (let i = 0; i < startDay; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'h-32 bg-transparent';
+                daysContainer.appendChild(emptyDiv);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayTrades = trades.filter(t => t.date === dateStr);
+                const dayPnL = dayTrades.reduce((sum, t) => sum + parseFloat(t.pnl), 0);
+
+                currentWeekPnL += dayPnL;
+                currentWeekCount += dayTrades.length;
+
+                const currentDayOfWeek = new Date(year, month, day).getDay();
+                if (currentDayOfWeek === 0 || day === daysInMonth) {
+                    weeklyStats.push({ pnl: currentWeekPnL, count: currentWeekCount });
+                    currentWeekPnL = 0;
+                    currentWeekCount = 0;
+                }
+
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'h-32 p-3 hover:bg-slate-800 cursor-pointer transition-colors flex flex-col group relative';
+                dayDiv.onclick = () => openTradeModal(dateStr, null);
+
+                let pnlClass = dayPnL > 0 ? 'text-emerald-400' : (dayPnL < 0 ? 'text-rose-400' : 'text-slate-500');
+
+                if (dayTrades.length > 0) {
+                    let pnlDisplay = dayPnL !== 0 ? (dayPnL > 0 ? `+$${dayPnL.toFixed(2)}` : `-$${Math.abs(dayPnL).toFixed(2)}`) : '$0.00';
+                    dayDiv.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <span class="text-sm font-bold ${isToday(year, month, day) ? 'bg-sky-600 text-white w-7 h-7 flex items-center justify-center rounded-full' : 'text-slate-500'}">${day}</span>
+                        </div>
+                        <div class="mt-4 flex flex-col space-y-2">
+                            <div class="text-lg font-bold ${pnlClass}">
+                                ${pnlDisplay}
+                            </div>
+                            <div class="text-xs text-sky-400 font-semibold">
+                                ${dayTrades.length} işlem
+                            </div>
+                        </div>
+                        <div class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i data-lucide="plus-circle" class="w-4 h-4 text-sky-500"></i>
+                        </div>
+                    `;
+                } else {
+                    dayDiv.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <span class="text-sm font-bold ${isToday(year, month, day) ? 'bg-sky-600 text-white w-7 h-7 flex items-center justify-center rounded-full' : 'text-slate-500'}">${day}</span>
+                        </div>
+                        <div class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i data-lucide="plus-circle" class="w-4 h-4 text-sky-500"></i>
+                        </div>
+                    `;
+                }
+                daysContainer.appendChild(dayDiv);
+            }
+
+            const totalCells = startDay + daysInMonth;
+            const remainingCells = 42 - totalCells;
+            for (let i = 0; i < remainingCells; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'h-32 bg-transparent';
+                daysContainer.appendChild(emptyDiv);
+            }
+
+            weeklyStats.forEach((week, index) => {
+                const weekDiv = document.createElement('div');
+                weekDiv.className = 'p-4 rounded-2xl bg-slate-800/50 border border-slate-700/50 flex flex-col space-y-1';
+                weekDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">${index + 1}. Hafta</span>
+                        <span class="text-xs font-bold ${week.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${week.pnl >= 0 ? '+' : ''}$${week.pnl.toFixed(2)}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-medium">${week.count} İşlem</div>
+                `;
+                weeklyStatsContainer.appendChild(weekDiv);
+            });
+
+            lucide.createIcons();
+            renderMonthlyHistory();
+        }
+
+        function renderMonthlyHistory() {
+            const tbody = document.getElementById('monthly-trades-body');
+            const statsContainer = document.getElementById('monthly-stats');
+            if (!tbody || !statsContainer) return;
+            
+            tbody.innerHTML = '';
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            const monthlyTrades = trades.filter(t => {
+                const tDate = safeParseDate(t.date);
+                return tDate.getFullYear() === year && tDate.getMonth() === month;
+            }).sort((a, b) => safeParseDate(b.date) - safeParseDate(a.date));
+
+            const monthlyPnL = monthlyTrades.reduce((sum, t) => sum + t.pnl, 0);
+            statsContainer.innerText = `Toplam: ${monthlyTrades.length} İşlem | P&L: ${monthlyPnL >= 0 ? '+' : ''}$${monthlyPnL.toFixed(2)}`;
+            statsContainer.className = `text-sm font-bold ${monthlyPnL >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+
+            if (monthlyTrades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400 italic">Bu ay henüz işlem girilmemiş.</td></tr>';
+                return;
+            }
+
+            monthlyTrades.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-4 text-sm text-slate-400">${t.date}${t.time ? '<span class="text-slate-500 text-xs ml-1">' + t.time + '</span>' : ''}</td>
+                    <td class="py-4 font-bold text-slate-100">${t.symbol}</td>
+                    <td class="py-4">
+                        <span class="px-2 py-1 rounded-md text-[10px] font-bold uppercase ${t.type === 'Long' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-rose-900/30 text-rose-400'}">${t.type}</span>
+                    </td>
+                    <td class="py-4 font-bold ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                        ${t.pnl >= 0 ? '+' : ''}${t.pnl.toFixed(2)}
+                    </td>
+                    <td class="py-4">
+                        <div class="flex space-x-2">
+                            <button onclick="editTrade('${t.id}')" class="p-2 text-slate-600 hover:text-sky-400 transition-colors">
+                                <i data-lucide="edit-2" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deleteTrade('${t.id}')" class="p-2 text-slate-600 hover:text-rose-400 transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
             });
             lucide.createIcons();
         }
 
-        // Lock & Sidebar Controls
-        window.checkLockPassword = () => {
-            const input = document.getElementById('lock-password-input');
-            if (input.value === LOCK_PASSWORD) {
-                sessionStorage.setItem('XAU_unlocked', 'true');
-                unlockApp();
-            } else {
-                document.getElementById('lock-error').classList.remove('hidden');
-                input.value = '';
-            }
-        };
+        function renderHistory() {
+            const container = document.getElementById('detailed-history-container');
+            if (!container) return;
+            container.innerHTML = '';
 
-        function unlockApp() {
-            document.getElementById('lock-screen').classList.add('hidden');
-            initFirebaseSync();
-            switchTab('home');
+            if (trades.length === 0) {
+                container.innerHTML = '<div class="bg-slate-900 p-12 rounded-3xl border border-slate-800 text-center text-slate-400 italic">Henüz işlem geçmişi bulunmuyor.</div>';
+                return;
+            }
+
+            const groupedTrades = trades.reduce((acc, trade) => {
+                const date = safeParseDate(trade.date);
+                const monthYear = date.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
+                if (!acc[monthYear]) acc[monthYear] = [];
+                acc[monthYear].push(trade);
+                return acc;
+            }, {});
+
+            const sortedMonths = Object.keys(groupedTrades).sort((a, b) => {
+                const dateA = safeParseDate(groupedTrades[a][0].date);
+                const dateB = safeParseDate(groupedTrades[b][0].date);
+                return dateB - dateA;
+            });
+
+            sortedMonths.forEach(monthYear => {
+                const monthTrades = groupedTrades[monthYear].sort((a, b) => safeParseDate(b.date) - safeParseDate(a.date));
+                const monthPnL = monthTrades.reduce((sum, t) => sum + t.pnl, 0);
+                
+                const monthSection = document.createElement('div');
+                monthSection.className = 'bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-sm';
+                monthSection.innerHTML = `
+                    <div class="bg-slate-800/50 px-8 py-4 border-b border-slate-800 flex justify-between items-center">
+                        <h4 class="font-bold text-slate-100">${monthYear}</h4>
+                        <span class="text-sm font-bold ${monthPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${monthPnL >= 0 ? '+' : ''}$${monthPnL.toFixed(2)}
+                        </span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left min-w-[1200px]">
+                            <thead>
+                                <tr class="text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-800">
+                                    <th class="px-8 py-4">Tarih</th>
+                                    <th class="px-4 py-4">Parite</th>
+                                    <th class="px-4 py-4">Lot</th>
+                                    <th class="px-4 py-4">İşlem</th>
+                                    <th class="px-4 py-4">Seans</th>
+                                    <th class="px-4 py-4">Bias M15</th>
+                                    <th class="px-4 py-4">Killzone</th>
+                                    <th class="px-4 py-4">Setup</th>
+                                    <th class="px-4 py-4">Psikoloji</th>
+                                    <th class="px-4 py-4">Çıkış Sebebi</th>
+                                    <th class="px-4 py-4">R (%)</th>
+                                    <th class="px-4 py-4">RR</th>
+                                    <th class="px-4 py-4">PnL</th>
+                                    <th class="px-8 py-4">Notlar</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800">
+                                ${monthTrades.map(t => `
+                                    <tr class="hover:bg-slate-800/50 transition-colors">
+                                        <td class="px-8 py-4 text-xs text-slate-400">${t.date}${t.time ? '<br><span class="text-slate-500">' + t.time + '</span>' : ''}</td>
+                                        <td class="px-4 py-4 text-xs font-bold text-slate-100">${t.symbol}</td>
+                                        <td class="px-4 py-4 text-xs text-slate-400">${t.lot || '-'}</td>
+                                        <td class="px-4 py-4">
+                                            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${t.type === 'Long' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-rose-900/30 text-rose-400'}">${t.type}</span>
+                                        </td>
+                                        <td class="px-4 py-4 text-xs text-slate-400">${t.session || '-'}</td>
+                                        <td class="px-4 py-4 text-xs text-slate-400/60">${t.bias || '-'}</td>
+                                        <td class="px-4 py-4 text-xs text-slate-400">${t.killzone || '-'}</td>
+                                        <td class="px-4 py-4 text-xs text-slate-400">
+                                            ${t.setupTypes && t.setupTypes.length > 0 ? t.setupTypes.map(setup => {
+                                                if (setup === 'Hislerim') {
+                                                    return '<span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-emerald-900/30 text-emerald-300">Hislerim</span>';
+                                                }
+                                                return setup;
+                                            }).join(', ') : (t.entryType || '-')}
+                                        </td>
+                                        <td class="px-4 py-4 text-xs text-slate-400 max-w-[120px] truncate" title="${t.psychology ? t.psychology.join(', ') : ''}">
+                                            ${t.psychology && t.psychology.length > 0 ? t.psychology.join(', ') : '-'}
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${t.exitReason === 'TP' ? 'bg-sky-900/30 text-sky-400' : (t.exitReason === 'SL' ? 'bg-rose-900/30 text-rose-400' : 'bg-slate-800 text-slate-400')}">${t.exitReason || '-'}</span>
+                                        </td>
+                                        <td class="px-4 py-4 text-xs text-slate-400">${t.rPercent ? t.rPercent + 'R' : '-'}</td>
+                                        <td class="px-4 py-4 text-xs font-bold ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                                            ${t.rr && t.rr !== '-' ? t.rr + 'R' : ((balance > 0 && t.rPercent > 0) ? (t.pnl / (balance * (t.rPercent / 100))).toFixed(1) + 'R' : '-')}
+                                        </td>
+                                        <td class="px-4 py-4 text-xs font-bold ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                                            ${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}
+                                        </td>
+                                        <td class="px-8 py-4 text-xs text-slate-500 max-w-[200px]" title="${t.notes || ''}">${formatNoteLinks(t.notes)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                container.appendChild(monthSection);
+            });
         }
 
-        // ... Diğer tüm 2500+ satırlık analiz, grafik ve tablo fonksiyonlarınız buraya gelecek ...
-        // (Sistemde hiçbirini değiştirmeden kullanabilirsiniz çünkü hepsi küresel 'trades' ve 'balance' değişkenlerine bakar)
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderCalendar();
+        }
 
+        function isToday(y, m, d) {
+            const today = new Date();
+            return today.getFullYear() === y && today.getMonth() === m && today.getDate() === d;
+        }
+
+        function openTradeModal(date = null, trade = null) {
+            document.body.classList.add('overflow-hidden');
+            document.getElementById('trade-modal').classList.remove('hidden');
+            document.getElementById('trade-form').reset();
+            document.getElementById('trade-id').value = trade ? trade.id : '';
+            document.getElementById('modal-title').innerText = trade ? 'İşlemi Düzenle' : 'Yeni İşlem Ekle';
+            
+            const now = new Date();
+            const dateInput = document.getElementById('trade-date');
+            const timeInput = document.getElementById('trade-time');
+            
+            if (trade) {
+                dateInput.value = trade.date;
+                timeInput.value = trade.time;
+                document.getElementById('trade-symbol').value = trade.symbol;
+                setTradeType(trade.type);
+                setExitReason(trade.exitReason);
+                document.getElementById('trade-pnl').value = trade.pnl;
+                document.getElementById('trade-lot').value = trade.lot || '';
+                document.getElementById('trade-r-percent').value = trade.rPercent || '';
+                
+                let kz = trade.killzone || 'Outside Killzone';
+                if (kz === 'Asia') kz = 'Asia Range';
+                if (kz === 'London') kz = 'London Open';
+                if (kz === 'no killzone') kz = 'Outside Killzone';
+                
+                document.getElementById('trade-killzone').value = kz;
+                document.getElementById('trade-notes').value = trade.notes || '';
+                if (trade.bias) {
+                    setBias(trade.bias);
+                } else {
+                    document.getElementById('trade-bias').value = '';
+                }
+
+                // Trading Session loader
+                document.getElementById('trade-session').value = trade.session || '';
+                setSession(trade.session || '');
+
+                // Trading Psychology loader
+                const selectedPsych = trade.psychology || [];
+                renderPsychologyButtons(selectedPsych);
+            } else {
+                dateInput.value = date ? date : toLocalDateStr(now);
+                timeInput.value = toLocalTimeStr(now);
+                
+                setTradeType('Long');
+                setExitReason('TP');
+                document.getElementById('trade-bias').value = '';
+                ['Bullish','Bearish','Neutral'].forEach(opt => {
+                    const btn = document.getElementById(`btn-bias-${opt}`);
+                    if (btn) {
+                        btn.classList.remove('bg-sky-600','bg-rose-600','bg-slate-600','text-white','border-sky-600','border-rose-600','border-slate-600');
+                        btn.classList.add('bg-slate-800','text-slate-400','border-slate-700');
+                    }
+                });
+                document.getElementById('trade-r-percent').value = 1;
+                updateKillzone();
+
+                // Trading Session clean defaults
+                document.getElementById('trade-session').value = '';
+                setSession('');
+
+                // Trading Psychology clean defaults
+                renderPsychologyButtons([]);
+            }
+            
+            populateEntryTypeSelect();
+            if (trade && trade.entryType) {
+                document.getElementById('trade-entry-type').value = trade.entryType;
+            }
+            
+            renderSetupButtons(trade && trade.setupTypes ? trade.setupTypes : []);
+            lucide.createIcons();
+            updateRRDisplay();
+        }
+
+        function renderSetupButtons(selectedSetups = []) {
+            const container = document.getElementById('setup-buttons-container');
+            const setupList = entryTypes && entryTypes.length > 0 ? entryTypes : ['Liq.Sweep', 'OTE', 'Breaker', 'FVG', 'IFVG', 'Asia Range'];
+            
+            container.innerHTML = setupList.map(setup => {
+                const isSelected = selectedSetups.includes(setup);
+                return `
+                    <button type="button" 
+                            onclick="toggleSetup('${setup}')" 
+                            id="btn-setup-${setup}"
+                            class="py-3 rounded-xl font-bold border transition-all ${
+                                isSelected 
+                                    ? 'bg-sky-600 border-sky-600 text-white' 
+                                    : 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            }">
+                        ${setup}
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('trade-setup-types').value = selectedSetups.join(',');
+        }
+
+        function toggleSetup(setupName) {
+            const hiddenInput = document.getElementById('trade-setup-types');
+            let selectedSetups = hiddenInput.value ? hiddenInput.value.split(',') : [];
+            
+            if (selectedSetups.includes(setupName)) {
+                selectedSetups = selectedSetups.filter(s => s !== setupName);
+            } else {
+                selectedSetups.push(setupName);
+            }
+            
+            hiddenInput.value = selectedSetups.join(',');
+            
+            const button = document.getElementById(`btn-setup-${setupName}`);
+            if (button) {
+                if (selectedSetups.includes(setupName)) {
+                    button.className = 'py-3 rounded-xl font-bold border transition-all bg-sky-600 border-sky-600 text-white';
+                } else {
+                    button.className = 'py-3 rounded-xl font-bold border transition-all border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700';
+                }
+            }
+        }
+
+        // Trading Session Selector
+        function setSession(session) {
+            if (!session) {
+                document.getElementById('trade-session').value = '';
+                ['Asia','London','New York','Kill Zone'].forEach(opt => {
+                    const idSafe = opt.replace(/\s+/g, '');
+                    const btn = document.getElementById(`btn-session-${idSafe}`);
+                    if (!btn) return;
+                    btn.classList.remove('bg-sky-600','text-white','border-sky-600');
+                    btn.classList.add('bg-slate-800','text-slate-400','border-slate-700');
+                });
+                return;
+            }
+            document.getElementById('trade-session').value = session;
+            updateButtonGroupUI('session', session, ['Asia', 'London', 'New York', 'Kill Zone'], {
+                'Asia': 'bg-sky-600',
+                'London': 'bg-sky-600',
+                'New York': 'bg-sky-600',
+                'Kill Zone': 'bg-sky-600'
+            });
+        }
+
+        // Trading Psychology Multi-Select Engine
+        function renderPsychologyButtons(selectedPsych = []) {
+            const container = document.getElementById('psychology-buttons-container');
+            if (!container) return;
+            container.innerHTML = psychologyList.map(item => {
+                const isSelected = selectedPsych.includes(item);
+                const idSafe = item.replace(/\s+/g, '');
+                return `
+                    <button type="button" 
+                            onclick="togglePsychology('${item}')" 
+                            id="btn-psych-${idSafe}"
+                            class="py-2.5 px-2 rounded-xl font-bold border text-xs transition-all ${
+                                isSelected 
+                                    ? 'bg-sky-600 border-sky-600 text-white' 
+                                    : 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            }">
+                        ${item}
+                    </button>
+                `;
+            }).join('');
+            document.getElementById('trade-psychology').value = selectedPsych.join(',');
+        }
+
+        function togglePsychology(item) {
+            const hiddenInput = document.getElementById('trade-psychology');
+            let selected = hiddenInput.value ? hiddenInput.value.split(',') : [];
+            if (selected.includes(item)) {
+                selected = selected.filter(x => x !== item);
+            } else {
+                selected.push(item);
+            }
+            hiddenInput.value = selected.join(',');
+            const idSafe = item.replace(/\s+/g, '');
+            const btn = document.getElementById(`btn-psych-${idSafe}`);
+            if (btn) {
+                if (selected.includes(item)) {
+                    btn.className = 'py-2.5 px-2 rounded-xl font-bold border text-xs transition-all bg-sky-600 border-sky-600 text-white';
+                } else {
+                    btn.className = 'py-2.5 px-2 rounded-xl font-bold border text-xs transition-all border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700';
+                }
+            }
+        }
+
+        function _lastSundayUTC(year, monthIndex) {
+            const lastDay = new Date(Date.UTC(year, monthIndex + 1, 0));
+            const dow = lastDay.getUTCDay();
+            lastDay.setUTCDate(lastDay.getUTCDate() - dow);
+            return lastDay;
+        }
+
+        function _nthSundayUTC(year, monthIndex, n) {
+            const first = new Date(Date.UTC(year, monthIndex, 1));
+            const dow = first.getUTCDay();
+            const firstSunday = dow === 0 ? 1 : 8 - dow;
+            return new Date(Date.UTC(year, monthIndex, firstSunday + (n - 1) * 7));
+        }
+
+        function _getDSTOffsets(dateUTC) {
+            const y = dateUTC.getUTCFullYear();
+
+            const londonStart = _lastSundayUTC(y, 2);
+            londonStart.setUTCHours(1);
+            const londonEnd = _lastSundayUTC(y, 9);
+            londonEnd.setUTCHours(1);
+            const londonSummer = dateUTC >= londonStart && dateUTC < londonEnd;
+            const londonOffset = londonSummer ? 1 : 0;
+
+            const nyStart = _nthSundayUTC(y, 2, 2);
+            nyStart.setUTCHours(7);
+            const nyEnd = _nthSundayUTC(y, 10, 1);
+            nyEnd.setUTCHours(6);
+            const nySummer = dateUTC >= nyStart && dateUTC < nyEnd;
+            const nyOffset = nySummer ? -4 : -5;
+
+            return { londonOffset, nyOffset };
+        }
+
+        function getKillzoneForDateTime(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return 'Outside Killzone';
+
+            try {
+                const [y, m, d] = dateStr.split('-').map(Number);
+                const [h, min] = timeStr.split(':').map(Number);
+
+                const utc = new Date(Date.UTC(y, m - 1, d, h - 3, min));
+                const { londonOffset, nyOffset } = _getDSTOffsets(utc);
+
+                const trMins = h * 60 + min;
+                const londonDiff = 3 - londonOffset;
+                const nyDiff     = 3 - nyOffset;
+
+                const frankfurtDiff = 1 - londonOffset;
+                const frankfurtStart = (9 + frankfurtDiff) * 60 + 1;
+                const frankfurtEnd   = (10 + frankfurtDiff) * 60 - 1;
+
+                const londonOpenStart  = (8  + londonDiff) * 60;
+                const londonOpenEnd    = (11 + londonDiff) * 60;
+
+                const nyOpenStart      = (8  + nyDiff) * 60;
+                const nyOpenEnd        = (10 + nyDiff) * 60;
+
+                const nyPMStart        = (10 + nyDiff) * 60;
+                const nyPMEnd          = (11 + nyDiff) * 60;
+
+                const londonCloseStart = (16 + londonDiff) * 60;
+                const londonCloseEnd   = (18 + londonDiff) * 60;
+
+                const inRange = (t, s, e) => t >= s && t < e;
+
+                if (inRange(trMins, frankfurtStart, frankfurtEnd)) return 'Frankfurt';
+                if (inRange(trMins, londonOpenStart, londonOpenEnd)) return 'London Open';
+                if (inRange(trMins, nyOpenStart, nyOpenEnd)) return 'NY Open';
+                if (inRange(trMins, nyPMStart, nyPMEnd)) return 'NY PM';
+                if (inRange(trMins, londonCloseStart, londonCloseEnd)) return 'London Close';
+
+                return 'Outside Killzone';
+            } catch (e) {
+                console.error('Killzone evaluation failed:', e);
+                return 'Outside Killzone';
+            }
+        }
+
+        function updateKillzone() {
+            const dateVal = document.getElementById('trade-date').value;
+            const timeVal = document.getElementById('trade-time').value;
+            if (!dateVal || !timeVal) return;
+            const kz = getKillzoneForDateTime(dateVal, timeVal);
+            document.getElementById('trade-killzone').value = kz;
+        }
+
+        // Output and calculation helpers
+        function updateRRDisplay() {
+            const pnl = parseFloat(document.getElementById('trade-pnl').value) || 0;
+            const rPercent = parseFloat(document.getElementById('trade-r-percent').value) || 0;
+            const rrDisplay = document.getElementById('trade-rr-display');
+            if (balance > 0 && rPercent > 0) {
+                const riskAmount = balance * (rPercent / 100);
+                const rr = (pnl / riskAmount).toFixed(1);
+                rrDisplay.innerText = `RR: ${rr}R`;
+            } else {
+                rrDisplay.innerText = 'RR: -';
+            }
+        }
+
+        function editTrade(id) {
+            const trade = trades.find(t => t.id === id);
+            if (trade) {
+                openTradeModal(null, trade);
+            }
+        }
+
+        function setTradeType(type) {
+            document.getElementById('trade-type').value = type;
+            updateButtonGroupUI('type', type, ['Long', 'Short'], {
+                Long: 'bg-emerald-600',
+                Short: 'bg-rose-400'
+            });
+        }
+
+        function setExitReason(reason) {
+            document.getElementById('trade-exit-reason').value = reason;
+            updateButtonGroupUI('exit', reason, ['TP', 'Manuel', 'SL'], {
+                TP: 'bg-sky-600',
+                Manuel: 'bg-slate-600',
+                SL: 'bg-rose-600'
+            });
+        }
+
+        function setBias(bias) {
+            const current = document.getElementById('trade-bias').value;
+            if (current === bias) {
+                document.getElementById('trade-bias').value = '';
+                ['Bullish','Bearish','Neutral'].forEach(opt => {
+                    const btn = document.getElementById(`btn-bias-${opt}`);
+                    if (!btn) return;
+                    btn.classList.remove('bg-sky-600','bg-rose-600','bg-slate-600','text-white','border-sky-600','border-rose-600','border-slate-600');
+                    btn.classList.add('bg-slate-800','text-slate-400','border-slate-700');
+                });
+                return;
+            }
+            document.getElementById('trade-bias').value = bias;
+            updateButtonGroupUI('bias', bias, ['Bullish', 'Bearish', 'Neutral'], {
+                Bullish: 'bg-sky-600',
+                Bearish: 'bg-rose-600',
+                Neutral: 'bg-slate-600'
+            });
+        }
+
+        function updateButtonGroupUI(groupId, activeValue, options, colorMap) {
+            options.forEach(opt => {
+                const btn = document.getElementById(`btn-${groupId}-${opt.replace(/\s+/g, '')}`);
+                if (!btn) return;
+                
+                const activeColor = colorMap[opt];
+                const activeBorder = activeColor.replace('bg-', 'border-');
+
+                if (opt === activeValue) {
+                    btn.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700');
+                    btn.classList.add(activeColor, 'text-white', activeBorder);
+                } else {
+                    btn.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700');
+                    Object.values(colorMap).forEach(color => {
+                        btn.classList.remove(color, 'text-white', color.replace('bg-', 'border-'));
+                    });
+                }
+            });
+        }
+
+        function closeTradeModal() {
+            document.body.classList.remove('overflow-hidden');
+            document.getElementById('trade-modal').classList.add('hidden');
+        }
+
+        function handleTradeSubmit(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('trade-id').value;
+            let pnl = parseFloat(document.getElementById('trade-pnl').value);
+            const rPercent = parseFloat(document.getElementById('trade-r-percent').value) || 0;
+            const exitReason = document.getElementById('trade-exit-reason').value;
+            
+            if (!document.getElementById('trade-date').value || !document.getElementById('trade-time').value) {
+                showToast('Lütfen tarih ve saat seçin', 'alert-circle', 'rose');
+                return;
+            }
+            if (isNaN(pnl)) {
+                showToast('Lütfen PnL değeri girin', 'alert-circle', 'rose');
+                return;
+            }
+            
+            if (exitReason === 'SL' && pnl > 0) {
+                pnl = -pnl;
+            }
+            
+            let rrValue = '-';
+            if (balance > 0 && rPercent > 0) {
+                rrValue = (pnl / (balance * (rPercent / 100))).toFixed(1);
+            }
+
+            let setupTypes = document.getElementById('trade-setup-types').value;
+            if (!setupTypes || setupTypes.trim() === '') {
+                setupTypes = 'Hislerim';
+            }
+
+            const sessionVal = document.getElementById('trade-session').value;
+            const psychologyVal = document.getElementById('trade-psychology').value;
+
+            const tradeData = {
+                id: id || Date.now().toString(),
+                symbol: 'XAUUSD',
+                date: document.getElementById('trade-date').value,
+                time: document.getElementById('trade-time').value,
+                type: document.getElementById('trade-type').value,
+                entryType: document.getElementById('trade-entry-type').value || '',
+                setupTypes: setupTypes.split(',').map(s => s.trim()),
+                killzone: document.getElementById('trade-killzone').value,
+                rPercent: rPercent,
+                rr: rrValue,
+                lot: parseFloat(document.getElementById('trade-lot').value) || 0,
+                pnl: pnl,
+                exitReason: exitReason,
+                bias: document.getElementById('trade-bias').value,
+                notes: document.getElementById('trade-notes').value,
+                session: sessionVal || '',
+                psychology: psychologyVal ? psychologyVal.split(',').map(s => s.trim()) : []
+            };
+
+            if (id) {
+                const index = trades.findIndex(t => t.id === id);
+                if (index !== -1) {
+                    trades[index] = tradeData;
+                }
+            } else {
+                trades.push(tradeData);
+            }
+
+            saveCurrentAccountData();
+            closeTradeModal();
+            showToast('İşlem kaydedildi', 'check-circle', 'emerald');
+        }
+
+        function deleteTrade(id) {
+            showConfirm('İşlemi Sil', 'Bu işlemi silmek istediğinize emin misiniz?', () => {
+                trades = trades.filter(t => t.id !== id);
+                saveCurrentAccountData();
+                closeConfirmModal();
+                showToast('İşlem silindi', 'trash-2', 'rose');
+            });
+        }
+
+        function exportTrades() {
+            if (trades.length === 0) {
+                showToast('Dışa aktarılacak işlem bulunmuyor', 'alert-circle', 'rose');
+                return;
+            }
+            const blob = new Blob([JSON.stringify(trades, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const account = accounts.find(acc => acc.id === currentAccountId);
+            const accountName = account ? account.name.replace(/\s+/g, '') : 'Hesap';
+            a.download = `${accountName}-islemgecmisi.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('İşlemler dışa aktarıldı');
+        }
+
+        function getTradeSetups(t) {
+            if (t.setupTypes && t.setupTypes.length > 0) {
+                return t.setupTypes;
+            }
+            if (t.entryType) {
+                return [t.entryType];
+            }
+            return [];
+        }
+
+        // DOM Insights Visualizer
+        function renderInsights(profitFactor, winRate, rrRatio) {
+            const insightsEl = document.getElementById('report-insights');
+            if (!insightsEl) return;
+            
+            let html = '';
+            if (profitFactor >= 1.5) {
+                html += '<p class="text-emerald-400 font-semibold mb-2">✓ Güçlü Karlılık rasyosu!</p>';
+            } else if (profitFactor >= 1.0) {
+                html += '<p class="text-sky-400 font-semibold mb-2">⚠ Karlılık sınırda, risk yönetimini gözden geçirin.</p>';
+            } else {
+                html += '<p class="text-rose-400 font-semibold mb-2">✗ Negatif Karlılık! Stratejinizi revize etmeniz önerilir.</p>';
+            }
+
+            if (winRate >= 0.5) {
+                html += `<p class="text-slate-300">Kazanma oranınız (%${(winRate * 100).toFixed(0)}) gayet iyi düzeyde. Psikolojinizi koruyarak devam edin.</p>`;
+            } else {
+                html += `<p class="text-slate-300">Kazanma oranınız (%${(winRate * 100).toFixed(0)}) düşük. Setup kalitenizi artırmayı hedefleyin.</p>`;
+            }
+
+            if (rrRatio >= 1.5) {
+                html += `<p class="text-slate-300 mt-2">Ortalama kazanç/kayıp oranınız (${rrRatio.toFixed(2)}) tatminkar. Risk ödül dengesini koruyorsunuz.</p>`;
+            } else {
+                html += `<p class="text-slate-300 mt-2">Ortalama kazanç/kayıp oranınız (${rrRatio.toFixed(2)}) zayıf. SL noktalarını daha disiplinli belirleyin.</p>`;
+            }
+
+            insightsEl.innerHTML = html;
+        }
+
+        function renderAnalysis() {
+            if (trades.length === 0) {
+                const reportElement = document.getElementById('report-insights');
+                if (reportElement) reportElement.innerHTML = '<p class="italic">Henüz analiz edilecek işlem bulunmuyor.</p>';
+                
+                ['stat-best-session', 'stat-worst-session', 'stat-psych-mistake', 'stat-psych-positive',
+                 'stat-bias-best-wr', 'stat-bias-worst-wr', 'stat-profitable-setup', 'stat-wr-setup', 'stat-used-setup'].forEach(id => {
+                     const el = document.getElementById(id);
+                     if (el) el.innerText = '-';
+                 });
+                const sTbody = document.getElementById('session-adv-body');
+                if (sTbody) sTbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-500 italic">Veri bulunmuyor</td></tr>';
+                const mSessionContainer = document.getElementById('monthly-session-perf');
+                if (mSessionContainer) mSessionContainer.innerHTML = '<p class="text-slate-500 italic text-center py-2">Veri bulunmuyor</p>';
+                const psychWRContainer = document.getElementById('psychology-wr-list');
+                if (psychWRContainer) psychWRContainer.innerHTML = '<p class="text-slate-500 italic text-center py-2">Veri bulunmuyor</p>';
+                return;
+            }
+
+            const now = new Date();
+            const todayStr = toLocalDateStr(now);
+            
+            const dailyPnL = trades.filter(t => t.date === todayStr).reduce((sum, t) => sum + t.pnl, 0);
+            
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+            const weeklyPnL = trades.filter(t => safeParseDate(t.date) >= startOfWeek).reduce((sum, t) => sum + t.pnl, 0);
+            
+            const monthlyPnL = trades.filter(t => {
+                const d = safeParseDate(t.date);
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            }).reduce((sum, t) => sum + t.pnl, 0);
+
+            document.getElementById('report-daily-pnl').innerText = `${dailyPnL >= 0 ? '+' : ''}$${dailyPnL.toFixed(2)}`;
+            document.getElementById('report-daily-pnl').className = `font-bold ${dailyPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            
+            document.getElementById('report-weekly-pnl').innerText = `${weeklyPnL >= 0 ? '+' : ''}$${weeklyPnL.toFixed(2)}`;
+            document.getElementById('report-weekly-pnl').className = `font-bold ${weeklyPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            
+            document.getElementById('report-monthly-pnl').innerText = `${monthlyPnL >= 0 ? '+' : ''}$${monthlyPnL.toFixed(2)}`;
+            document.getElementById('report-monthly-pnl').className = `font-bold ${monthlyPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+            const wins = trades.filter(t => t.pnl > 0);
+            const losses = trades.filter(t => t.pnl < 0);
+            const grossProfit = wins.reduce((sum, t) => sum + t.pnl, 0);
+            const grossLoss = Math.abs(losses.reduce((sum, t) => sum + t.pnl, 0));
+            const profitFactor = grossLoss === 0 ? (grossProfit > 0 ? 99.9 : 0) : (grossProfit / grossLoss);
+            
+            document.getElementById('stat-profit-factor').innerText = profitFactor.toFixed(2);
+            document.getElementById('stat-profit-factor').className = `text-3xl font-bold ${profitFactor >= 1.5 ? 'text-emerald-400' : (profitFactor >= 1 ? 'text-sky-500' : 'text-rose-400')}`;
+
+            const totalTrades = trades.length;
+            const winRate = totalTrades > 0 ? (wins.length / totalTrades) : 0;
+            const lossRate = totalTrades > 0 ? (losses.length / totalTrades) : 0;
+            const avgWin = wins.length > 0 ? (grossProfit / wins.length) : 0;
+            const avgLoss = losses.length > 0 ? (grossLoss / losses.length) : 0;
+            const expectancy = (winRate * avgWin) - (lossRate * avgLoss);
+            
+            const expectancyEl = document.getElementById('report-expectancy-val');
+            if (expectancyEl) {
+                expectancyEl.innerText = `$${expectancy.toFixed(2)}`;
+                expectancyEl.className = `font-bold ${expectancy >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            }
+
+            const rrRatio = avgLoss === 0 ? 0 : (avgWin / avgLoss);
+            document.getElementById('report-rr-ratio').innerText = rrRatio.toFixed(2);
+
+            let maxWinStreak = 0;
+            let maxLossStreak = 0;
+            let currentWinStreak = 0;
+            let currentLossStreak = 0;
+            
+            [...trades].sort((a, b) => safeParseDate(a.date) - safeParseDate(b.date)).forEach(t => {
+                if (t.pnl > 0) {
+                    currentWinStreak++;
+                    currentLossStreak = 0;
+                    if (currentWinStreak > maxWinStreak) maxWinStreak = currentWinStreak;
+                } else if (t.pnl < 0) {
+                    currentLossStreak++;
+                    currentWinStreak = 0;
+                    if (currentLossStreak > maxLossStreak) maxLossStreak = currentLossStreak;
+                }
+            });
+            document.getElementById('report-win-streak').innerText = maxWinStreak;
+            document.getElementById('report-loss-streak').innerText = maxLossStreak;
+
+            const symbolStats = {};
+            trades.forEach(t => {
+                if (!symbolStats[t.symbol]) symbolStats[t.symbol] = 0;
+                symbolStats[t.symbol] += t.pnl;
+            });
+
+            const sortedSymbols = Object.entries(symbolStats).sort((a, b) => b[1] - a[1]);
+            
+            const bestContainer = document.getElementById('report-best-pairs');
+            const worstContainer = document.getElementById('report-worst-pairs');
+            if (bestContainer && worstContainer) {
+                bestContainer.innerHTML = '';
+                worstContainer.innerHTML = '';
+
+                sortedSymbols.slice(0, 3).forEach(([sym, pnl]) => {
+                    if (pnl <= 0) return;
+                    bestContainer.innerHTML += `
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-slate-300 font-medium">${sym}</span>
+                            <span class="text-emerald-400 font-bold">+$${pnl.toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+
+                sortedSymbols.slice(-3).reverse().forEach(([sym, pnl]) => {
+                    if (pnl >= 0) return;
+                    worstContainer.innerHTML += `
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-slate-300 font-medium">${sym}</span>
+                            <span class="text-rose-400 font-bold">-$${Math.abs(pnl).toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            // Setup Advanced Analytics
+            const setupPnL = {};
+            const setupWins = {};
+            const setupCounts = {};
+            trades.forEach(t => {
+                getTradeSetups(t).forEach(setup => {
+                    setupCounts[setup] = (setupCounts[setup] || 0) + 1;
+                    setupPnL[setup] = (setupPnL[setup] || 0) + t.pnl;
+                    if (t.pnl > 0) {
+                        setupWins[setup] = (setupWins[setup] || 0) + 1;
+                    }
+                });
+            });
+
+            // 1. Most Profitable Setup
+            let mostProfitableSetup = '-';
+            let maxSetupPnL = -Infinity;
+            Object.entries(setupPnL).forEach(([setup, pnl]) => {
+                if (pnl > maxSetupPnL) {
+                    maxSetupPnL = pnl;
+                    mostProfitableSetup = `${setup} (+$${pnl.toFixed(0)})`;
+                }
+            });
+
+            // 2. Highest Win Rate Setup
+            let highestWRSetup = '-';
+            let maxSetupWR = -1;
+            Object.entries(setupCounts).forEach(([setup, count]) => {
+                const wr = (setupWins[setup] || 0) / count;
+                if (wr > maxSetupWR) {
+                    maxSetupWR = wr;
+                    highestWRSetup = `${setup} (%${(wr * 100).toFixed(0)})`;
+                }
+            });
+
+            // 3. Most Used Setup
+            let mostUsedSetup = '-';
+            let maxSetupCount = 0;
+            Object.entries(setupCounts).forEach(([setup, count]) => {
+                if (count > maxSetupCount) {
+                    maxSetupCount = count;
+                    mostUsedSetup = `${setup} (${count} kez)`;
+                }
+            });
+
+            // Session Advanced Analytics
+            const sessionPnL = { 'Asia': 0, 'London': 0, 'New York': 0, 'Kill Zone': 0 };
+            const sessionTrades = { 'Asia': [], 'London': [], 'New York': [], 'Kill Zone': [] };
+            trades.forEach(t => {
+                if (t.session && sessionPnL.hasOwnProperty(t.session)) {
+                    sessionPnL[t.session] += t.pnl;
+                    sessionTrades[t.session].push(t);
+                }
+            });
+
+            // 4. Best & Worst Trading Session
+            let bestSession = '-';
+            let bestSessionPnL = -Infinity;
+            let worstSession = '-';
+            let worstSessionPnL = Infinity;
+
+            Object.entries(sessionPnL).forEach(([sess, pnl]) => {
+                if (sessionTrades[sess].length > 0) {
+                    if (pnl > bestSessionPnL) {
+                        bestSessionPnL = pnl;
+                        bestSession = `${sess} (+$${pnl.toFixed(0)})`;
+                    }
+                    if (pnl < worstSessionPnL) {
+                        worstSessionPnL = pnl;
+                        worstSession = `${sess} ($${pnl.toFixed(0)})`;
+                    }
+                }
+            });
+
+            // 5. Win Rate, Average RR, and Average Profit by Session
+            const sessionMetrics = {};
+            ['Asia', 'London', 'New York', 'Kill Zone'].forEach(sess => {
+                const sTrades = sessionTrades[sess] || [];
+                const count = sTrades.length;
+                const winsCount = sTrades.filter(t => t.pnl > 0).length;
+                const wr = count > 0 ? ((winsCount / count) * 100).toFixed(0) : '0';
+                
+                const totalRR = sTrades.reduce((acc, t) => acc + (parseFloat(t.rr) || 0), 0);
+                const avgRR = count > 0 ? (totalRR / count).toFixed(2) : '0.00';
+                
+                const totalProfit = sTrades.reduce((acc, t) => acc + t.pnl, 0);
+                const avgProfit = count > 0 ? (totalProfit / count).toFixed(2) : '0.00';
+                
+                sessionMetrics[sess] = { count, wr, avgRR, avgProfit };
+            });
+
+            // HTF Bias Analytics
+            const biasWins = { 'Bullish': 0, 'Bearish': 0, 'Neutral': 0 };
+            const biasCounts = { 'Bullish': 0, 'Bearish': 0, 'Neutral': 0 };
+            trades.forEach(t => {
+                if (t.bias && biasCounts.hasOwnProperty(t.bias)) {
+                    biasCounts[t.bias]++;
+                    if (t.pnl > 0) {
+                        biasWins[t.bias]++;
+                    }
+                }
+            });
+
+            // 6. Highest & Lowest Win Rate HTF Bias
+            let highestWRBias = '-';
+            let maxBiasWR = -1;
+            let lowestWRBias = '-';
+            let minBiasWR = Infinity;
+
+            Object.entries(biasCounts).forEach(([bias, count]) => {
+                if (count > 0) {
+                    const wr = biasWins[bias] / count;
+                    if (wr > maxBiasWR) {
+                        maxBiasWR = wr;
+                        highestWRBias = `${bias} (%${(wr * 100).toFixed(0)})`;
+                    }
+                    if (wr < minBiasWR) {
+                        minBiasWR = wr;
+                        lowestWRBias = `${bias} (%${(wr * 100).toFixed(0)})`;
+                    }
+                }
+            });
+
+            // Psychology Analytics
+            const mistakeList = ['FOMO', 'Revenge Trade', 'Fear', 'Greed', 'Overconfidence', 'Early Exit', 'Late Entry'];
+            const positiveList = ['Patient', 'Discipline', 'Perfect Execution'];
+            const psychCounts = {};
+            const psychWins = {};
+            trades.forEach(t => {
+                if (t.psychology && Array.isArray(t.psychology)) {
+                    t.psychology.forEach(item => {
+                        psychCounts[item] = (psychCounts[item] || 0) + 1;
+                        if (t.pnl > 0) {
+                            psychWins[item] = (psychWins[item] || 0) + 1;
+                        }
+                    });
+                }
+            });
+
+            // 7. Most Common Psychology Mistake
+            let commonMistake = '-';
+            let maxMistakeCount = 0;
+            mistakeList.forEach(m => {
+                const count = psychCounts[m] || 0;
+                if (count > maxMistakeCount) {
+                    maxMistakeCount = count;
+                    commonMistake = `${m} (${count} kez)`;
+                }
+            });
+
+            // 8. Most Common Positive Psychology
+            let commonPositive = '-';
+            let maxPositiveCount = 0;
+            positiveList.forEach(p => {
+                const count = psychCounts[p] || 0;
+                if (count > maxPositiveCount) {
+                    maxPositiveCount = count;
+                    commonPositive = `${p} (${count} kez)`;
+                }
+            });
+
+            // 9. Win Rate by Psychology HTML Generation
+            let psychologyWRHTML = '';
+            psychologyList.forEach(item => {
+                const count = psychCounts[item] || 0;
+                if (count > 0) {
+                    const winsCount = psychWins[item] || 0;
+                    const wr = ((winsCount / count) * 100).toFixed(0);
+                    psychologyWRHTML += `
+                        <div class="flex justify-between items-center text-sm py-1 border-b border-slate-800/30">
+                            <span class="text-slate-400">${item}</span>
+                            <span class="font-bold ${wr >= 50 ? 'text-emerald-400' : 'text-rose-400'}">%${wr} (${count} İşlem)</span>
+                        </div>
+                    `;
+                }
+            });
+            if (!psychologyWRHTML) {
+                psychologyWRHTML = '<p class="text-xs text-slate-500 italic text-center py-2">Henüz psikolojik analiz verisi bulunmuyor.</p>';
+            }
+
+            // 10. Average Monthly Session Performance
+            const monthlySessionPerformance = {};
+            trades.forEach(t => {
+                if (t.session && ['Asia', 'London', 'New York', 'Kill Zone'].includes(t.session)) {
+                    const d = safeParseDate(t.date);
+                    const monthYear = d.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
+                    if (!monthlySessionPerformance[monthYear]) {
+                        monthlySessionPerformance[monthYear] = { 'Asia': 0, 'London': 0, 'New York': 0, 'Kill Zone': 0 };
+                    }
+                    monthlySessionPerformance[monthYear][t.session] += t.pnl;
+                }
+            });
+
+            // Push computations into Advanced UI Nodes
+            document.getElementById('stat-profitable-setup').innerText = mostProfitableSetup;
+            document.getElementById('stat-wr-setup').innerText = highestWRSetup;
+            document.getElementById('stat-used-setup').innerText = mostUsedSetup;
+
+            document.getElementById('stat-best-session').innerText = bestSession;
+            document.getElementById('stat-worst-session').innerText = worstSession;
+
+            const sTbody = document.getElementById('session-adv-body');
+            if (sTbody) {
+                sTbody.innerHTML = ['Asia', 'London', 'New York', 'Kill Zone'].map(sess => {
+                    const metrics = sessionMetrics[sess];
+                    const profitColor = parseFloat(metrics.avgProfit) >= 0 ? 'text-emerald-400' : 'text-rose-400';
+                    return `
+                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
+                            <td class="py-2.5 font-medium">${sess}</td>
+                            <td class="py-2.5 text-center">${metrics.count}</td>
+                            <td class="py-2.5 text-center font-bold text-sky-400">${metrics.wr}%</td>
+                            <td class="py-2.5 text-center font-semibold">${metrics.avgRR}R</td>
+                            <td class="py-2.5 text-right font-bold ${profitColor}">$${metrics.avgProfit}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            const mSessionContainer = document.getElementById('monthly-session-perf');
+            if (mSessionContainer) {
+                let mSessHTML = '';
+                Object.entries(monthlySessionPerformance).sort((a,b) => b[0].localeCompare(a[0])).forEach(([mYear, sessions]) => {
+                    mSessHTML += `
+                        <div class="bg-slate-950/20 p-2.5 rounded-xl border border-slate-800/50 space-y-2">
+                            <div class="font-bold text-slate-300">${mYear}</div>
+                            <div class="grid grid-cols-4 gap-2 text-center text-[10px]">
+                                ${['Asia', 'London', 'New York', 'Kill Zone'].map(s => {
+                                    const val = sessions[s] || 0;
+                                    const valColor = val >= 0 ? 'text-emerald-400' : 'text-rose-400';
+                                    return `
+                                        <div>
+                                            <span class="text-slate-500 font-medium block">${s}</span>
+                                            <span class="font-bold ${valColor}">${val >= 0 ? '+' : ''}$${val.toFixed(0)}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                mSessionContainer.innerHTML = mSessHTML || '<p class="text-slate-500 italic text-center py-2">Seans verisi bulunan işlem yok.</p>';
+            }
+
+            document.getElementById('stat-psych-mistake').innerText = commonMistake;
+            document.getElementById('stat-psych-positive').innerText = commonPositive;
+
+            document.getElementById('stat-bias-best-wr').innerText = highestWRBias;
+            document.getElementById('stat-bias-worst-wr').innerText = lowestWRBias;
+
+            const psychWRContainer = document.getElementById('psychology-wr-list');
+            if (psychWRContainer) {
+                psychWRContainer.innerHTML = psychologyWRHTML;
+            }
+
+            // Generate contextual DOM insights safely
+            renderInsights(profitFactor, winRate, rrRatio);
+
+            drawEquityChart();
+            drawSymbolChart(symbolStats);
+            drawDayChart();
+            drawRRDistributionChart();
+            drawKillzoneWinRateChart();
+            
+            renderHourlyPerformance();
+            renderDailyWinRate();
+            renderSetupPerformance();
+            renderBiasAccuracy();
+            renderSessionPerformance();
+            renderHeatmap();
+        }
+
+        function drawEquityChart() {
+            const container = document.getElementById('equity-chart');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const margin = { top: 20, right: 20, bottom: 30, left: 50 };
+            const width = container.clientWidth - margin.left - margin.right;
+            const height = container.clientHeight - margin.top - margin.bottom;
+            if (width <= 0 || height <= 0) return;
+            
+            const sortedTrades = [...trades].sort((a, b) => safeParseDate(a.date) - safeParseDate(b.date));
+            let cumulative = balance;
+            const data = [{ date: safeParseDate(sortedTrades[0]?.date || new Date()), value: cumulative }];
+            
+            let maxEquity = cumulative;
+            let maxDD = 0;
+
+            sortedTrades.forEach(t => {
+                cumulative += t.pnl;
+                if (cumulative > maxEquity) maxEquity = cumulative;
+                const dd = maxEquity > 0 ? ((maxEquity - cumulative) / maxEquity) * 100 : 0;
+                if (dd > maxDD) maxDD = dd;
+                data.push({ date: safeParseDate(t.date), value: cumulative });
+            });
+
+            document.getElementById('report-drawdown').innerText = `Max DD: ${maxDD.toFixed(1)}%`;
+
+            const svg = d3.select("#equity-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleTime()
+                .domain(d3.extent(data, d => d.date))
+                .range([0, width]);
+
+            const y = d3.scaleLinear()
+                .domain([d3.min(data, d => d.value) * 0.95, d3.max(data, d => d.value) * 1.05])
+                .range([height, 0]);
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%d %b")))
+                .attr("color", "#475569");
+
+            svg.append("g")
+                .call(d3.axisLeft(y).ticks(5))
+                .attr("color", "#475569");
+
+            const line = d3.line()
+                .x(d => x(d.date))
+                .y(d => y(d.value))
+                .curve(d3.curveMonotoneX);
+
+            svg.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "#0ea5e9")
+                .attr("stroke-width", 3)
+                .attr("d", line);
+                
+            const area = d3.area()
+                .x(d => x(d.date))
+                .y0(height)
+                .y1(d => y(d.value))
+                .curve(d3.curveMonotoneX);
+                
+            svg.append("path")
+                .datum(data)
+                .attr("fill", "url(#equity-gradient)")
+                .attr("d", area);
+                
+            const defs = svg.append("defs");
+            const gradient = defs.append("linearGradient")
+                .attr("id", "equity-gradient")
+                .attr("x1", "0%").attr("y1", "0%")
+                .attr("x2", "0%").attr("y2", "100%");
+            gradient.append("stop").attr("offset", "0%").attr("stop-color", "#0ea5e9").attr("stop-opacity", 0.2);
+            gradient.append("stop").attr("offset", "100%").attr("stop-color", "#0ea5e9").attr("stop-opacity", 0);
+        }
+
+        function drawDayChart() {
+            const container = document.getElementById('day-chart');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const margin = { top: 20, right: 20, bottom: 40, left: 60 };
+            const width = container.clientWidth - margin.left - margin.right;
+            const height = container.clientHeight - margin.top - margin.bottom;
+            if (width <= 0 || height <= 0) return;
+            
+            const days = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+            const dayPnL = [0, 0, 0, 0, 0, 0, 0];
+            
+            trades.forEach(t => {
+                const day = safeParseDate(t.date).getDay();
+                dayPnL[day] += t.pnl;
+            });
+
+            const data = days.map((name, i) => ({ name, value: dayPnL[i] }));
+
+            const svg = d3.select("#day-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleBand()
+                .range([0, width])
+                .domain(data.map(d => d.name))
+                .padding(0.4);
+
+            const y = d3.scaleLinear()
+                .domain([Math.min(0, d3.min(data, d => d.value)), d3.max(data, d => d.value)])
+                .range([height, 0]);
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .attr("color", "#475569");
+
+            svg.append("g")
+                .call(d3.axisLeft(y).ticks(5))
+                .attr("color", "#475569");
+
+            svg.selectAll("bar")
+                .data(data)
+                .enter()
+                .append("rect")
+                .attr("x", d => x(d.name))
+                .attr("y", d => y(Math.max(0, d.value)))
+                .attr("width", x.bandwidth())
+                .attr("height", d => Math.abs(y(d.value) - y(0)))
+                .attr("fill", d => d.value >= 0 ? "#10b981" : "#f43f5e")
+                .attr("rx", 4);
+        }
+
+        function drawRRDistributionChart() {
+            const container = document.getElementById('rr-distribution-chart');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const margin = { top: 20, right: 20, bottom: 40, left: 40 };
+            const width = container.clientWidth - margin.left - margin.right;
+            const height = container.clientHeight - margin.top - margin.bottom;
+            if (width <= 0 || height <= 0) return;
+            
+            const rrValues = trades
+                .filter(t => t.pnl > 0 && t.rr && t.rr !== '-')
+                .map(t => parseFloat(t.rr));
+
+            if (rrValues.length === 0) {
+                container.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500 text-sm italic">RR verisi bulunmuyor.</div>';
+                return;
+            }
+
+            const svg = d3.select("#rr-distribution-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleLinear()
+                .domain([0, d3.max(rrValues) + 1])
+                .range([0, width]);
+
+            const histogram = d3.histogram()
+                .value(d => d)
+                .domain(x.domain())
+                .thresholds(x.ticks(10));
+
+            const bins = histogram(rrValues);
+
+            const y = d3.scaleLinear()
+                .range([height, 0])
+                .domain([0, d3.max(bins, d => d.length)]);
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .attr("color", "#475569");
+
+            svg.append("g")
+                .call(d3.axisLeft(y).ticks(5))
+                .attr("color", "#475569");
+
+            svg.selectAll("rect")
+                .data(bins)
+                .enter()
+                .append("rect")
+                .attr("x", 1)
+                .attr("transform", d => `translate(${x(d.x0)},${y(d.length)})`)
+                .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
+                .attr("height", d => height - y(d.length))
+                .style("fill", "#0ea5e9")
+                .attr("rx", 2);
+        }
+
+        function drawKillzoneWinRateChart() {
+            const container = document.getElementById('killzone-winrate-chart');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const margin = { top: 20, right: 20, bottom: 40, left: 60 };
+            const width = container.clientWidth - margin.left - margin.right;
+            const height = container.clientHeight - margin.top - margin.bottom;
+            if (width <= 0 || height <= 0) return;
+            
+            const killzones = ["London Open", "NY Open", "London Close", "NY PM", "Outside Killzone"];
+            const stats = killzones.map(kz => {
+                const kzTrades = trades.filter(t => t.killzone === kz);
+                const wins = kzTrades.filter(t => t.pnl > 0).length;
+                const winRate = kzTrades.length > 0 ? (wins / kzTrades.length) * 100 : 0;
+                return { name: kz, value: winRate, count: kzTrades.length };
+            });
+
+            const svg = d3.select("#killzone-winrate-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleBand()
+                .range([0, width])
+                .domain(stats.map(d => d.name))
+                .padding(0.4);
+
+            const y = d3.scaleLinear()
+                .domain([0, 100])
+                .range([height, 0]);
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .attr("color", "#475569");
+
+            svg.append("g")
+                .call(d3.axisLeft(y).ticks(5).tickFormat(d => d + "%"))
+                .attr("color", "#475569");
+
+            svg.selectAll("bar")
+                .data(stats)
+                .enter()
+                .append("rect")
+                .attr("x", d => x(d.name))
+                .attr("y", d => y(d.value))
+                .attr("width", x.bandwidth())
+                .attr("height", d => height - y(d.value))
+                .attr("fill", d => d.value >= 50 ? "#10b981" : "#f43f5e")
+                .attr("rx", 4);
+
+            svg.selectAll("text.label")
+                .data(stats)
+                .enter()
+                .append("text")
+                .attr("class", "label")
+                .attr("x", d => x(d.name) + x.bandwidth() / 2)
+                .attr("y", d => y(d.value) - 5)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#94a3b8")
+                .style("font-size", "10px")
+                .text(d => d.count > 0 ? d.value.toFixed(0) + "%" : "");
+        }
+
+        function drawSymbolChart(symbolStats) {
+            const container = document.getElementById('symbol-chart');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const margin = { top: 20, right: 20, bottom: 40, left: 60 };
+            const width = container.clientWidth - margin.left - margin.right;
+            const height = container.clientHeight - margin.top - margin.bottom;
+            if (width <= 0 || height <= 0) return;
+            
+            const data = Object.entries(symbolStats)
+                .map(([name, value]) => ({ name, value }))
+                .sort((a, b) => b.value - a.value);
+
+            if (data.length === 0) return;
+
+            const svg = d3.select("#symbol-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleBand()
+                .range([0, width])
+                .domain(data.map(d => d.name))
+                .padding(0.4);
+
+            const y = d3.scaleLinear()
+                .domain([Math.min(0, d3.min(data, d => d.value)), d3.max(data, d => d.value)])
+                .range([height, 0]);
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                .attr("color", "#475569")
+                .style("text-anchor", "middle");
+
+            svg.append("g")
+                .call(d3.axisLeft(y).ticks(5))
+                .attr("color", "#475569");
+
+            svg.selectAll("bar")
+                .data(data)
+                .enter()
+                .append("rect")
+                .attr("x", d => x(d.name))
+                .attr("y", d => y(Math.max(0, d.value)))
+                .attr("width", x.bandwidth())
+                .attr("height", d => Math.abs(y(d.value) - y(0)))
+                .attr("fill", d => d.value >= 0 ? "#10b981" : "#f43f5e")
+                .attr("rx", 4);
+        }
+
+        function drawBalanceChart() {
+            const container = document.getElementById('balance-chart');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const margin = { top: 40, right: 40, bottom: 40, left: 60 };
+            const width = container.clientWidth - margin.left - margin.right;
+            const height = container.clientHeight - margin.top - margin.bottom;
+            if (width <= 0 || height <= 0) return;
+
+            const events = [];
+            trades.forEach(t => events.push({ date: safeParseDate(t.date), amount: t.pnl, type: 'trade' }));
+            transactions.forEach(t => events.push({ date: safeParseDate(t.date), amount: t.type === 'deposit' ? t.amount : -t.amount, type: t.type }));
+
+            const year2026Events = events.filter(e => e.date.getFullYear() === 2026);
+            year2026Events.sort((a, b) => a.date - b.date);
+
+            let currentBalance = balance;
+            const before2026Events = events.filter(e => e.date.getFullYear() < 2026);
+            before2026Events.forEach(e => currentBalance += e.amount);
+
+            const data = [];
+            const startOfYear = new Date(2026, 0, 1);
+            const endOfYear = new Date(2026, 11, 31);
+
+            if (year2026Events.length === 0) {
+                data.push({ date: startOfYear, value: currentBalance });
+                data.push({ date: endOfYear, value: currentBalance });
+            } else {
+                data.push({ date: startOfYear, value: currentBalance });
+                
+                year2026Events.forEach(e => {
+                    currentBalance += e.amount;
+                    data.push({ date: e.date, value: currentBalance, eventType: e.type });
+                });
+                
+                const today = new Date();
+                if (today.getFullYear() === 2026) {
+                    data.push({ date: today, value: currentBalance });
+                } else if (today.getFullYear() > 2026) {
+                    data.push({ date: endOfYear, value: currentBalance });
+                }
+            }
+
+            const x = d3.scaleTime()
+                .domain([startOfYear, endOfYear])
+                .range([0, width]);
+
+            const y = d3.scaleLinear()
+                .domain([d3.min(data, d => d.value) * 0.9, d3.max(data, d => d.value) * 1.1])
+                .range([height, 0]);
+
+            const svg = d3.select("#balance-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x).ticks(12).tickFormat(d3.timeFormat("%b")))
+                .attr("color", "#475569");
+
+            svg.append("g")
+                .call(d3.axisLeft(y).ticks(5))
+                .attr("color", "#475569");
+
+            const line = d3.line()
+                .x(d => x(d.date))
+                .y(d => y(d.value))
+                .curve(d3.curveStepAfter);
+
+            svg.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "#0ea5e9")
+                .attr("stroke-width", 2)
+                .attr("d", line);
+
+            const transactionData = data.filter(d => d.eventType === 'deposit' || d.eventType === 'withdraw');
+            
+            svg.selectAll(".transaction-icon")
+                .data(transactionData)
+                .enter()
+                .append("g")
+                .attr("transform", d => `translate(${x(d.date)}, ${y(d.value)})`)
+                .each(function(d) {
+                    const g = d3.select(this);
+                    if (d.eventType === 'deposit') {
+                        g.append("circle").attr("r", 8).attr("fill", "#10b981").attr("fill-opacity", 0.2);
+                        g.append("circle").attr("r", 3).attr("fill", "#10b981");
+                    } else {
+                        g.append("circle").attr("r", 8).attr("fill", "#f43f5e").attr("fill-opacity", 0.2);
+                        g.append("circle").attr("r", 3).attr("fill", "#f43f5e");
+                    }
+                });
+        }
+
+        function updateStats() {
+            const totalTrades = trades.length;
+            const winsCount = trades.filter(t => t.pnl > 0).length;
+            const winRate = totalTrades > 0 ? Math.round((winsCount / totalTrades) * 100) : 0;
+            const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
+            
+            const avgWin = winsCount > 0 ? (trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0) / winsCount) : 0;
+            const lossesCount = totalTrades - winsCount;
+            const avgLoss = lossesCount > 0 ? (Math.abs(trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0)) / lossesCount) : 0;
+            const expectancy = (totalTrades > 0) ? ( (winsCount/totalTrades) * avgWin ) - ( (lossesCount/totalTrades) * avgLoss ) : 0;
+
+            const totalTransactions = transactions.reduce((sum, t) => t.type === 'deposit' ? sum + t.amount : sum - t.amount, 0);
+            const currentBudget = balance + totalPnL + totalTransactions;
+
+            const winRateEl = document.getElementById('stat-win-rate');
+            const totalPnLEl = document.getElementById('stat-total-pnl');
+            const currentBudgetEl = document.getElementById('stat-current-budget');
+            const expectancyEl = document.getElementById('stat-expectancy');
+
+            if (winRateEl) winRateEl.innerText = `${winRate}%`;
+            if (totalPnLEl) {
+                totalPnLEl.innerText = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
+                totalPnLEl.className = `text-3xl font-bold ${totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            }
+            if (currentBudgetEl) currentBudgetEl.innerText = `$${currentBudget.toFixed(2)}`;
+            if (expectancyEl) {
+                expectancyEl.innerText = `${expectancy >= 0 ? '+' : ''}$${expectancy.toFixed(2)}`;
+                expectancyEl.className = `text-3xl font-bold ${expectancy >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            }
+
+            const totalDeposit = transactions.filter(t => t.type === 'deposit').reduce((sum, t) => sum + t.amount, 0);
+            const totalWithdraw = transactions.filter(t => t.type === 'withdraw').reduce((sum, t) => sum + t.amount, 0);
+            const currentBalance = balance + totalPnL + totalDeposit - totalWithdraw;
+
+            const balanceCurrentEl = document.getElementById('balance-current');
+            const balanceDepositEl = document.getElementById('balance-total-deposit');
+            const balanceWithdrawEl = document.getElementById('balance-total-withdraw');
+
+            if (balanceCurrentEl) balanceCurrentEl.innerText = `$${currentBalance.toFixed(2)}`;
+            if (balanceDepositEl) balanceDepositEl.innerText = `$${totalDeposit.toFixed(2)}`;
+            if (balanceWithdrawEl) balanceWithdrawEl.innerText = `$${totalWithdraw.toFixed(2)}`;
+        }
+
+        function renderBalance() {
+            drawBalanceChart();
+            const historyBody = document.getElementById('balance-history-body');
+
+            if (historyBody) {
+                historyBody.innerHTML = transactions.slice().reverse().map(t => `
+                    <tr class="text-sm border-b border-slate-800/50">
+                        <td class="py-4 text-slate-400">${new Date(t.date).toLocaleDateString('tr-TR')}</td>
+                        <td class="py-4">
+                            <span class="px-2 py-1 rounded-lg text-xs font-bold ${t.type === 'deposit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">
+                                ${t.type === 'deposit' ? 'Yatırma' : 'Çekme'}
+                            </span>
+                        </td>
+                        <td class="py-4 font-bold ${t.type === 'deposit' ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${t.type === 'deposit' ? '+' : '-'}$${t.amount.toFixed(2)}
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function renderNotes() {
+            const container = document.getElementById('notes-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            notes.forEach((note, index) => {
+                const div = document.createElement('div');
+                div.className = 'bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm space-y-4 relative group cursor-pointer hover:border-sky-500/50 transition-all';
+                div.onclick = () => openNoteModal(index);
+                div.innerHTML = `
+                    <button onclick="event.stopPropagation(); deleteNote(${index})" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-2 text-slate-600 hover:text-rose-400 transition-all">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                    <h5 class="font-bold text-slate-100 pr-8">${note.title}</h5>
+                    <p class="text-sm text-slate-400 leading-relaxed line-clamp-3">${note.content}</p>
+                    <p class="text-[10px] text-slate-600 font-bold uppercase tracking-wider">${note.date}</p>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        function openNoteModal(index = null) {
+            document.body.classList.add('overflow-hidden');
+            editingNoteIndex = index;
+            const modal = document.getElementById('note-modal');
+            const titleInput = document.getElementById('note-title');
+            const contentInput = document.getElementById('note-content');
+            const modalTitle = document.getElementById('note-modal-title');
+
+            if (index !== null) {
+                const note = notes[index];
+                titleInput.value = note.title;
+                contentInput.value = note.content;
+                modalTitle.innerText = 'Notu Düzenle';
+            } else {
+                titleInput.value = '';
+                contentInput.value = '';
+                modalTitle.innerText = 'Not Ekle';
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeNoteModal() {
+            document.body.classList.remove('overflow-hidden');
+            document.getElementById('note-modal').classList.add('hidden');
+        }
+
+        function saveNote() {
+            const title = document.getElementById('note-title').value;
+            const content = document.getElementById('note-content').value;
+
+            if (!title && !content) return;
+
+            const noteData = {
+                title: title || 'Başlıksız Not',
+                content,
+                date: new Date().toLocaleDateString('tr-TR')
+            };
+
+            if (editingNoteIndex !== null) {
+                notes[editingNoteIndex] = noteData;
+            } else {
+                notes.push(noteData);
+            }
+
+            saveCurrentAccountData();
+            closeNoteModal();
+            renderNotes();
+        }
+
+        function deleteNote(index) {
+            showConfirm('Notu Sil', 'Bu notu silmek istediğinize emin misiniz?', () => {
+                notes.splice(index, 1);
+                saveCurrentAccountData();
+                renderNotes();
+                showToast('Not silindi', 'trash-2', 'rose');
+            });
+        }
+
+        function renderEntryTypes() {
+            const list = document.getElementById('entry-types-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            entryTypes.forEach((type, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center p-3 bg-slate-800 rounded-xl border border-slate-700 group';
+                div.innerHTML = `
+                    <span class="text-sm font-medium text-slate-200">${type}</span>
+                    <button onclick="deleteEntryType(${index})" class="p-1.5 text-slate-500 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                `;
+                list.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        function addEntryType() {
+            const input = document.getElementById('new-entry-type');
+            const value = input.value.trim();
+            if (!value) return;
+
+            if (entryTypes.includes(value)) {
+                showToast('Bu Setup zaten mevcut', 'alert-circle', 'rose');
+                return;
+            }
+
+            entryTypes.push(value);
+            
+            updateSyncStatus(isOnline, "Eşitleniyor...");
+            set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
+                .then(() => {
+                    updateSyncStatus(true);
+                })
+                .catch(() => {
+                    updateSyncStatus(false);
+                });
+
+            input.value = '';
+            renderEntryTypes();
+            const modal = document.getElementById('trade-modal');
+            if (modal && modal.classList.contains('flex')) {
+                renderSetupButtons([]);
+            }
+            showToast('Setup eklendi');
+        }
+
+        function deleteEntryType(index) {
+            entryTypes.splice(index, 1);
+            
+            updateSyncStatus(isOnline, "Eşitleniyor...");
+            set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
+                .then(() => {
+                    updateSyncStatus(true);
+                })
+                .catch(() => {
+                    updateSyncStatus(false);
+                });
+
+            renderEntryTypes();
+            const modal = document.getElementById('trade-modal');
+            if (modal && modal.classList.contains('flex')) {
+                renderSetupButtons([]);
+            }
+            showToast('Setup silindi', 'trash-2', 'rose');
+        }
+
+        function populateEntryTypeSelect() {
+            const select = document.getElementById('trade-entry-type');
+            if (!select) return;
+            select.innerHTML = entryTypes.map(type => `<option value="${type}">${type}</option>`).join('');
+        }
+
+        function checkBalanceButton() {
+            const btn = document.getElementById('save-balance-btn');
+            const inp = document.getElementById('initial-balance-input');
+            if (!btn) return;
+            if (balance > 0) {
+                btn.innerText = 'Bakiyeyi Gir';
+                btn.disabled = true;
+                btn.onclick = null;
+                btn.classList.remove('bg-sky-600', 'hover:bg-sky-700');
+                btn.classList.add('bg-slate-700', 'opacity-50', 'cursor-not-allowed');
+                if (inp) {
+                    inp.disabled = true;
+                    inp.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            } else {
+                btn.innerText = 'Bakiyeyi Gir';
+                btn.disabled = false;
+                btn.onclick = saveInitialBalance;
+                btn.classList.remove('bg-slate-700', 'opacity-50', 'cursor-not-allowed');
+                btn.classList.add('bg-sky-600', 'hover:bg-sky-700');
+                if (inp) {
+                    inp.disabled = false;
+                    inp.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        function saveInitialBalance() {
+            if (balance > 0) return;
+            const val = parseFloat(document.getElementById('initial-balance-input').value);
+            if (isNaN(val) || val <= 0) {
+                showToast('Lütfen geçerli bir bakiye girin', 'alert-circle', 'rose');
+                return;
+            }
+            balance = val;
+            saveCurrentAccountData();
+            showToast('Başlangıç bakiyesi kaydedildi');
+        }
+
+        function executeTransaction(type) {
+            const amountInput = document.getElementById('transaction-amount-input');
+            const amount = parseFloat(amountInput.value);
+            
+            if (isNaN(amount) || amount <= 0) {
+                showToast('Lütfen geçerli bir tutar girin', 'alert-circle', 'rose');
+                return;
+            }
+
+            transactions.push({
+                type,
+                amount,
+                date: new Date().toISOString()
+            });
+
+            saveCurrentAccountData();
+            amountInput.value = '';
+            showToast(`${type === 'deposit' ? 'Yatırma' : 'Çekme'} işlemi kaydedildi`);
+        }
+
+        function backupData() {
+            const backup = {
+                accounts: accounts,
+                currentAccountId: currentAccountId,
+                entryTypes: entryTypes,
+                data: {}
+            };
+
+            accounts.forEach(acc => {
+                backup.data[`trades_${acc.id}`] = allTrades[acc.id] || [];
+                backup.data[`notes_${acc.id}`] = allNotes[acc.id] || [];
+                backup.data[`balance_${acc.id}`] = (allBalances[acc.id] !== undefined ? allBalances[acc.id] : 0).toString();
+                backup.data[`transactions_${acc.id}`] = allTransactions[acc.id] || [];
+            });
+
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            const account = accounts.find(acc => acc.id === currentAccountId);
+            const accountName = account ? account.name.replace(/\s+/g, '') : 'Hesap';
+            const date = new Date();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            a.download = `${accountName}-${month}-${year}.json`;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Veriler yedeklendi: ' + a.download);
+        }
+
+        function restoreData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    
+                    if (backup.accounts) {
+                        accounts = backup.accounts;
+                    }
+                    if (backup.currentAccountId) {
+                        currentAccountId = backup.currentAccountId;
+                    }
+                    if (backup.entryTypes) {
+                        entryTypes = backup.entryTypes;
+                    }
+                    
+                    const updates = {};
+                    if (backup.accounts) updates["tradeJournal/6592/accounts"] = backup.accounts;
+                    if (backup.entryTypes) updates["tradeJournal/6592/entryTypes"] = backup.entryTypes;
+
+                    if (backup.data) {
+                        Object.keys(backup.data).forEach(key => {
+                            const val = backup.data[key];
+                            const match = key.match(/^(trades|notes|balance|transactions)_(acc_\d+)$/);
+                            if (match) {
+                                const [_, type, accId] = match;
+                                const parsedVal = (type === 'balance') ? parseFloat(val) : (typeof val === 'string' ? JSON.parse(val) : val);
+                                updates[`tradeJournal/6592/${type}/${accId}`] = parsedVal;
+                            }
+                        });
+                    }
+
+                    updateSyncStatus(isOnline, "Geri Yükleniyor...");
+                    update(ref(db), updates)
+                        .then(() => {
+                            showToast('Tüm veriler başarıyla geri yüklendi!', 'refresh-cw', 'emerald');
+                            setTimeout(() => location.reload(), 1500);
+                        })
+                        .catch(err => {
+                            console.error("Firebase restore failed:", err);
+                            showToast('Senkronizasyon hatası oluştu', 'alert-triangle', 'amber');
+                        });
+                } catch (err) {
+                    console.error('Restore failed:', err);
+                    showToast('Geçersiz yedek dosyası!', 'alert-triangle', 'rose');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        let confirmCallback = null;
+
+        function showConfirm(title, message, callback) {
+            document.body.classList.add('overflow-hidden');
+            const confirmTitleEl = document.getElementById('confirm-title');
+            const confirmMsgEl = document.getElementById('confirm-message');
+            if (confirmTitleEl && confirmMsgEl) {
+                confirmTitleEl.innerText = title;
+                confirmMsgEl.innerText = message;
+            }
+            confirmCallback = callback;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            
+            const actionBtn = document.getElementById('confirm-action-btn');
+            if (actionBtn) {
+                actionBtn.onclick = () => {
+                    if (confirmCallback) confirmCallback();
+                    closeConfirmModal();
+                };
+            }
+        }
+
+        function closeConfirmModal() {
+            document.body.classList.remove('overflow-hidden');
+            document.getElementById('confirm-modal').classList.add('hidden');
+            confirmCallback = null;
+        }
+
+        function showToast(message, icon = 'check-circle', color = 'sky') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            if (!toast || !toastMsg || !toastIcon) return;
+            
+            toastMsg.innerText = message;
+            toastIcon.setAttribute('data-lucide', icon);
+            toastIcon.className = `w-5 h-5 text-${color}-500`;
+            
+            toast.classList.remove('hidden');
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function updateDateDisplay() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const el = document.getElementById('current-date-display');
+            if (el) el.innerText = new Date().toLocaleDateString('tr-TR', options);
+        }
+
+        // Placeholder fallback renders to prevent charts/statistics errors
+        function renderHourlyPerformance() {
+            const body = document.getElementById('hourly-perf-body');
+            if (!body) return;
+            body.innerHTML = '';
+            
+            const hours = {};
+            trades.forEach(t => {
+                if (!t.time) return;
+                const hr = t.time.split(':')[0] + ":00";
+                if (!hours[hr]) hours[hr] = { count: 0, wins: 0, pnl: 0 };
+                hours[hr].count++;
+                hours[hr].pnl += t.pnl;
+                if (t.pnl > 0) hours[hr].wins++;
+            });
+
+            const sorted = Object.entries(hours).sort((a,b) => b[1].pnl - a[1].pnl);
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
+                return;
+            }
+
+            sorted.forEach(([hr, stats]) => {
+                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
+                body.innerHTML += `
+                    <tr>
+                        <td class="py-3 text-slate-300 font-medium">${hr}</td>
+                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderDailyWinRate() {
+            const body = document.getElementById('daily-wr-body');
+            if (!body) return;
+            body.innerHTML = '';
+
+            const daysMap = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+            const days = {};
+            trades.forEach(t => {
+                const dayIndex = safeParseDate(t.date).getDay();
+                const dayName = daysMap[dayIndex];
+                if (!days[dayName]) days[dayName] = { count: 0, wins: 0, pnl: 0 };
+                days[dayName].count++;
+                days[dayName].pnl += t.pnl;
+                if (t.pnl > 0) days[dayName].wins++;
+            });
+
+            const sorted = Object.entries(days).sort((a,b) => b[1].pnl - a[1].pnl);
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
+                return;
+            }
+
+            sorted.forEach(([day, stats]) => {
+                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
+                body.innerHTML += `
+                    <tr>
+                        <td class="py-3 text-slate-300 font-medium">${day}</td>
+                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderSetupPerformance() {
+            const body = document.getElementById('setup-perf-body');
+            if (!body) return;
+            body.innerHTML = '';
+
+            const setups = {};
+            trades.forEach(t => {
+                getTradeSetups(t).forEach(setup => {
+                    if (!setups[setup]) setups[setup] = { count: 0, wins: 0, rrSum: 0 };
+                    setups[setup].count++;
+                    if (t.pnl > 0) setups[setup].wins++;
+                    setups[setup].rrSum += (parseFloat(t.rr) || 0);
+                });
+            });
+
+            const sorted = Object.entries(setups).sort((a,b) => b[1].count - a[1].count);
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
+                return;
+            }
+
+            sorted.forEach(([setup, stats]) => {
+                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
+                const avgRR = (stats.rrSum / stats.count).toFixed(2);
+                body.innerHTML += `
+                    <tr>
+                        <td class="py-3 text-slate-300 font-medium">${setup}</td>
+                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
+                        <td class="py-3 text-right text-slate-300 font-bold">${avgRR}R</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderBiasAccuracy() {
+            const body = document.getElementById('bias-acc-body');
+            if (!body) return;
+            body.innerHTML = '';
+
+            const biases = {};
+            trades.forEach(t => {
+                if (!t.bias) return;
+                if (!biases[t.bias]) biases[t.bias] = { count: 0, wins: 0, pnl: 0 };
+                biases[t.bias].count++;
+                biases[t.bias].pnl += t.pnl;
+                if (t.pnl > 0) biases[t.bias].wins++;
+            });
+
+            const sorted = Object.entries(biases).sort((a,b) => b[1].pnl - a[1].pnl);
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
+                return;
+            }
+
+            sorted.forEach(([bias, stats]) => {
+                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
+                body.innerHTML += `
+                    <tr>
+                        <td class="py-3 text-slate-300 font-medium">${bias}</td>
+                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderSessionPerformance() {
+            const body = document.getElementById('session-perf-body');
+            if (!body) return;
+            body.innerHTML = '';
+
+            const sessions = {};
+            trades.forEach(t => {
+                if (!t.session) return;
+                if (!sessions[t.session]) sessions[t.session] = { count: 0, wins: 0, pnl: 0 };
+                sessions[t.session].count++;
+                sessions[t.session].pnl += t.pnl;
+                if (t.pnl > 0) sessions[t.session].wins++;
+            });
+
+            const sorted = Object.entries(sessions).sort((a,b) => b[1].pnl - a[1].pnl);
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
+                return;
+            }
+
+            sorted.forEach(([sess, stats]) => {
+                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
+                body.innerHTML += `
+                    <tr>
+                        <td class="py-3 text-slate-300 font-medium">${sess}</td>
+                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderHeatmap() {
+            const container = document.getElementById('heatmap-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const days = ["Pzt", "Sal", "Çar", "Per", "Cum"];
+            const hourIntervals = ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"];
+            
+            let html = `<div class="grid grid-cols-6 gap-2 text-center text-xs">`;
+            html += `<div></div>`;
+            hourIntervals.forEach(h => {
+                html += `<div class="font-bold text-slate-500">${h}</div>`;
+            });
+
+            days.forEach((day, dIdx) => {
+                html += `<div class="font-bold text-slate-400 flex items-center justify-center">${day}</div>`;
+                hourIntervals.forEach(interval => {
+                    const startHour = parseInt(interval.split(':')[0]);
+                    
+                    const cellTrades = trades.filter(t => {
+                        const dateObj = safeParseDate(t.date);
+                        const dayMatch = dateObj.getDay() === (dIdx + 1); // Monday is 1, Friday is 5
+                        if (!dayMatch || !t.time) return false;
+                        const tHour = parseInt(t.time.split(':')[0]);
+                        return tHour >= startHour && tHour < (startHour + 2);
+                    });
+
+                    const count = cellTrades.length;
+                    const pnl = cellTrades.reduce((sum, t) => sum + t.pnl, 0);
+                    
+                    let bg = "bg-slate-900/30";
+                    let text = "text-slate-600";
+                    if (count > 0) {
+                        if (pnl > 0) {
+                            bg = "bg-emerald-950/80 border border-emerald-500/30";
+                            text = "text-emerald-400";
+                        } else if (pnl < 0) {
+                            bg = "bg-rose-950/80 border border-rose-500/30";
+                            text = "text-rose-400";
+                        } else {
+                            bg = "bg-slate-800 border border-slate-700";
+                            text = "text-slate-300";
+                        }
+                    }
+
+                    html += `
+                        <div class="p-3 rounded-lg ${bg} ${text} flex flex-col items-center justify-center min-h-[50px] transition-all" title="${count} işlem, PnL: $${pnl.toFixed(1)}">
+                            <span class="font-bold">${count > 0 ? (pnl >= 0 ? '+' : '') + pnl.toFixed(0) : '-'}</span>
+                            <span class="text-[9px] opacity-60">${count > 0 ? count + ' Tx' : ''}</span>
+                        </div>
+                    `;
+                });
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        // Module Bindings mapping directly to the global HTML window object
         const globalFunctions = {
-            switchTab, openAccountModal, closeAccountModal, saveAccount, changeMonth,
-            openTradeModal, closeTradeModal, handleTradeSubmit, setTradeType, setBias,
-            updateKillzone, updateRRDisplay, setExitReason, openNoteModal, closeNoteModal,
-            saveNote, deleteNote, addEntryType, deleteEntryType, saveInitialBalance,
-            executeTransaction, lockApp: () => { sessionStorage.clear(); location.reload(); }
+            checkLockPassword,
+            toggleMobileSidebar,
+            switchTab,
+            backupData,
+            restoreData,
+            lockApp,
+            openAccountModal,
+            closeAccountModal,
+            saveAccount,
+            changeMonth,
+            openTradeModal,
+            exportTrades,
+            closeTradeModal,
+            handleTradeSubmit,
+            setTradeType,
+            setBias,
+            updateKillzone,
+            updateRRDisplay,
+            setExitReason,
+            openNoteModal,
+            closeNoteModal,
+            saveNote,
+            deleteNote,
+            addEntryType,
+            deleteEntryType,
+            saveInitialBalance,
+            executeTransaction,
+            closeConfirmModal,
+            toggleAccountStatus,
+            confirmDeleteAccount,
+            deleteAccount,
+            editTrade,
+            deleteTrade,
+            selectAccount,
+            toggleSetup,
+            setSession,
+            togglePsychology
         };
-        Object.keys(globalFunctions).forEach(key => window[key] = globalFunctions[key]);
+
+        Object.keys(globalFunctions).forEach(key => {
+            window[key] = globalFunctions[key];
+        });
     </script>
 </body>
 </html>
