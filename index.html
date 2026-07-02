@@ -146,8 +146,8 @@
                             </div>
                             <span id="report-drawdown" class="px-3 py-1 bg-rose-950 text-rose-400 border border-rose-800/50 rounded-xl text-xs font-bold">Max DD: 0%</span>
                         </div>
-                        <div id="equity-chart" class="w-full h-64 bg-[#030712]/30 rounded-2xl border border-slate-800/40 flex items-center justify-center text-slate-500 text-sm">
-                            Grafik verisi yükleniyor...
+                        <div id="equity-chart" class="w-full h-64 bg-[#030712]/30 rounded-2xl border border-slate-800/40 p-2">
+                            <!-- D3 Grafik Buraya Çizilecek -->
                         </div>
                     </div>
                     <!-- Seans / Beklenti -->
@@ -249,7 +249,7 @@
                 <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
                     <div class="flex items-center justify-between mb-8">
                         <div>
-                            <h4 id="calendar-month-year" class="text-lg font-bold text-slate-200">Ocak 2026</h4>
+                            <h4 id="calendar-month-year" class="text-lg font-bold text-slate-200">Temmuz 2026</h4>
                             <p class="text-xs text-slate-400">Günlük kümülatif performans görünümü</p>
                         </div>
                         <div class="flex items-center gap-2">
@@ -374,7 +374,6 @@
 
             <!-- VIEW: BALANCE -->
             <div id="view-balance" class="hidden space-y-8">
-                <!-- Hesap Bilgileri Üst Panel -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60">
                         <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Mevcut Toplam Bakiye</p>
@@ -391,22 +390,20 @@
                     </div>
                 </div>
 
-                <!-- Bakiye Aksiyon Kontrolleri -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="bg-[#0b1329] p-6 rounded-3xl border border-slate-800/60 space-y-6">
                         <h4 class="text-base font-bold text-slate-200">Hesap Fon İşlemleri</h4>
-                        
                         <div class="space-y-2">
                             <label class="text-xs font-semibold text-slate-400">Başlangıç Bakiyesi Ayarla</label>
                             <div class="flex gap-2">
-                                <input type="number" id="initial-balance-input" placeholder="10000" class="flex-1 bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2 text-sm font-medium focus:outline-none focus:border-amber-500">
+                                <input type="number" id="initial-balance-input" placeholder="10000" class="flex-1 bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2 text-sm font-medium focus:outline-none focus:border-amber-500 text-slate-100">
                                 <button onclick="saveInitialBalance()" id="save-balance-btn" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-sm transition-all">Kaydet</button>
                             </div>
                         </div>
 
                         <div class="pt-4 border-t border-slate-800/80 space-y-4">
                             <label class="text-xs font-semibold text-slate-400 block">Para Yatır / Çek (Fon Ekle/Çıkar)</label>
-                            <input type="number" id="transaction-amount-input" placeholder="$ Miktar Girin" class="w-full bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-amber-500">
+                            <input type="number" id="transaction-amount-input" placeholder="$ Miktar Girin" class="w-full bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-amber-500 text-slate-100">
                             <div class="flex gap-3">
                                 <button onclick="executeTransaction('deposit')" class="flex-1 py-2.5 bg-emerald-950 text-emerald-400 border border-emerald-800/60 font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-emerald-900 transition-all">Para Yatır</button>
                                 <button onclick="executeTransaction('withdraw')" class="flex-1 py-2.5 bg-rose-950 text-rose-400 border border-rose-800/60 font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-rose-900 transition-all">Para Çek</button>
@@ -445,7 +442,6 @@
                         <i data-lucide="plus" class="w-4 h-4"></i> Yeni Not Ekle
                     </button>
                 </div>
-
                 <div id="notes-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Dinamik Not Kartları -->
                 </div>
@@ -454,36 +450,25 @@
             <!-- VIEW: SETTINGS -->
             <div id="view-settings" class="hidden space-y-8">
                 <div class="max-w-3xl bg-[#0b1329] p-8 rounded-3xl border border-slate-800/60 space-y-8">
-                    <!-- Setup Ayarları -->
                     <div class="space-y-4">
                         <h4 class="text-base font-bold text-slate-200 flex items-center gap-2">
                             <i data-lucide="toggle-left" class="w-5 h-5 text-amber-500"></i> İşlem Kurulum Modelleri (Setups)
                         </h4>
                         <p class="text-xs text-slate-400">Yeni işlem giriş paneline eklenmesini istediğiniz ICT/SMC kurulum modellerini tanımlayın.</p>
-                        <div class="flex gap-3">
-                            <input type="text" id="new-entry-type" placeholder="Örn: ICT Silver Bullet, MSS+OB, FVG" class="flex-1 bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-amber-500">
-                            <button onclick="addEntryType()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-sm border border-slate-700 transition-all">Ekle</button>
+                        <div class="flex gap-2">
+                            <input type="text" id="new-setup-input" placeholder="Örn: MSB + FVG Entry" class="flex-1 bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2 text-sm font-medium focus:outline-none focus:border-amber-500 text-slate-100">
+                            <button onclick="addNewSetup()" class="px-4 py-2 bg-slate-800 border border-slate-700 text-slate-200 rounded-xl text-sm font-bold hover:bg-slate-700 transition-all">Ekle</button>
                         </div>
-                        <div id="entry-types-list" class="grid grid-cols-2 md:grid-cols-3 gap-3 pt-2">
-                            <!-- Dinamik -->
+                        <div id="settings-setup-list" class="flex flex-wrap gap-2 pt-2">
+                            <!-- Dinamik Setuplar -->
                         </div>
                     </div>
-
-                    <!-- Yedekleme & Sıfırlama -->
                     <div class="pt-6 border-t border-slate-800/80 space-y-4">
-                        <h4 class="text-base font-bold text-slate-200 flex items-center gap-2">
-                            <i data-lucide="database" class="w-5 h-5 text-amber-500"></i> Veri Güvenliği & Yedekleme
+                        <h4 class="text-base font-bold text-rose-400 flex items-center gap-2">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i> Tehlikeli Bölge
                         </h4>
-                        <p class="text-xs text-slate-400">Tüm verileriniz tarayıcınızın lokal hafızasında güvenle saklanır. Başka bilgisayara geçmek veya yedeklemek için dışa aktarabilirsiniz.</p>
-                        <div class="flex flex-wrap gap-4 pt-2">
-                            <button onclick="backupData()" class="flex items-center gap-2 px-5 py-3 bg-[#111c44] border border-slate-700/60 hover:bg-slate-800 text-slate-200 font-semibold text-sm rounded-xl transition-all">
-                                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i> Komple Sistemi Yedekle (.json)
-                            </button>
-                            <label class="flex items-center gap-2 px-5 py-3 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 font-semibold text-sm rounded-xl cursor-pointer transition-all">
-                                <i data-lucide="upload-cloud" class="w-4 h-4 text-sky-400"></i> Yedekten Geri Yükle
-                                <input type="file" onchange="restoreData(event)" class="hidden" accept=".json">
-                            </label>
-                        </div>
+                        <p class="text-xs text-slate-400">Aktif hesaba ait tüm işlem geçmişini ve finansal kayıtları kalıcı olarak temizler.</p>
+                        <button onclick="clearCurrentAccountData()" class="px-4 py-2.5 bg-rose-950 hover:bg-rose-900 border border-rose-800/60 text-rose-200 text-xs font-bold uppercase tracking-wider rounded-xl transition-all">Tüm Verileri Sıfırla</button>
                     </div>
                 </div>
             </div>
@@ -491,919 +476,460 @@
         </div>
     </main>
 
-    <!-- MODAL: YENİ İŞLEM EKLEME -->
-    <div id="trade-modal" class="fixed inset-0 bg-[#030712]/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-[#0b1329] w-full max-w-2xl rounded-3xl border border-slate-800 p-6 max-h-[90vh] overflow-y-auto space-y-6 shadow-2xl">
-            <div class="flex justify-between items-center pb-4 border-b border-slate-800">
-                <h3 id="trade-modal-title" class="text-lg font-bold text-slate-100">Yeni İşlem Kaydı Girdisi</h3>
+    <!-- MODAL: YENİ İŞLEM EKLE -->
+    <div id="modal-trade" class="fixed inset-0 bg-[#030712]/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="bg-[#0b1329] w-full max-w-xl rounded-3xl border border-slate-800 p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-slate-200 flex items-center gap-2"><i data-lucide="plus-circle" class="text-amber-500 w-5 h-5"></i> Yeni Trade Kurulumu</h3>
                 <button onclick="closeTradeModal()" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <form id="trade-form" onsubmit="handleTradeSubmit(e)" class="space-y-5">
-                <input type="hidden" id="trade-id">
-                <input type="hidden" id="trade-type" value="Long">
-                <input type="hidden" id="trade-exit-reason" value="TP">
-                <input type="hidden" id="trade-bias" value="Bullish">
-
+            <form id="trade-form" onsubmit="saveTrade(event)" class="space-y-4 text-xs">
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-slate-400">Tarih</label>
-                        <input type="date" id="trade-date" required class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    <div>
+                        <label class="block mb-1.5 text-slate-400 font-semibold">Tarih / Saat</label>
+                        <input type="datetime-local" id="form-date" required class="w-full bg-[#030712] border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500">
                     </div>
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-slate-400">Saat (TR - GMT+3)</label>
-                        <input type="time" id="trade-time" required class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-slate-400">Parite / Enstrüman</label>
-                        <select id="trade-symbol" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-                            <option value="XAU/USD">XAU/USD (Altın)</option>
+                    <div>
+                        <label class="block mb-1.5 text-slate-400 font-semibold">Parite</label>
+                        <select id="form-pair" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500">
+                            <option value="XAU/USD">XAU/USD (Gold)</option>
                             <option value="BTC/USDT">BTC/USDT</option>
                             <option value="ETH/USDT">ETH/USDT</option>
-                            <option value="EUR/USD">EUR/USD</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-slate-400">Setup Kurulum Modeli</label>
-                        <select id="trade-entry-type" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-                            <!-- Dinamik -->
                         </select>
                     </div>
                 </div>
-
-                <!-- Yön (Type) ve Bias Seçici Büyük Butonlar -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-slate-400">İşlem Yönü</label>
-                        <div class="flex gap-2">
-                            <button type="button" id="btn-type-Long" onclick="setTradeType('Long')" class="flex-1 py-3 bg-emerald-600 border border-emerald-600 text-white rounded-xl font-bold transition-all text-sm">BUY / LONG</button>
-                            <button type="button" id="btn-type-Short" onclick="setTradeType('Short')" class="flex-1 py-3 border border-slate-700 bg-slate-800 text-slate-400 rounded-xl font-bold hover:bg-slate-700 transition-all text-sm">SELL / SHORT</button>
-                        </div>
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-slate-400">Yüksek Zaman Dilimi Makro Bias</label>
-                        <div class="flex gap-2">
-                            <button type="button" id="btn-bias-Bullish" onclick="setBias('Bullish')" class="flex-1 py-3 bg-sky-600 border border-sky-600 text-white rounded-xl font-bold transition-all text-xs">BULLISH</button>
-                            <button type="button" id="btn-bias-Bearish" onclick="setBias('Bearish')" class="flex-1 py-3 border border-slate-700 bg-slate-800 text-slate-400 rounded-xl font-bold hover:bg-slate-700 transition-all text-xs">BEARISH</button>
-                            <button type="button" id="btn-bias-Neutral" onclick="setBias('Neutral')" class="flex-1 py-3 border border-slate-700 bg-slate-800 text-slate-400 rounded-xl font-bold hover:bg-slate-700 transition-all text-xs">NÖTR</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Lot, Risk R% ve Net PnL Girişleri -->
                 <div class="grid grid-cols-3 gap-4">
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-slate-400">İşlem Hacmi (Lot)</label>
-                        <input type="number" step="0.01" id="trade-lot" required placeholder="1.00" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    <div>
+                        <label class="block mb-1.5 text-slate-400 font-semibold">Yön</label>
+                        <select id="form-direction" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500">
+                            <option value="BUY" class="text-emerald-400">BUY (Long)</option>
+                            <option value="SELL" class="text-rose-400">SELL (Short)</option>
+                        </select>
                     </div>
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-slate-400">Risk Edilen Tutar (%)</label>
-                        <input type="number" step="0.1" id="trade-r-percent" required placeholder="1.0" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    <div>
+                        <label class="block mb-1.5 text-slate-400 font-semibold">Daily Bias</label>
+                        <select id="form-bias" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500">
+                            <option value="BULLISH">Bullish</option>
+                            <option value="BEARISH">Bearish</option>
+                        </select>
                     </div>
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-semibold text-slate-400">Net Sonuç (Kar/Zarar $)</label>
-                        <input type="number" step="0.01" id="trade-pnl" required placeholder="-150 veya +350" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    <div>
+                        <label class="block mb-1.5 text-slate-400 font-semibold">Killzone (TR)</label>
+                        <select id="form-killzone" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500">
+                            <option value="London Open">London Open (09:00-12:00)</option>
+                            <option value="NY Open">NY Open (14:00-17:00)</option>
+                            <option value="NY Close">NY Close (23:00-01:00)</option>
+                            <option value="Asia">Asia Session (02:00-07:00)</option>
+                        </select>
                     </div>
                 </div>
-
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-400">Çıkış Taktik Stratejisi</label>
-                    <div class="flex gap-2">
-                        <button type="button" id="btn-exit-TP" onclick="setExitReason('TP')" class="flex-1 py-3 bg-sky-600 border border-sky-600 text-white rounded-xl font-bold text-sm">Nizami Hedef (TP)</button>
-                        <button type="button" id="btn-exit-Manuel" onclick="setExitReason('Manuel')" class="flex-1 py-3 border border-slate-700 bg-slate-800 text-slate-400 rounded-xl font-bold hover:bg-slate-700 transition-all text-sm">Manuel Kapatma</button>
-                        <button type="button" id="btn-exit-SL" onclick="setExitReason('SL')" class="flex-1 py-3 border border-slate-700 bg-slate-800 text-slate-400 rounded-xl font-bold hover:bg-slate-700 transition-all text-sm">Stop Out (SL)</button>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block mb-1.5 text-slate-400 font-semibold">Lot Büyüklüğü</label>
+                        <input type="number" step="0.01" id="form-lot" placeholder="1.0" required class="w-full bg-[#030712] border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block mb-1.5 text-slate-400 font-semibold">Risk (R %)</label>
+                        <input type="number" step="0.1" id="form-r-risk" placeholder="1.0" required class="w-full bg-[#030712] border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block mb-1.5 text-slate-400 font-semibold">Yakalanan R:R</label>
+                        <input type="number" step="0.1" id="form-rr" placeholder="3.5" required class="w-full bg-[#030712] border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500">
                     </div>
                 </div>
-
-                <!-- Detaylı İnceleme Notları -->
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-400">Detaylı İnceleme Analiz Notları & Setup Linkleri</label>
-                    <textarea id="trade-notes" rows="3" placeholder="Örn: HTF Likidite alındı, LTF kırılım beklendi. Ekran Görüntüsü: https://tradingview.com/x/.../" class="w-full bg-[#030712] border border-slate-700 rounded-xl p-4 text-sm text-slate-200 focus:outline-none focus:border-amber-500"></textarea>
+                <div>
+                    <label class="block mb-1.5 text-slate-400 font-semibold">Setup Modeli</label>
+                    <select id="form-setup" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500">
+                        <!-- Ayarlardan dinamik beslenecek -->
+                    </select>
                 </div>
-
-                <div class="pt-2 flex gap-4">
-                    <button type="button" onclick="closeTradeModal()" class="flex-1 py-3 bg-slate-800 border border-slate-700 hover:bg-slate-700 font-bold rounded-xl text-sm transition-all">İptal Et</button>
-                    <button type="submit" class="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-lg shadow-amber-500/10">İşlemi Günlüğe Kaydet</button>
+                <div>
+                    <label class="block mb-1.5 text-slate-400 font-semibold">Net PnL ($) <span class="text-slate-500 font-normal">(Zarar ise başına - koyun)</span></label>
+                    <input type="number" step="0.01" id="form-pnl" placeholder="500.00" required class="w-full bg-[#030712] border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-200 focus:outline-none focus:border-amber-500">
                 </div>
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold rounded-xl shadow-lg transition-all">İşlemi Günlüğe Kaydet</button>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: HESAP DÜZENLEME MANTIĞI -->
-    <div id="account-modal" class="fixed inset-0 bg-[#030712]/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-[#0b1329] w-full max-w-md rounded-3xl border border-slate-800 p-6 space-y-6">
-            <div class="flex justify-between items-center pb-3 border-b border-slate-800">
-                <h3 class="text-base font-bold text-slate-100">İşlem Hesapları Yönetimi</h3>
+    <!-- MODAL: HESAP YÖNETİMİ -->
+    <div id="modal-account" class="fixed inset-0 bg-[#030712]/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="bg-[#0b1329] w-full max-w-md rounded-3xl border border-slate-800 p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-slate-200">Hesap Portföy Yönetimi</h3>
                 <button onclick="closeAccountModal()" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <div class="space-y-4">
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-400">Yeni Hesap Adı Tanımla</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="new-account-name" placeholder="Örn: 50K Funded, Personal Real" class="flex-1 bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2 text-sm font-medium focus:outline-none focus:border-amber-500">
-                        <button onclick="createNewAccount()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-sm transition-all">Ekle</button>
-                    </div>
+            <div class="space-y-2">
+                <label class="text-xs font-semibold text-slate-400">Yeni Hesap Oluştur</label>
+                <div class="flex gap-2">
+                    <input type="text" id="new-account-name" placeholder="Örn: Funded 100K Apex" class="flex-1 bg-[#030712] border border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500 text-slate-100">
+                    <button onclick="createNewAccount()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Ekle</button>
                 </div>
-                <div class="space-y-2">
-                    <label class="text-xs font-semibold text-slate-400 block">Kayıtlı Hesap Listesi</label>
-                    <div id="account-list-container" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        <!-- Dinamik -->
-                    </div>
+            </div>
+            <div class="border-t border-slate-800/80 pt-3">
+                <label class="text-xs font-semibold text-slate-400 block mb-2">Mevcut Hesaplar</label>
+                <div id="modal-account-list" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    <!-- Dinamik -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- CONFIRM DIALOG MODAL -->
-    <div id="confirm-modal" class="fixed inset-0 bg-[#030712]/70 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-[#0b1329] border border-slate-800 p-6 rounded-3xl w-full max-w-sm text-center space-y-4">
-            <h4 id="confirm-title" class="text-base font-bold text-slate-100">Emin misiniz?</h4>
-            <p id="confirm-message" class="text-xs text-slate-400 leading-relaxed">Bu veri tamamen silinecektir.</p>
-            <div class="flex gap-3 pt-2">
-                <button onclick="closeConfirmModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold transition-all">Geri Dön</button>
-                <button id="confirm-action-btn" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-bold text-white transition-all">Evet, Sil</button>
+    <!-- MODAL: YENİ NOT EKLE -->
+    <div id="modal-note" class="fixed inset-0 bg-[#030712]/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-all duration-300">
+        <div class="bg-[#0b1329] w-full max-w-md rounded-3xl border border-slate-800 p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-slate-200">Yeni Strateji Notu</h3>
+                <button onclick="closeNoteModal()" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block mb-1 text-slate-400 font-semibold">Başlık</label>
+                    <input type="text" id="note-title" placeholder="Örn: Silver Bullet Kuralları" class="w-full bg-[#030712] border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block mb-1 text-slate-400 font-semibold">İçerik / Not Detayları</label>
+                    <textarea id="note-content" rows="4" placeholder="Örn: NY saatine göre 10:00-11:00 arası oluşan FVG kırılım yönü hedeflenmeli..." class="w-full bg-[#030712] border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+                <button onclick="saveNote()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Notu Kaydet</button>
             </div>
         </div>
     </div>
 
-    <!-- GLOBAL BİLDİRİM TOAST MOTORU -->
-    <div id="toast" class="fixed bottom-6 right-6 bg-[#0b1329] border border-slate-800 rounded-2xl px-5 py-4 flex items-center gap-3.5 shadow-2xl z-50 hidden animate-bounce-short">
-        <div id="toast-icon-wrapper" class="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-400">
-            <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5"></i>
-        </div>
-        <div>
-            <p id="toast-message" class="text-sm font-semibold text-slate-200">İşlem başarıyla tamamlandı.</p>
-        </div>
-    </div>
-
-    <!-- ── JAVASCRIPT ÇEKİRDEK KODLARI ── -->
+    <!-- JAVASCRIPT MOTORU (CORE SCRIPT) -->
     <script>
-        // GLOBAL SISTEM DEĞİŞKENLERİ
-        let accounts = JSON.parse(localStorage.getItem('XAU_accounts')) || [{ id: 'acc_1', name: 'Ana Hesap (Default)' }];
-        let currentAccountId = localStorage.getItem('XAU_currentAccountId') || 'acc_1';
-        let entryTypes = JSON.parse(localStorage.getItem('XAU_entryTypes')) || ['MSS+OB', 'Silver Bullet', 'FVG Entry', 'Liquidity Sweep', 'Breaker Block'];
-        
-        let trades = [];
-        let notes = [];
-        let balance = 0;
-        let transactions = [];
-        let currentView = 'dashboard';
-        let editingNoteIndex = null;
-
-        // TAKVİM MOTORU DEĞİŞKENLERİ
-        let calendarDate = new Date();
-
-        // SAYFA İLK KURULUMU
-        window.onload = function() {
-            lucide.createIcons();
-            updateDateDisplay();
-            initAccounts();
-            loadCurrentAccountData();
-            populateEntryTypeSelect();
-            refreshCurrentView();
-            checkBalanceButton();
-            
-            // Form Submit Listener'ını bağlama
-            const form = document.getElementById('trade-form');
-            if(form) {
-                form.addEventListener('submit', function(e) {
-                    handleTradeSubmit(e);
-                });
-            }
+        // CORE STATE MANAGEMENT
+        let state = {
+            accounts: ["Ana Scalping Hesabı"],
+            currentAccount: "Ana Scalping Hesabı",
+            trades: {},
+            balanceHistory: {},
+            initialBalance: {},
+            setups: ["Silver Bullet", "Turtle Soup", "Judas Swing", "2022 Model Entry", "Order Block Rejection"],
+            notes: []
         };
 
-        // HESAP YÖNETİMİ MANTIĞI
-        function initAccounts() {
-            if (!localStorage.getItem('XAU_accounts')) {
-                localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
-            }
-            if (!localStorage.getItem('XAU_currentAccountId')) {
-                localStorage.setItem('XAU_currentAccountId', currentAccountId);
-            }
-            renderAccountSelector();
+        let calendarState = {
+            currentYear: 2026,
+            currentMonth: 6 // Temmuz (0-indexed base: Ocak=0)
+        };
+
+        const monthsTR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            updateCurrentTimeDisplay();
+            initApp();
+            setInterval(updateCurrentTimeDisplay, 60000);
+        });
+
+        function updateCurrentTimeDisplay() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('current-date-display').innerText = now.toLocaleDateString('tr-TR', options);
         }
 
-        function renderAccountSelector() {
-            const selector = document.getElementById('account-selector');
-            if(!selector) return;
-            selector.innerHTML = accounts.map(acc => `<option value="${acc.id}" ${acc.id === currentAccountId ? 'selected' : ''}>${acc.name}</option>`).join('');
+        function initApp() {
+            buildAccountSelectors();
+            buildSetupSelectorsAndSettings();
+            renderAllData();
+            lucide.createIcons();
         }
 
-        function loadCurrentAccountData() {
-            trades = JSON.parse(localStorage.getItem(`trades_${currentAccountId}`)) || [];
-            notes = JSON.parse(localStorage.getItem(`notes_${currentAccountId}`)) || [];
-            balance = parseFloat(localStorage.getItem(`balance_${currentAccountId}`)) || 0;
-            transactions = JSON.parse(localStorage.getItem(`transactions_${currentAccountId}`)) || [];
+        // LOCAL STORAGE
+        function saveToLocalStorage() {
+            localStorage.setItem('xau_journal_state_v25', JSON.stringify(state));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('xau_journal_state_v25');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    state = { ...state, ...parsed };
+                } catch (e) { console.error("Data parse error", e); }
+            }
+            if (!state.trades[state.currentAccount]) state.trades[state.currentAccount] = [];
+            if (!state.balanceHistory[state.currentAccount]) state.balanceHistory[state.currentAccount] = [];
+            if (!state.initialBalance[state.currentAccount]) state.initialBalance[state.currentAccount] = 10000;
+        }
+
+        // VIEW NAVIGATION
+        function switchView(viewId) {
+            const views = ['dashboard', 'trades', 'calendar', 'analysis', 'balance', 'notes', 'settings'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                const nav = document.getElementById(`nav-${v}`);
+                if (v === viewId) {
+                    el.classList.remove('hidden');
+                    nav.className = "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all bg-gradient-to-r from-amber-500/10 to-transparent text-amber-400 border-l-4 border-amber-500";
+                } else {
+                    el.classList.add('hidden');
+                    nav.className = "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-l-4 border-transparent";
+                }
+            });
+            document.getElementById('view-title').innerText = document.getElementById(`nav-${viewId}`).innerText.trim();
+            if (viewId === 'dashboard') renderEquityChart();
+        }
+
+        // PORTFOLIO / ACCOUNT MANAGEMENT
+        function buildAccountSelectors() {
+            const sel = document.getElementById('account-selector');
+            sel.innerHTML = state.accounts.map(a => `<option value="${a}" ${a === state.currentAccount ? 'selected' : ''}>${a}</option>`).join('');
             
-            const balInput = document.getElementById('initial-balance-input');
-            if(balInput) balInput.value = balance || '';
-        }
-
-        function saveCurrentAccountData() {
-            localStorage.setItem(`trades_${currentAccountId}`, JSON.stringify(trades));
-            localStorage.setItem(`notes_${currentAccountId}`, JSON.stringify(notes));
-            localStorage.setItem(`balance_${currentAccountId}`, balance.toString());
-            localStorage.setItem(`transactions_${currentAccountId}`, JSON.stringify(transactions));
-        }
-
-        function switchAccount(id) {
-            currentAccountId = id;
-            localStorage.setItem('XAU_currentAccountId', id);
-            loadCurrentAccountData();
-            refreshCurrentView();
-            checkBalanceButton();
-            showToast('Hesap değiştirildi');
-        }
-
-        function openAccountModal() {
-            document.getElementById('account-modal').classList.remove('hidden');
-            renderAccountList();
-        }
-
-        function closeAccountModal() {
-            document.getElementById('account-modal').classList.add('hidden');
-        }
-
-        function createNewAccount() {
-            const input = document.getElementById('new-account-name');
-            const name = input.value.trim();
-            if(!name) return;
-            const newAcc = { id: 'acc_' + Date.now(), name: name };
-            accounts.push(newAcc);
-            localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
-            input.value = '';
-            renderAccountSelector();
-            renderAccountList();
-            showToast('Yeni işlem hesabı oluşturuldu');
-        }
-
-        function renderAccountList() {
-            const container = document.getElementById('account-list-container');
-            if(!container) return;
-            container.innerHTML = accounts.map(acc => `
-                <div class="flex justify-between items-center p-3 bg-[#030712] rounded-xl border border-slate-800">
-                    <span class="text-xs font-semibold ${acc.id === currentAccountId ? 'text-amber-400' : 'text-slate-300'}">${acc.name}</span>
-                    ${accounts.length > 1 ? `<button onclick="deleteAccount('${acc.id}')" class="text-slate-500 hover:text-rose-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+            const list = document.getElementById('modal-account-list');
+            list.innerHTML = state.accounts.map(a => `
+                <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded-xl border border-slate-800 text-xs font-semibold">
+                    <span class="${a === state.currentAccount ? 'text-amber-400' : 'text-slate-300'}">${a}</span>
+                    ${state.accounts.length > 1 ? `<button onclick="deleteAccount('${a}')" class="text-rose-400 hover:text-rose-300"><i data-lucide="trash" class="w-3.5 h-3.5"></i></button>` : ''}
                 </div>
             `).join('');
             lucide.createIcons();
         }
 
-        function deleteAccount(id) {
-            if(id === currentAccountId) {
-                showToast('Aktif hesap silinemez', 'error');
-                return;
-            }
-            showConfirm('Hesabı Sil', 'Bu hesabı ve hesaba ait tüm trade geçmişini silmek istediğinize emin misiniz?', () => {
-                accounts = accounts.filter(acc => acc.id !== id);
-                localStorage.setItem('XAU_accounts', JSON.stringify(accounts));
-                localStorage.removeItem(`trades_${id}`);
-                localStorage.removeItem(`notes_${id}`);
-                localStorage.removeItem(`balance_${id}`);
-                localStorage.removeItem(`transactions_${id}`);
-                renderAccountSelector();
-                renderAccountList();
-                closeConfirmModal();
-                showToast('Hesap silindi', 'info');
-            });
+        function switchAccount(accName) {
+            state.currentAccount = accName;
+            if (!state.trades[accName]) state.trades[accName] = [];
+            if (!state.balanceHistory[accName]) state.balanceHistory[accName] = [];
+            if (!state.initialBalance[accName]) state.initialBalance[accName] = 10000;
+            saveToLocalStorage();
+            initApp();
         }
 
-        // GÖRÜNÜM DEGİŞTİRME MOTORU
-        function switchView(viewName) {
-            currentView = viewName;
-            const views = ['dashboard', 'trades', 'calendar', 'analysis', 'balance', 'notes', 'settings'];
-            views.forEach(v => {
-                const el = document.getElementById(`view-${v}`);
-                const nav = document.getElementById(`nav-${v}`);
-                if (el) el.classList.add('hidden');
-                if (nav) {
-                    nav.className = "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-l-4 border-transparent";
+        function createNewAccount() {
+            const inp = document.getElementById('new-account-name');
+            const name = inp.value.trim();
+            if (name && !state.accounts.includes(name)) {
+                state.accounts.push(name);
+                inp.value = '';
+                switchAccount(name);
+            }
+        }
+
+        function deleteAccount(accName) {
+            if (state.accounts.length <= 1) return;
+            if (confirm(`${accName} hesabını ve tüm verilerini silmek istediğinize emin misiniz?`)) {
+                state.accounts = state.accounts.filter(a => a !== accName);
+                delete state.trades[accName];
+                delete state.balanceHistory[accName];
+                delete state.initialBalance[accName];
+                if (state.currentAccount === accName) {
+                    state.currentAccount = state.accounts[0];
                 }
-            });
-
-            const currentEl = document.getElementById(`view-${viewName}`);
-            const currentNav = document.getElementById(`nav-${viewName}`);
-            if (currentEl) currentEl.classList.remove('hidden');
-            if (currentNav) {
-                currentNav.className = "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold transition-all bg-gradient-to-r from-amber-500/10 to-transparent text-amber-400 border-l-4 border-amber-500";
-            }
-
-            // Başlık Güncelleme
-            const titles = { dashboard: 'Panel', trades: 'İşlem Günlüğü', calendar: 'Performans Takvimi', analysis: 'Performans Analizi', balance: 'Bakiye & Finans', notes: 'Strateji Kuralları & Ders Notları', settings: 'Sistem Ayarları' };
-            document.getElementById('view-title').innerText = titles[viewName] || 'Panel';
-
-            refreshCurrentView();
-        }
-
-        function refreshCurrentView() {
-            if (currentView === 'dashboard') {
-                updateStats();
-                renderRecentTrades();
-                renderEquityChart();
-            } else if (currentView === 'trades') {
-                renderAllTrades(trades);
-            } else if (currentView === 'calendar') {
-                renderCalendar();
-            } else if (currentView === 'analysis') {
-                renderAnalysis();
-            } else if (currentView === 'balance') {
-                renderBalance();
-            } else if (currentView === 'notes') {
-                renderNotes();
-            } else if (currentView === 'settings') {
-                renderEntryTypes();
+                saveToLocalStorage();
+                initApp();
             }
         }
 
-        // TIKLANABİLİR LİNK FORMATLAYICI
-        function formatNoteLinks(text) {
-            if(!text) return '';
-            const urlRegex = /(https?:\/\/[^\s]+)/g;
-            return text.replace(urlRegex, function(url) {
-                return `<a href="${url}" target="_blank" class="text-amber-400 hover:underline inline-flex items-center gap-0.5 break-all">${url}</a>`;
-            });
-        }
+        // SETUP / MODELLER AYARLARI
+        function buildSetupSelectorsAndSettings() {
+            const selectForm = document.getElementById('form-setup');
+            selectForm.innerHTML = state.setups.map(s => `<option value="${s}">${s}</option>`).join('');
 
-        // LONDRA/NY YAZ-KIŞ SAATİ (DST) DURUMUNA DUYARLI KILLZONE TESPİT MOTORU
-        function _getDSTOffsets(dateObj) {
-            const year = dateObj.getFullYear();
-            
-            // Mart ayının son Pazar günü (Avrupa DST başlangıcı)
-            let march = new Date(year, 2, 31);
-            let marchD = march.getDay();
-            let euDstStart = new Date(year, 2, 31 - marchD);
-            
-            // Ekim ayının son Pazar günü (Avrupa DST bitişi)
-            let october = new Date(year, 9, 31);
-            let octoberD = october.getDay();
-            let euDstEnd = new Date(year, 9, 31 - octoberD);
-            
-            // ABD için: Mart ayının 2. Pazar günü, Kasım ayının 1. Pazar günü
-            let usDstStart = new Date(year, 2, 8);
-            usDstStart.setDate(8 - usDstStart.getDay());
-            
-            let usDstEnd = new Date(year, 10, 1);
-            usDstEnd.setDate(1 + (usDstEnd.getDay() === 0 ? 0 : 7 - usDstEnd.getDay()));
-
-            return {
-                isEUDST: (dateObj >= euDstStart && dateObj < euDstEnd),
-                isUSDST: (dateObj >= usDstStart && dateObj < usDstEnd)
-            };
-        }
-
-        function getKillzoneForDateTime(dateStr, timeStr) {
-            const dObj = new Date(dateStr + 'T' + timeStr);
-            if(isNaN(dObj.getTime())) return 'Outside Killzone';
-
-            const dst = _getDSTOffsets(dObj);
-            const hour = dObj.getHours();
-            const min = dObj.getMinutes();
-            const totalMinutes = hour * 60 + min;
-
-            // TR (GMT+3) Sabit Saat Dilimine Göre Seans Algoritması (Yaz/Kış Dönemsel Kayma Dahil)
-            const frankfurtStart = dst.isEUDST ? (8 * 60) : (9 * 60); 
-            const frankfurtEnd = dst.isEUDST ? (9 * 60) : (10 * 60);
-
-            const londonOpenStart = dst.isEUDST ? (9 * 60) : (10 * 60);
-            const londonOpenEnd = dst.isEUDST ? (12 * 60) : (13 * 60);
-
-            const nyOpenStart = dst.isUSDST ? (14 * 60) : (15 * 60);
-            const nyOpenEnd = dst.isUSDST ? (17 * 60) : (18 * 60);
-
-            const nyPMStart = dst.isUSDST ? (20 * 60) : (21 * 60);
-            const nyPMEnd = dst.isUSDST ? (23 * 60) : (24 * 60);
-
-            const londonCloseStart = dst.isEUDST ? (18 * 60) : (19 * 60);
-            const londonCloseEnd = dst.isEUDST ? (19 * 60) : (20 * 60);
-
-            if (totalMinutes >= frankfurtStart && totalMinutes < frankfurtEnd) return 'Frankfurt';
-            if (totalMinutes >= londonOpenStart && totalMinutes < londonOpenEnd) return 'London Open';
-            if (totalMinutes >= nyOpenStart && totalMinutes < nyOpenEnd) return 'NY Open';
-            if (totalMinutes >= londonCloseStart && totalMinutes < londonCloseEnd) return 'London Close';
-            if (totalMinutes >= nyPMStart && totalMinutes < nyPMEnd) return 'NY PM';
-
-            return 'Outside Killzone';
-        }
-
-        // DINAMIK ISTATISTIK GORUNUM YUKLEYICI
-        function renderRecentTrades() {
-            const tbody = document.getElementById('recent-trades-body');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            const sorted = [...trades].sort((a,b) => new Date(b.date + 'T' + (b.time||'00:00')) - new Date(a.date + 'T' + (a.time||'00:00'))).slice(0, 5);
-
-            if(sorted.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-500 italic">Henüz girilmiş işlem kaydı bulunmuyor.</td></tr>';
-                return;
-            }
-
-            sorted.forEach(t => {
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-800/40 hover:bg-slate-800/20 transition-all">
-                        <td class="py-4 text-slate-400 font-medium">${t.date} <span class="text-xs text-slate-500 block">${t.time || ''}</span></td>
-                        <td class="py-4 font-bold text-slate-200">${t.symbol} <span class="text-[10px] px-2 py-0.5 rounded ml-1.5 ${t.type === 'Long' ? 'bg-emerald-950 text-emerald-400' : 'bg-rose-950 text-rose-400'}">${t.type}</span></td>
-                        <td class="py-4 font-semibold text-slate-400">${t.killzone || 'Dış Seans'}</td>
-                        <td class="py-4 font-medium text-slate-300 max-w-[150px] truncate" title="${t.entryType || (t.setupTypes ? t.setupTypes.join(', ') : '-')}">${t.entryType || (t.setupTypes ? t.setupTypes.join(', ') : '-')}</td>
-                        <td class="py-4 text-center text-slate-300 font-bold">${t.rPercent || 0}%</td>
-                        <td class="py-4 text-center font-bold text-amber-400">${t.rr && t.rr !== '-' ? t.rr + 'R' : '-'}</td>
-                        <td class="py-4 text-right font-extrabold ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}</td>
-                    </tr>`;
-            });
-        }
-
-        function renderAllTrades(tradesList) {
-            const tbody = document.getElementById('all-trades-body');
-            if(!tbody) return;
-            tbody.innerHTML = '';
-
-            if(tradesList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" class="py-8 text-center text-slate-500 italic">İşlem geçmişi boş.</td></tr>';
-                return;
-            }
-
-            const sorted = [...tradesList].sort((a,b) => new Date(b.date + 'T' + (b.time||'00:00')) - new Date(a.date + 'T' + (a.time||'00:00')));
-
-            sorted.forEach(t => {
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-800/50 hover:bg-slate-800/20 group transition-all">
-                        <td class="py-4 text-slate-400 font-medium">${t.date} <span class="text-xs text-slate-500 block">${t.time || ''}</span></td>
-                        <td class="py-4 font-bold text-slate-200">${t.symbol}</td>
-                        <td class="py-4 font-bold"><span class="px-2 py-0.5 text-xs rounded ${t.type === 'Long' ? 'bg-emerald-950 text-emerald-400' : 'bg-rose-950 text-rose-400'}">${t.type}</span></td>
-                        <td class="py-4 font-semibold text-xs text-slate-400">${t.bias || 'Neutral'}</td>
-                        <td class="py-4 font-semibold text-slate-400 text-xs">${t.killzone || 'Outside'}</td>
-                        <td class="py-4 font-medium text-slate-300 max-w-[120px] truncate" title="${t.entryType || (t.setupTypes ? t.setupTypes.join(', ') : '-')}">${t.entryType || (t.setupTypes ? t.setupTypes.join(', ') : '-')}</td>
-                        <td class="py-4 text-center font-bold text-slate-300">${t.lot || 0}</td>
-                        <td class="py-4 text-center font-bold text-slate-400">${t.rPercent || 0}%</td>
-                        <td class="py-4 text-center font-extrabold text-amber-400">${t.rr && t.rr !== '-' ? t.rr + 'R' : '-'}</td>
-                        <td class="py-4 text-right font-black ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}</td>
-                        <td class="py-4 text-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <button onclick="openEditTradeModal('${t.id}')" class="p-1.5 text-slate-500 hover:text-amber-400 transition-all"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                                <button onclick="deleteTrade('${t.id}')" class="p-1.5 text-slate-500 hover:text-rose-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                    ${t.notes ? `
-                    <tr class="bg-slate-900/10 border-b border-slate-800/20 hidden group-hover:table-row transition-all">
-                        <td colspan="11" class="px-6 py-2.5 text-xs text-slate-400 font-medium whitespace-pre-wrap"><span class="font-bold text-slate-500">Analiz Detay / Not:</span> ${formatNoteLinks(t.notes)}</td>
-                    </tr>` : ''}`;
-            });
+            const settingsList = document.getElementById('settings-setup-list');
+            settingsList.innerHTML = state.setups.map(s => `
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800 border border-slate-700 rounded-xl text-xs font-medium text-slate-300">
+                    ${s}
+                    <button onclick="removeSetup('${s}')" class="text-slate-500 hover:text-rose-400 transition-all"><i data-lucide="x" class="w-3 h-3"></i></button>
+                </span>
+            `).join('');
             lucide.createIcons();
         }
 
-        function filterTrades() {
-            const query = document.getElementById('trade-search').value.toLowerCase().trim();
-            if(!query) {
-                renderAllTrades(trades);
-                return;
+        function addNewSetup() {
+            const inp = document.getElementById('new-setup-input');
+            const val = inp.value.trim();
+            if (val && !state.setups.includes(val)) {
+                state.setups.push(val);
+                inp.value = '';
+                saveToLocalStorage();
+                buildSetupSelectorsAndSettings();
             }
-            const filtered = trades.filter(t => {
-                return (t.symbol && t.symbol.toLowerCase().includes(query)) ||
-                       (t.entryType && t.entryType.toLowerCase().includes(query)) ||
-                       (t.notes && t.notes.toLowerCase().includes(query)) ||
-                       (t.killzone && t.killzone.toLowerCase().includes(query)) ||
-                       (t.type && t.type.toLowerCase().includes(query));
-            });
-            renderAllTrades(filtered);
         }
 
-        // TIKLANAN MODAL METOTLARI
-        function openTradeModal() {
-            document.getElementById('trade-id').value = '';
-            document.getElementById('trade-form').reset();
-            document.getElementById('trade-modal-title').innerText = 'Yeni İşlem Kaydı Girdisi';
-            
-            // Bugünün tarih ve saatini otomatik getir
-            const now = new Date();
-            document.getElementById('trade-date').value = now.toISOString().slice(0, 10);
-            document.getElementById('trade-time').value = now.toTimeString().slice(0, 5);
-            
-            setTradeType('Long');
-            setBias('Bullish');
-            setExitReason('TP');
-            
-            document.getElementById('trade-modal').classList.remove('hidden');
+        function removeSetup(sName) {
+            state.setups = state.setups.filter(s => s !== sName);
+            saveToLocalStorage();
+            buildSetupSelectorsAndSettings();
         }
 
-        function openEditTradeModal(id) {
-            const t = trades.find(item => item.id === id);
-            if(!t) return;
+        // VERİ HESAPLAMA VE RENDER MOTORU
+        function renderAllData() {
+            const trades = state.trades[state.currentAccount] || [];
+            const initial = state.initialBalance[state.currentAccount] || 10000;
+            const fundingHistory = state.balanceHistory[state.currentAccount] || [];
 
-            document.getElementById('trade-id').value = t.id;
-            document.getElementById('trade-date').value = t.date;
-            document.getElementById('trade-time').value = t.time || '';
-            document.getElementById('trade-symbol').value = t.symbol;
-            document.getElementById('trade-entry-type').value = t.entryType || (t.setupTypes ? t.setupTypes[0] : '') || '';
-            document.getElementById('trade-lot').value = t.lot || '';
-            document.getElementById('trade-r-percent').value = t.rPercent || '';
-            document.getElementById('trade-pnl').value = t.pnl;
-            document.getElementById('trade-notes').value = t.notes || '';
+            // PnL & Hesaplamalar
+            let netPnL = 0;
+            let wins = 0;
+            let losses = 0;
+            let totalWinAmount = 0;
+            let totalLossAmount = 0;
+            let maxWinStreak = 0, currentWinStreak = 0;
+            let maxLossStreak = 0, currentLossStreak = 0;
+            let totalRR = 0;
 
-            setTradeType(t.type || 'Long');
-            setBias(t.bias || 'Bullish');
-            setExitReason(t.exitReason || 'TP');
+            // Sıralı hesaplama (Tarihe göre)
+            const sortedTrades = [...trades].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            document.getElementById('trade-modal-title').innerText = 'İşlem Kaydını Düzenle';
-            document.getElementById('trade-modal').classList.remove('remove');
-            document.getElementById('trade-modal').classList.remove('hidden');
-        }
+            sortedTrades.forEach(t => {
+                const p = parseFloat(t.pnl);
+                netPnL += p;
+                totalRR += parseFloat(t.rr);
 
-        // DİNAMİK PERFORMANS TAKVİMİ MOTORU
-        function renderCalendar() {
-            const grid = document.getElementById('calendar-grid');
-            const monthYearTitle = document.getElementById('calendar-month-year');
-            if(!grid || !monthYearTitle) return;
-
-            grid.innerHTML = '';
-            const monthsTr = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-            
-            const currentYear = calendarDate.getFullYear();
-            const currentMonth = calendarDate.getMonth();
-            
-            monthYearTitle.innerText = `${monthsTr[currentMonth]} ${currentYear}`;
-
-            // Ayın ilk gününün haftanın hangi günü başladığı hesabı
-            let firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-            // Pazartesiyi 0 yapmak için kaydırma
-            firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
-
-            const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-            // Boş hücreleri doldur (Önceki ay taşmaları için)
-            for(let i = 0; i < firstDayIndex; i++) {
-                grid.innerHTML += `<div class="bg-transparent min-h-[96px]"></div>`;
-            }
-
-            // Günleri doldur
-            for(let day = 1; day <= totalDays; day++) {
-                const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const matchTrades = trades.filter(t => t.date === dateString);
-                
-                let dayPnL = 0;
-                let dayTradesCount = matchTrades.length;
-                matchTrades.forEach(t => dayPnL += t.pnl);
-
-                let bgClass = 'bg-[#030712]/40 border-slate-800/80';
-                let textPnLClass = 'text-slate-500';
-                
-                if(dayTradesCount > 0) {
-                    if(dayPnL > 0) {
-                        bgClass = 'bg-emerald-950/40 border-emerald-800/40 hover:bg-emerald-900/30';
-                        textPnLClass = 'text-emerald-400 font-bold';
-                    } else if(dayPnL < 0) {
-                        bgClass = 'bg-rose-950/40 border-rose-800/40 hover:bg-rose-900/30';
-                        textPnLClass = 'text-rose-400 font-bold';
-                    } else {
-                        bgClass = 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-700/50';
-                        textPnLClass = 'text-slate-300 font-bold';
-                    }
+                if (p > 0) {
+                    wins++;
+                    totalWinAmount += p;
+                    currentWinStreak++;
+                    maxWinStreak = Math.max(maxWinStreak, currentWinStreak);
+                    currentLossStreak = 0;
+                } else if (p < 0) {
+                    losses++;
+                    totalLossAmount += Math.abs(p);
+                    currentLossStreak++;
+                    maxLossStreak = Math.max(maxLossStreak, currentLossStreak);
+                    currentWinStreak = 0;
                 }
+            });
 
-                grid.innerHTML += `
-                    <div class="min-h-[100px] border p-3 rounded-2xl flex flex-col justify-between transition-all cursor-pointer ${bgClass}">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold ${dayTradesCount > 0 ? 'text-slate-200' : 'text-slate-500'}">${day}</span>
-                            ${dayTradesCount > 0 ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#030712]/80 text-slate-400 font-semibold rounded">${dayTradesCount} T</span>` : ''}
-                        </div>
-                        <div class="text-right text-xs ${textPnLClass}">
-                            ${dayTradesCount > 0 ? (dayPnL >= 0 ? '+' : '') + '$' + dayPnL.toFixed(1) : ''}
-                        </div>
-                    </div>`;
-            }
-        }
+            const winRate = trades.length ? Math.round((wins / trades.length) * 100) : 0;
+            const profitFactor = totalLossAmount > 0 ? (totalWinAmount / totalLossAmount).toFixed(2) : (totalWinAmount > 0 ? totalWinAmount.toFixed(2) : "0.00");
+            const expectancy = trades.length ? (netPnL / trades.length).toFixed(2) : "0.00";
+            const avgRR = trades.length ? (totalRR / trades.length).toFixed(1) : 0;
 
-        function prevMonth() {
-            calendarDate.setMonth(calendarDate.getMonth() - 1);
-            renderCalendar();
-        }
+            // Fonlama Net Hesabı
+            let netFunding = 0;
+            let totalDeposited = 0;
+            let totalWithdrawn = 0;
 
-        function nextMonth() {
-            calendarDate.setMonth(calendarDate.getMonth() + 1);
-            renderCalendar();
-        }
-    </script>
-
-    <!-- KULLANICI ETKİLEŞİM VE ANALİZ BLOKLARI (AZ ÖNCEKİ ENTEGRE YARDIMCILAR) -->
-    <script>
-        function setTradeType(type) {
-            document.getElementById('trade-type').value = type;
-            ['Long', 'Short'].forEach(opt => {
-                const btn = document.getElementById(`btn-type-${opt}`);
-                if (!btn) return;
-                if (opt === type) {
-                    btn.className = `flex-1 py-3 rounded-xl font-bold border ${type === 'Long' ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-rose-600 border-rose-600 text-white'}`;
+            fundingHistory.forEach(f => {
+                const amt = parseFloat(f.amount);
+                if (f.type === 'deposit') {
+                    netFunding += amt;
+                    totalDeposited += amt;
                 } else {
-                    btn.className = 'flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all';
+                    netFunding -= amt;
+                    totalWithdrawn += amt;
                 }
             });
-        }
 
-        function setExitReason(reason) {
-            document.getElementById('trade-exit-reason').value = reason;
-            ['TP', 'Manuel', 'SL'].forEach(opt => {
-                const btn = document.getElementById(`btn-exit-${opt}`);
-                if (!btn) return;
-                if (opt === reason) {
-                    let colorClass = 'bg-sky-600 border-sky-600 text-white';
-                    if (reason === 'SL') colorClass = 'bg-rose-600 border-rose-600 text-white';
-                    if (reason === 'Manuel') colorClass = 'bg-slate-600 border-slate-600 text-white';
-                    btn.className = `flex-1 py-3 rounded-xl font-bold border ${colorClass}`;
-                } else {
-                    btn.className = 'flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all';
-                }
-            });
-        }
+            const currentBalance = initial + netFunding + netPnL;
 
-        function setBias(bias) {
-            document.getElementById('trade-bias').value = bias;
-            ['Bullish', 'Bearish', 'Neutral'].forEach(opt => {
-                const btn = document.getElementById(`btn-bias-${opt}`);
-                if (!btn) return;
-                if (opt === bias) {
-                    let colorClass = 'bg-sky-600 border-sky-600 text-white';
-                    if (bias === 'Bearish') colorClass = 'bg-rose-600 border-rose-600 text-white';
-                    if (bias === 'Neutral') colorClass = 'bg-slate-600 border-slate-600 text-white';
-                    btn.className = `flex-1 py-3 rounded-xl font-bold border ${colorClass}`;
-                } else {
-                    btn.className = 'flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all';
-                }
-            });
-        }
-
-        function populateEntryTypeSelect() {
-            const select = document.getElementById('trade-entry-type');
-            if (!select) return;
-            select.innerHTML = entryTypes.map(t => `<option value="${t}">${t}</option>`).join('');
-        }
-
-        function closeTradeModal() {
-            document.getElementById('trade-modal').classList.add('hidden');
-            document.getElementById('trade-form').reset();
-        }
-
-        function handleTradeSubmit(e) {
-            e.preventDefault();
-            const tradeId = document.getElementById('trade-id').value;
-            const date = document.getElementById('trade-date').value;
-            const time = document.getElementById('trade-time').value;
-            const symbol = document.getElementById('trade-symbol').value;
-            const type = document.getElementById('trade-type').value;
-            const bias = document.getElementById('trade-bias').value;
-            const rPercent = parseFloat(document.getElementById('trade-r-percent').value) || 0;
-            const lot = parseFloat(document.getElementById('trade-lot').value) || 0;
-            const pnl = parseFloat(document.getElementById('trade-pnl').value) || 0;
-            const exitReason = document.getElementById('trade-exit-reason').value;
-            const notesText = document.getElementById('trade-notes').value;
-            const selectedSetup = document.getElementById('trade-entry-type').value;
-
-            const calculatedKillzone = getKillzoneForDateTime(date, time);
-            
-            let riskAmount = balance * (rPercent / 100);
-            let calculatedRR = riskAmount > 0 ? (pnl / riskAmount).toFixed(1) : '-';
-
-            const tradeData = {
-                id: tradeId || 'trade_' + Date.now(),
-                date, time, symbol, type, bias, rPercent, lot, pnl, exitReason,
-                killzone: calculatedKillzone,
-                notes: notesText,
-                entryType: selectedSetup,
-                rr: calculatedRR
-            };
-
-            if (tradeId) {
-                const index = trades.findIndex(t => t.id === tradeId);
-                if (index !== -1) trades[index] = tradeData;
-            } else {
-                trades.push(tradeData);
-            }
-
-            saveCurrentAccountData();
-            closeTradeModal();
-            refreshCurrentView();
-            showToast(tradeId ? 'İşlem güncellendi' : 'Yeni işlem başarıyla kaydedildi');
-        }
-
-        function deleteTrade(id) {
-            showConfirm('İşlemi Sil', 'Bu işlemi geçmişten kalıcı olarak silmek istediğinize emin misiniz?', () => {
-                trades = trades.filter(t => t.id !== id);
-                saveCurrentAccountData();
-                refreshCurrentView();
-                closeConfirmModal();
-                showToast('İşlem silindi', 'info');
-            });
-        }
-
-        function updateStats() {
-            const totalTrades = trades.length;
-            const winTrades = trades.filter(t => t.pnl > 0).length;
-            const lossTrades = trades.filter(t => t.pnl < 0).length;
-            
-            const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
-            const winRate = totalTrades > 0 ? Math.round((winTrades / totalTrades) * 100) : 0;
-
-            const totalWinAmount = trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0);
-            const totalLossAmount = Math.abs(trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0));
-            const profitFactor = totalLossAmount > 0 ? (totalWinAmount / totalLossAmount).toFixed(2) : (totalWinAmount > 0 ? totalWinAmount.toFixed(2) : '0.00');
-
-            const avgWin = winTrades > 0 ? totalWinAmount / winTrades : 0;
-            const avgLoss = lossTrades > 0 ? totalLossAmount / lossTrades : 0;
-            const expectancy = totalTrades > 0 ? ((winRate / 100) * avgWin) - (((100 - winRate) / 100) * avgLoss) : 0;
-
-            document.getElementById('stat-total-pnl').innerText = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
-            document.getElementById('stat-total-pnl').className = `text-3xl font-bold ${totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            // DOM Güncellemeleri (Dashboard Stats)
+            document.getElementById('stat-total-pnl').innerText = (netPnL >= 0 ? "+$" : "-$") + Math.abs(netPnL).toFixed(2);
+            document.getElementById('stat-total-pnl').className = `text-3xl font-extrabold ${netPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
             document.getElementById('stat-win-rate').innerText = `${winRate}%`;
             document.getElementById('stat-profit-factor').innerText = profitFactor;
+            document.getElementById('stat-current-budget').innerText = `$${currentBalance.toFixed(2)}`;
+            document.getElementById('stat-expectancy').innerText = (parseFloat(expectancy) >= 0 ? "$" : "-$") + Math.abs(parseFloat(expectancy)).toFixed(2);
+            document.getElementById('stat-expectancy').className = `text-3xl font-extrabold ${parseFloat(expectancy) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
             
-            const expElements = document.querySelectorAll('#stat-expectancy');
-            expElements.forEach(el => {
-                el.innerText = `${expectancy >= 0 ? '+' : ''}$${expectancy.toFixed(2)}`;
-                el.className = `text-3xl font-bold ${expectancy >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-            });
+            document.getElementById('report-win-streak').innerText = maxWinStreak;
+            document.getElementById('report-loss-streak').innerText = maxLossStreak;
+            document.getElementById('report-rr-ratio').innerText = `${avgRR}R`;
 
-            const totalDeposit = transactions.filter(t => t.type === 'deposit').reduce((s, t) => s + t.amount, 0);
-            const totalWithdraw = transactions.filter(t => t.type === 'withdraw').reduce((s, t) => s + t.amount, 0);
-            const currentBudget = balance + totalPnL + totalDeposit - totalWithdraw;
-            
-            document.getElementById('stat-current-budget').innerText = `$${currentBudget.toFixed(2)}`;
-            
-            let currentWinStreak = 0, currentLossStreak = 0;
-            let maxWinStreak = 0, maxLossStreak = 0;
-            
-            [...trades].sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(t => {
-                if (t.pnl > 0) {
-                    currentWinStreak++;
-                    currentLossStreak = 0;
-                    if (currentWinStreak > maxWinStreak) maxWinStreak = currentWinStreak;
-                } else if (t.pnl < 0) {
-                    currentLossStreak++;
-                    currentWinStreak = 0;
-                    if (currentLossStreak > maxLossStreak) maxLossStreak = currentLossStreak;
-                }
-            });
+            // Bakiye Sayfası Güncellemeleri
+            document.getElementById('balance-current').innerText = `$${currentBalance.toFixed(2)}`;
+            document.getElementById('balance-total-deposit').innerText = `$${totalDeposited.toFixed(2)}`;
+            document.getElementById('balance-total-withdraw').innerText = `$${totalWithdrawn.toFixed(2)}`;
+            document.getElementById('initial-balance-input').value = initial;
 
-            if(document.getElementById('report-win-streak')) document.getElementById('report-win-streak').innerText = maxWinStreak;
-            if(document.getElementById('report-loss-streak')) document.getElementById('report-loss-streak').innerText = maxLossStreak;
-            
-            const validRRTrades = trades.filter(t => t.rr && t.rr !== '-').map(t => parseFloat(t.rr));
-            const avgRR = validRRTrades.length > 0 ? (validRRTrades.reduce((s, r) => s + r, 0) / validRRTrades.length).toFixed(2) : '0.00';
-            if(document.getElementById('report-rr-ratio')) document.getElementById('report-rr-ratio').innerText = `${avgRR}R`;
-        }
+            // Max Drawdown Hesaplama
+            let peak = initial;
+            let currentEquity = initial;
+            let maxDD = 0;
 
-        function renderAnalysis() {
-            updateStats();
-            
-            const ids = ['hourly-perf-body', 'daily-wr-body', 'setup-perf-body', 'bias-acc-body', 'session-perf-body'];
-            ids.forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerHTML = ''; });
+            sortedTrades.forEach(t => {
+                currentEquity += parseFloat(t.pnl);
+                if (currentEquity > peak) peak = currentEquity;
+                const dd = peak > 0 ? ((peak - currentEquity) / peak) * 100 : 0;
+                if (dd > maxDD) maxDD = dd;
+            });
+            document.getElementById('report-drawdown').innerText = `Max DD: ${maxDD.toFixed(1)}%`;
 
-            // 1. Saatlik Verimlilik
-            const hourlyData = {};
-            trades.forEach(t => {
-                if(!t.time) return;
-                const hour = t.time.split(':')[0] + ':00';
-                if(!hourlyData[hour]) hourlyData[hour] = { count: 0, wins: 0, pnl: 0 };
-                hourlyData[hour].count++;
-                if(t.pnl > 0) hourlyData[hour].wins++;
-                hourlyData[hour].pnl += t.pnl;
-            });
-            Object.keys(hourlyData).sort().forEach(hour => {
-                const d = hourlyData[hour];
-                const wr = Math.round((d.wins / d.count) * 100);
-                document.getElementById('hourly-perf-body').innerHTML += `
-                    <tr>
-                        <td class="py-3 font-semibold text-slate-300">${hour}</td>
-                        <td class="py-3 text-center text-slate-400">${d.count}</td>
-                        <td class="py-3 text-center text-sky-400 font-bold">${wr}%</td>
-                        <td class="py-3 text-right font-bold ${d.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</td>
-                    </tr>`;
-            });
-
-            // 2. Günlük Dağılım
-            const daysTr = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
-            const dailyData = {};
-            trades.forEach(t => {
-                const dayName = daysTr[new Date(t.date).getDay()];
-                if(!dailyData[dayName]) dailyData[dayName] = { count: 0, wins: 0, pnl: 0 };
-                dailyData[dayName].count++;
-                if(t.pnl > 0) dailyData[dayName].wins++;
-                dailyData[dayName].pnl += t.pnl;
-            });
-            daysTr.forEach(day => {
-                const d = dailyData[day] || { count: 0, wins: 0, pnl: 0 };
-                if (d.count === 0) return;
-                const wr = Math.round((d.wins / d.count) * 100);
-                document.getElementById('daily-wr-body').innerHTML += `
-                    <tr>
-                        <td class="py-3 font-semibold text-slate-300">${day}</td>
-                        <td class="py-3 text-center text-slate-400">${d.count}</td>
-                        <td class="py-3 text-center text-sky-400 font-bold">${wr}%</td>
-                        <td class="py-3 text-right font-bold ${d.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</td>
-                    </tr>`;
-            });
-
-            // 3. Setup Performansı
-            const setupData = {};
-            trades.forEach(t => {
-                const setup = t.entryType || 'Bilinmeyen';
-                if(!setupData[setup]) setupData[setup] = { count: 0, wins: 0, totalRR: 0, rrCount: 0 };
-                setupData[setup].count++;
-                if(t.pnl > 0) setupData[setup].wins++;
-                if(t.rr && t.rr !== '-') {
-                    setupData[setup].totalRR += parseFloat(t.rr);
-                    setupData[setup].rrCount++;
-                }
-            });
-            Object.keys(setupData).forEach(setup => {
-                const d = setupData[setup];
-                const wr = Math.round((d.wins / d.count) * 100);
-                const avgRR = d.rrCount > 0 ? (d.totalRR / d.rrCount).toFixed(1) + 'R' : '-';
-                document.getElementById('setup-perf-body').innerHTML += `
-                    <tr>
-                        <td class="py-3 font-semibold text-slate-300">${setup}</td>
-                        <td class="py-3 text-center text-slate-400">${d.count}</td>
-                        <td class="py-3 text-center text-sky-400 font-bold">${wr}%</td>
-                        <td class="py-3 text-right font-bold text-emerald-400">${avgRR}</td>
-                    </tr>`;
-            });
-
-            // 4. Bias Doğruluğu
-            const biasData = {};
-            trades.forEach(t => {
-                const b = t.bias || 'Neutral';
-                if(!biasData[b]) biasData[b] = { count: 0, wins: 0, pnl: 0 };
-                biasData[b].count++;
-                if(t.pnl > 0) biasData[b].wins++;
-                biasData[b].pnl += t.pnl;
-            });
-            ['Bullish', 'Bearish', 'Neutral'].forEach(b => {
-                const d = biasData[b] || { count: 0, wins: 0, pnl: 0 };
-                if (d.count === 0) return;
-                const wr = Math.round((d.wins / d.count) * 100);
-                document.getElementById('bias-acc-body').innerHTML += `
-                    <tr>
-                        <td class="py-3 font-semibold text-slate-300">${b}</td>
-                        <td class="py-3 text-center text-slate-400">${d.count}</td>
-                        <td class="py-3 text-center text-sky-400 font-bold">${wr}%</td>
-                        <td class="py-3 text-right font-bold ${d.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</td>
-                    </tr>`;
-            });
-
-            // 5. Seans Performansı
-            const sessionData = {};
-            trades.forEach(t => {
-                const kz = t.killzone || 'Outside Killzone';
-                if(!sessionData[kz]) sessionData[kz] = { count: 0, wins: 0, pnl: 0 };
-                sessionData[kz].count++;
-                if(t.pnl > 0) sessionData[kz].wins++;
-                sessionData[kz].pnl += t.pnl;
-            });
-            ['Frankfurt', 'London Open', 'NY Open', 'NY PM', 'London Close', 'Outside Killzone'].forEach(kz => {
-                const d = sessionData[kz] || { count: 0, wins: 0, pnl: 0 };
-                if (d.count === 0) return;
-                const wr = Math.round((d.wins / d.count) * 100);
-                document.getElementById('session-perf-body').innerHTML += `
-                    <tr>
-                        <td class="py-3 font-semibold text-slate-300">${kz}</td>
-                        <td class="py-3 text-center text-slate-400">${d.count}</td>
-                        <td class="py-3 text-center text-sky-400 font-bold">${wr}%</td>
-                        <td class="py-3 text-right font-bold ${d.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${d.pnl >= 0 ? '+' : ''}$${d.pnl.toFixed(2)}</td>
-                    </tr>`;
-            });
-
+            // Tabloları Çiz
+            renderTradeTables(trades);
+            renderCalendar();
+            renderAnalysisView(trades);
+            renderBalanceHistory(fundingHistory);
+            renderNotes();
             renderEquityChart();
         }
 
+        function renderTradeTables(trades) {
+            const sorted = [...trades].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Son 5 İşlem (Dashboard)
+            const recentBody = document.getElementById('recent-trades-body');
+            recentBody.innerHTML = sorted.slice(0, 5).map(t => `
+                <tr class="border-b border-slate-800/30 hover:bg-slate-800/20 transition-all">
+                    <td class="py-3.5 font-medium text-slate-400">${t.date.replace('T', ' ')}</td>
+                    <td class="py-3.5 font-bold text-slate-200">${t.pair} <span class="text-[10px] px-1.5 py-0.5 rounded ml-1 ${t.direction === 'BUY' ? 'bg-emerald-950 text-emerald-400' : 'bg-rose-950 text-rose-400'}">${t.direction}</span></td>
+                    <td class="py-3.5 text-slate-300 font-semibold">${t.killzone}</td>
+                    <td class="py-3.5"><span class="px-2 py-1 bg-[#111c44] border border-slate-700/50 rounded-xl text-xs text-amber-300 font-medium">${t.setup}</span></td>
+                    <td class="py-3.5 text-center text-slate-300 font-semibold">%${t.risk}</td>
+                    <td class="py-3.5 text-center text-sky-400 font-bold">${t.rr}R</td>
+                    <td class="py-3.5 text-right font-extrabold ${parseFloat(t.pnl) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(t.pnl) >= 0 ? '+' : ''}$${parseFloat(t.pnl).toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            // Tüm İşlemler
+            filterTrades();
+        }
+
+        function filterTrades() {
+            const query = document.getElementById('trade-search').value.toLowerCase();
+            const trades = state.trades[state.currentAccount] || [];
+            const sorted = [...trades].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const filtered = sorted.filter(t => 
+                t.pair.toLowerCase().includes(query) || 
+                t.setup.toLowerCase().includes(query) || 
+                t.killzone.toLowerCase().includes(query) ||
+                t.direction.toLowerCase().includes(query)
+            );
+
+            const allBody = document.getElementById('all-trades-body');
+            allBody.innerHTML = filtered.map(t => `
+                <tr class="border-b border-slate-800/30 hover:bg-slate-800/20 transition-all">
+                    <td class="py-3.5 text-slate-400">${t.date.replace('T', ' ')}</td>
+                    <td class="py-3.5 font-bold text-slate-200">${t.pair}</td>
+                    <td class="py-3.5 font-bold ${t.direction === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}">${t.direction}</td>
+                    <td class="py-3.5 text-slate-400 font-medium">${t.bias || 'BULLISH'}</td>
+                    <td class="py-3.5 text-slate-300">${t.killzone}</td>
+                    <td class="py-3.5"><span class="px-2 py-1 bg-[#111c44] border border-slate-700/50 rounded-xl text-xs text-amber-300 font-medium">${t.setup}</span></td>
+                    <td class="py-3.5 text-center font-semibold text-slate-300">${t.lot}</td>
+                    <td class="py-3.5 text-center text-slate-400">%${t.risk}</td>
+                    <td class="py-3.5 text-center text-sky-400 font-bold">${t.rr}R</td>
+                    <td class="py-3.5 text-right font-extrabold ${parseFloat(t.pnl) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(t.pnl) >= 0 ? '+' : ''}$${parseFloat(t.pnl).toFixed(2)}</td>
+                    <td class="py-3.5 text-center">
+                        <button onclick="deleteTrade('${t.id}')" class="text-slate-500 hover:text-rose-400 transition-all p-1"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // EQUITY CURVE GRAPH (D3.JS)
         function renderEquityChart() {
             const container = document.getElementById('equity-chart');
-            if (!container) return;
             container.innerHTML = '';
 
-            const width = container.clientWidth || 500;
-            const height = 256;
-            const margin = { top: 20, right: 30, bottom: 30, left: 50 };
+            const trades = state.trades[state.currentAccount] || [];
+            const initial = state.initialBalance[state.currentAccount] || 10000;
+            const sortedTrades = [...trades].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            let cumulativePnL = balance;
-            const data = [{ index: 0, balance: cumulativePnL }];
-
-            const sortedTrades = [...trades].sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')));
-            
-            let peak = balance;
-            let maxDD = 0;
+            let data = [{ index: 0, balance: initial }];
+            let runningBalance = initial;
 
             sortedTrades.forEach((t, i) => {
-                cumulativePnL += t.pnl;
-                if (cumulativePnL > peak) peak = cumulativePnL;
-                let dd = peak > 0 ? ((peak - cumulativePnL) / peak) * 100 : 0;
-                if (dd > maxDD) maxDD = dd;
-                
-                data.push({ index: i + 1, balance: cumulativePnL });
+                runningBalance += parseFloat(t.pnl);
+                data.push({ index: i + 1, balance: runningBalance });
             });
 
-            if(document.getElementById('report-drawdown')) {
-                document.getElementById('report-drawdown').innerText = `Max DD: ${maxDD.toFixed(1)}%`;
-            }
+            const width = container.clientWidth;
+            const height = container.clientHeight || 250;
+            const margin = { top: 15, right: 20, bottom: 25, left: 55 };
 
             const svg = d3.select('#equity-chart')
                 .append('svg')
@@ -1415,388 +941,356 @@
                 .range([margin.left, width - margin.right]);
 
             const y = d3.scaleLinear()
-                .domain([d3.min(data, d => d.balance) * 0.95, d3.max(data, d => d.balance) * 1.05])
+                .domain([d3.min(data, d => d.balance) * 0.99, d3.max(data, d => d.balance) * 1.01])
                 .range([height - margin.bottom, margin.top]);
 
+            // Grid Çizgileri
+            svg.append('g').attr('class', 'grid')
+                .attr('transform', `translate(0, ${height - margin.bottom})`)
+                .call(d3.axisBottom(x).ticks(data.length).tickSize(-height + margin.top + margin.bottom).tickFormat(''));
+
+            svg.append('g').attr('class', 'grid')
+                .attr('transform', `translate(${margin.left}, 0)`)
+                .call(d3.axisLeft(y).ticks(5).tickSize(-width + margin.left + margin.right).tickFormat(''));
+
+            // Eksen Tanımlamaları
+            svg.append('g')
+                .attr('transform', `translate(0, ${height - margin.bottom})`)
+                .call(d3.axisBottom(x).ticks(Math.min(data.length, 10)).tickFormat(d3.format('d')))
+                .attr('color', '#475569');
+
+            svg.append('g')
+                .attr('transform', `translate(${margin.left}, 0)`)
+                .call(d3.axisLeft(y).ticks(5).tickFormat(d => '$' + d3.format(',.0f')(d)))
+                .attr('color', '#475569');
+
+            // Çizgi ve Alan Gradyanı
             const line = d3.line()
                 .x(d => x(d.index))
                 .y(d => y(d.balance))
                 .curve(d3.curveMonotoneX);
 
-            svg.append('g')
-                .attr('class', 'grid')
-                .attr('transform', `translate(0, ${height - margin.bottom})`)
-                .call(d3.axisBottom(x).ticks(5).tickSize(-height + margin.top + margin.bottom).tickFormat(''))
-                .attr('stroke', '#334155')
-                .attr('opacity', 0.2);
+            const area = d3.area()
+                .x(d => x(d.index))
+                .y0(height - margin.bottom)
+                .y1(d => y(d.balance))
+                .curve(d3.curveMonotoneX);
 
-            svg.append('g')
-                .attr('class', 'grid')
-                .attr('transform', `translate(${margin.left}, 0)`)
-                .call(d3.axisLeft(y).ticks(5).tickSize(-width + margin.left + margin.right).tickFormat(''))
-                .attr('stroke', '#334155')
-                .attr('opacity', 0.2);
+            const gradientId = 'chart-gradient-' + Math.random().toString(36).substr(2, 9);
+            svg.append('defs')
+                .append('linearGradient')
+                .attr('id', gradientId)
+                .attr('x1', '0%').attr('y1', '0%')
+                .attr('x2', '0%').attr('y2', '100%')
+                .html(`
+                    <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.25"></stop>
+                    <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.00"></stop>
+                `);
 
-            svg.append('g')
-                .attr('transform', `translate(0, ${height - margin.bottom})`)
-                .call(d3.axisBottom(x).ticks(5))
-                .attr('color', '#64748b');
-
-            svg.append('g')
-                .attr('transform', `translate(${margin.left}, 0)`)
-                .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${d}`))
-                .attr('color', '#64748b');
+            svg.append('path')
+                .datum(data)
+                .attr('fill', `url(#${gradientId})`)
+                .attr('d', area);
 
             svg.append('path')
                 .datum(data)
                 .attr('fill', 'none')
-                .attr('stroke', '#0ea5e9')
-                .attr('stroke-width', 3)
+                .attr('stroke', '#f59e0b')
+                .attr('stroke-width', 2.5)
                 .attr('d', line);
         }
 
-        function renderBalance() {
-            const tbody = document.getElementById('balance-history-body');
-            if(!tbody) return;
-            tbody.innerHTML = '';
+        // PERFORMANCE ANALYSIS SUB-ENGINE
+        function renderAnalysisView(trades) {
+            // Gruplama Şablon Yapıları
+            let hourly = {}, daily = {}, setups = {}, bias = {}, sessions = {};
 
-            const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
-            const totalDeposit = transactions.filter(t => t.type === 'deposit').reduce((s, t) => s + t.amount, 0);
-            const totalWithdraw = transactions.filter(t => t.type === 'withdraw').reduce((s, t) => s + t.amount, 0);
-            const currentBalance = balance + totalPnL + totalDeposit - totalWithdraw;
+            trades.forEach(t => {
+                const pnl = parseFloat(t.pnl);
+                const isWin = pnl > 0;
+                
+                // Saat Gruplama
+                const hour = t.date ? t.date.split('T')[1]?.substring(0, 2) + ':00' : 'Bilinmeyen';
+                if (!hourly[hour]) hourly[hour] = { count: 0, wins: 0, pnl: 0 };
+                hourly[hour].count++;
+                if (isWin) hourly[hour].wins++;
+                hourly[hour].pnl += pnl;
 
-            document.getElementById('balance-current').innerText = `$${currentBalance.toFixed(2)}`;
-            document.getElementById('balance-total-deposit').innerText = `$${totalDeposit.toFixed(2)}`;
-            document.getElementById('balance-total-withdraw').innerText = `$${totalWithdraw.toFixed(2)}`;
+                // Gün Gruplama
+                const dayName = t.date ? new Date(t.date).toLocaleDateString('tr-TR', { weekday: 'long' }) : 'Bilinmeyen';
+                if (!daily[dayName]) daily[dayName] = { count: 0, wins: 0, pnl: 0 };
+                daily[dayName].count++;
+                if (isWin) daily[dayName].wins++;
+                daily[dayName].pnl += pnl;
 
-            if(transactions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-slate-500 italic">Yatırma/Çekme işlemi bulunmuyor.</td></tr>';
-                return;
-            }
+                // Setup Gruplama
+                if (!setups[t.setup]) setups[t.setup] = { count: 0, wins: 0, totalRR: 0 };
+                setups[t.setup].count++;
+                if (isWin) setups[t.setup].wins++;
+                setups[t.setup].totalRR += parseFloat(t.rr);
 
-            [...transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(t => {
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-800">
-                        <td class="py-4 text-slate-400 text-sm">${new Date(t.date).toLocaleString('tr-TR')}</td>
-                        <td class="py-4 font-semibold text-sm">
-                            <span class="px-2 py-1 rounded text-[10px] font-bold ${t.type === 'deposit' ? 'bg-emerald-950 text-emerald-400' : 'bg-rose-950 text-rose-400'}">
-                                ${t.type === 'deposit' ? 'PARA YATIRMA' : 'PARA ÇEKME'}
-                            </span>
-                        </td>
-                        <td class="py-4 font-bold text-sm ${t.type === 'deposit' ? 'text-emerald-400' : 'text-rose-400'}">
-                            ${t.type === 'deposit' ? '+' : '-'}$${t.amount.toFixed(2)}
-                        </td>
-                    </tr>`;
+                // Bias Gruplama
+                const bDir = t.bias || 'BULLISH';
+                if (!bias[bDir]) bias[bDir] = { count: 0, wins: 0, pnl: 0 };
+                bias[bDir].count++;
+                if (isWin) bias[bDir].wins++;
+                bias[bDir].pnl += pnl;
+
+                // Seans Gruplama
+                if (!sessions[t.killzone]) sessions[t.killzone] = { count: 0, wins: 0, pnl: 0 };
+                sessions[t.killzone].count++;
+                if (isWin) sessions[t.killzone].wins++;
+                sessions[t.killzone].pnl += pnl;
             });
+
+            // HTML Oluşturma
+            document.getElementById('hourly-perf-body').innerHTML = Object.keys(hourly).sort().map(h => `
+                <tr class="border-b border-slate-800/20"><td class="py-2.5 font-medium">${h}</td><td class="text-center">${hourly[h].count}</td><td class="text-center font-bold text-sky-400">${Math.round((hourly[h].wins/hourly[h].count)*100)}%</td><td class="text-right font-semibold ${hourly[h].pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${hourly[h].pnl >= 0 ? '+' : ''}$${hourly[h].pnl.toFixed(2)}</td></tr>
+            `).join('') || `<tr><td colspan="4" class="text-center py-4 text-slate-500">Yeterli veri bulunmuyor.</td></tr>`;
+
+            document.getElementById('daily-wr-body').innerHTML = Object.keys(daily).map(d => `
+                <tr class="border-b border-slate-800/20"><td class="py-2.5 font-medium">${d}</td><td class="text-center">${daily[d].count}</td><td class="text-center font-bold text-sky-400">${Math.round((daily[d].wins/daily[d].count)*100)}%</td><td class="text-right font-semibold ${daily[d].pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${daily[d].pnl >= 0 ? '+' : ''}$${daily[d].pnl.toFixed(2)}</td></tr>
+            `).join('') || `<tr><td colspan="4" class="text-center py-4 text-slate-500">Yeterli veri bulunmuyor.</td></tr>`;
+
+            document.getElementById('setup-perf-body').innerHTML = Object.keys(setups).map(s => `
+                <tr class="border-b border-slate-800/20"><td class="py-2.5 font-medium">${s}</td><td class="text-center">${setups[s].count}</td><td class="text-center font-bold text-sky-400">${Math.round((setups[s].wins/setups[s].count)*100)}%</td><td class="text-right font-bold text-amber-400">${(setups[s].totalRR / setups[s].count).toFixed(1)}R</td></tr>
+            `).join('') || `<tr><td colspan="4" class="text-center py-4 text-slate-500">Yeterli veri bulunmuyor.</td></tr>`;
+
+            document.getElementById('bias-acc-body').innerHTML = Object.keys(bias).map(b => `
+                <tr class="border-b border-slate-800/20"><td class="py-2.5 font-medium">${b}</td><td class="text-center">${bias[b].count}</td><td class="text-center font-bold text-sky-400">${Math.round((bias[b].wins/bias[b].count)*100)}%</td><td class="text-right font-semibold ${bias[b].pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${bias[b].pnl >= 0 ? '+' : ''}$${bias[b].pnl.toFixed(2)}</td></tr>
+            `).join('') || `<tr><td colspan="4" class="text-center py-4 text-slate-500">Yeterli veri bulunmuyor.</td></tr>`;
+
+            document.getElementById('session-perf-body').innerHTML = Object.keys(sessions).map(sn => `
+                <tr class="border-b border-slate-800/20"><td class="py-2.5 font-medium">${sn}</td><td class="text-center">${sessions[sn].count}</td><td class="text-center font-bold text-sky-400">${Math.round((sessions[sn].wins/sessions[sn].count)*100)}%</td><td class="text-right font-semibold ${sessions[sn].pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${sessions[sn].pnl >= 0 ? '+' : ''}$${sessions[sn].pnl.toFixed(2)}</td></tr>
+            `).join('') || `<tr><td colspan="4" class="text-center py-4 text-slate-500">Yeterli veri bulunmuyor.</td></tr>`;
         }
 
+        // TAKVİM MOTORU (CALENDAR)
+        function renderCalendar() {
+            const year = calendarState.currentYear;
+            const month = calendarState.currentMonth;
+            
+            document.getElementById('calendar-month-year').innerText = `${monthsTR[month]} ${year}`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            // Haftanın ilk gününü TR standardı için Pazartesi'ye çekme mantığı
+            const adjustedFirstDay = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            const trades = state.trades[state.currentAccount] || [];
+            
+            // Günlük Kar/Zarar Haritalama
+            let dailyPnL = {};
+            trades.forEach(t => {
+                if (!t.date) return;
+                const dObj = new Date(t.date);
+                if (dObj.getFullYear() === year && dObj.getMonth() === month) {
+                    const dNum = dObj.getDate();
+                    if (!dailyPnL[dNum]) dailyPnL[dNum] = 0;
+                    dailyPnL[dNum] += parseFloat(t.pnl);
+                }
+            });
+
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+
+            // Boş Gün Hücreleri
+            for (let i = 0; i < adjustedFirstDay; i++) {
+                grid.innerHTML += `<div class="bg-transparent h-20"></div>`;
+            }
+
+            // Aktif Gün Hücreleri
+            for (let day = 1; day <= totalDays; day++) {
+                const dayPnL = dailyPnL[day] || 0;
+                let bgClass = "bg-slate-800/20 border-slate-800/80";
+                let textClass = "text-slate-400";
+                
+                if (dayPnL > 0) { bgClass = "bg-emerald-950/40 border-emerald-800/40"; textClass = "text-emerald-400 font-bold"; }
+                else if (dayPnL < 0) { bgClass = "bg-rose-950/40 border-rose-800/40"; textClass = "text-rose-400 font-bold"; }
+
+                grid.innerHTML += `
+                    <div class="h-20 p-2.5 rounded-2xl border ${bgClass} flex flex-col justify-between transition-all hover:scale-[1.02]">
+                        <span class="text-xs font-bold text-slate-400">${day}</span>
+                        <span class="text-[11px] truncate tracking-tighter ${textClass}">
+                            ${dayPnL !== 0 ? (dayPnL > 0 ? '+' : '') + '$' + dayPnL.toFixed(0) : ''}
+                        </span>
+                    </div>
+                `;
+            }
+        }
+
+        function prevMonth() {
+            calendarState.currentMonth--;
+            if (calendarState.currentMonth < 0) {
+                calendarState.currentMonth = 11;
+                calendarState.currentYear--;
+            }
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            calendarState.currentMonth++;
+            if (calendarState.currentMonth > 11) {
+                calendarState.currentMonth = 0;
+                calendarState.currentYear++;
+            }
+            renderCalendar();
+        }
+
+        // FON TRANSFER İŞLEMLERİ
         function saveInitialBalance() {
-            const val = parseFloat(document.getElementById('initial-balance-input').value) || 0;
-            balance = val;
-            saveCurrentAccountData();
-            updateStats();
-            if(currentView === 'balance') renderBalance();
-            showToast('Başlangıç bakiyesi güncellendi');
+            const val = parseFloat(document.getElementById('initial-balance-input').value);
+            if (!isNaN(val) && val >= 0) {
+                state.initialBalance[state.currentAccount] = val;
+                saveToLocalStorage();
+                renderAllData();
+            }
         }
 
         function executeTransaction(type) {
-            const amtInput = document.getElementById('transaction-amount-input');
-            const amount = parseFloat(amtInput.value) || 0;
-            if(amount <= 0) {
-                showToast('Geçerli bir miktar girin', 'error');
-                return;
-            }
-
-            transactions.push({
-                id: 'tx_' + Date.now(),
-                type: type,
-                amount: amount,
-                date: new Date().toISOString()
-            });
-
-            amtInput.value = '';
-            saveCurrentAccountData();
-            if(currentView === 'balance') renderBalance();
-            updateStats();
-            showToast(type === 'deposit' ? 'Para yatırma işlendi' : 'Para çekme işlendi');
-        }
-
-        function checkBalanceButton() {
-            const btn = document.getElementById('save-balance-btn');
-            if(btn && balance > 0) {
-                btn.innerText = "Bakiyeyi Güncelle";
+            const inp = document.getElementById('transaction-amount-input');
+            const val = parseFloat(inp.value);
+            if (!isNaN(val) && val > 0) {
+                const history = state.balanceHistory[state.currentAccount] || [];
+                history.push({
+                    date: new Date().toISOString().substring(0, 10),
+                    type: type,
+                    amount: val
+                });
+                state.balanceHistory[state.currentAccount] = history;
+                inp.value = '';
+                saveToLocalStorage();
+                renderAllData();
             }
         }
 
+        function renderBalanceHistory(history) {
+            const body = document.getElementById('balance-history-body');
+            body.innerHTML = [...history].reverse().map(f => `
+                <tr class="border-b border-slate-800/30">
+                    <td class="py-2.5 text-slate-400 font-medium">${f.date}</td>
+                    <td class="py-2.5 font-bold uppercase ${f.type === 'deposit' ? 'text-emerald-500' : 'text-rose-500'}">${f.type === 'deposit' ? 'Para Yatırma' : 'Para Çekme'}</td>
+                    <td class="py-2.5 text-right font-extrabold ${f.type === 'deposit' ? 'text-emerald-400' : 'text-rose-400'}">${f.type === 'deposit' ? '+' : '-'}$${parseFloat(f.amount).toFixed(2)}</td>
+                </tr>
+            `).join('') || `<tr><td colspan="3" class="text-center py-4 text-slate-500">Finansal transfer kaydı bulunamadı.</td></tr>`;
+        }
+
+        // STRATEJİ NOTLARI MOTORU
         function renderNotes() {
             const container = document.getElementById('notes-container');
-            if(!container) return;
-            container.innerHTML = '';
-
-            if(notes.length === 0) {
-                container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 italic">Kayıtlı strateji veya ders notu bulunmuyor.</div>';
-                return;
-            }
-
-            notes.forEach((note, index) => {
-                const card = document.createElement('div');
-                card.className = 'bg-[#0b1329] p-6 rounded-3xl border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all cursor-pointer';
-                card.onclick = () => editNote(index);
-                card.innerHTML = `
+            container.innerHTML = state.notes.map(n => `
+                <div class="bg-[#0b1329] p-5 rounded-3xl border border-slate-800/60 flex flex-col justify-between space-y-3 relative group">
+                    <button onclick="deleteNote('${n.id}')" class="absolute top-4 right-4 text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all"><i data-lucide="trash" class="w-4 h-4"></i></button>
                     <div>
-                        <h5 class="text-lg font-bold text-slate-100 mb-2 truncate">${note.title}</h5>
-                        <p class="text-sm text-slate-400 line-clamp-4 whitespace-pre-wrap">${formatNoteLinks(note.content)}</p>
+                        <h5 class="text-sm font-bold text-amber-400 mb-2">${n.title}</h5>
+                        <p class="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">${n.content}</p>
                     </div>
-                    <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-800/60">
-                        <span class="text-xs text-slate-500">${new Date(note.date).toLocaleDateString('tr-TR')}</span>
-                        <button onclick="event.stopPropagation(); deleteNote(${index});" class="text-slate-500 hover:text-rose-400 transition-colors">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </div>`;
-                container.appendChild(card);
-            });
+                    <div class="text-[10px] text-slate-500 font-semibold pt-2 border-t border-slate-800/60">${n.date}</div>
+                </div>
+            `).join('');
             lucide.createIcons();
-        }
-
-        function openNoteModal() {
-            editingNoteIndex = null;
-            document.getElementById('note-modal').classList.remove('hidden');
-            document.getElementById('note-modal-title').innerText = 'Yeni Not Ekle';
-            document.getElementById('note-title').value = '';
-            document.getElementById('note-content').value = '';
-        }
-
-        function closeNoteModal() {
-            document.getElementById('note-modal').classList.add('hidden');
         }
 
         function saveNote() {
             const title = document.getElementById('note-title').value.trim();
             const content = document.getElementById('note-content').value.trim();
-
-            if(!title || !content) {
-                showToast('Lütfen başlık ve içerik alanlarını doldurun', 'error');
-                return;
+            if (title && content) {
+                state.notes.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    title: title,
+                    content: content,
+                    date: new Date().toLocaleDateString('tr-TR')
+                });
+                document.getElementById('note-title').value = '';
+                document.getElementById('note-content').value = '';
+                closeNoteModal();
+                saveToLocalStorage();
+                renderAllData();
             }
+        }
 
-            const noteData = { title, content, date: new Date().toISOString() };
+        function deleteNote(id) {
+            state.notes = state.notes.filter(n => n.id !== id);
+            saveToLocalStorage();
+            renderAllData();
+        }
 
-            if(editingNoteIndex !== null) {
-                notes[editingNoteIndex] = noteData;
-            } else {
-                notes.push(noteData);
+        // İŞLEM EKLEME VE SİLME
+        function saveTrade(e) {
+            e.preventDefault();
+            const tradeData = {
+                id: Math.random().toString(36).substr(2, 9),
+                date: document.getElementById('form-date').value,
+                pair: document.getElementById('form-pair').value,
+                direction: document.getElementById('form-direction').value,
+                bias: document.getElementById('form-bias').value,
+                killzone: document.getElementById('form-killzone').value,
+                lot: document.getElementById('form-lot').value,
+                risk: document.getElementById('form-r-risk').value,
+                rr: document.getElementById('form-rr').value,
+                setup: document.getElementById('form-setup').value,
+                pnl: document.getElementById('form-pnl').value
+            };
+
+            if (!state.trades[state.currentAccount]) state.trades[state.currentAccount] = [];
+            state.trades[state.currentAccount].push(tradeData);
+            
+            document.getElementById('trade-form').reset();
+            closeTradeModal();
+            saveToLocalStorage();
+            renderAllData();
+        }
+
+        function deleteTrade(id) {
+            if (confirm("Bu işlemi kayıtlardan silmek istediğinize emin misiniz?")) {
+                state.trades[state.currentAccount] = state.trades[state.currentAccount].filter(t => t.id !== id);
+                saveToLocalStorage();
+                renderAllData();
             }
-
-            saveCurrentAccountData();
-            closeNoteModal();
-            renderNotes();
-            showToast('Not başarıyla kaydedildi');
         }
 
-        function editNote(index) {
-            editingNoteIndex = index;
-            const note = notes[index];
-            document.getElementById('note-modal').classList.remove('hidden');
-            document.getElementById('note-modal-title').innerText = 'Notu Düzenle';
-            document.getElementById('note-title').value = note.title;
-            document.getElementById('note-content').value = note.content;
-        }
-
-        function deleteNote(index) {
-            showConfirm('Notu Sil', 'Bu strateji notunu kalıcı olarak silmek istediğinize emin misiniz?', () => {
-                notes.splice(index, 1);
-                saveCurrentAccountData();
-                renderNotes();
-                closeConfirmModal();
-                showToast('Not silindi', 'info');
-            });
-        }
-
-        function renderEntryTypes() {
-            const list = document.getElementById('entry-types-list');
-            if(!list) return;
-            list.innerHTML = '';
-            entryTypes.forEach((type, index) => {
-                list.innerHTML += `
-                    <div class="flex justify-between items-center p-3 bg-[#030712] rounded-xl border border-slate-800">
-                        <span class="text-sm font-semibold text-slate-200">${type}</span>
-                        <button onclick="removeEntryType(${index})" class="text-slate-500 hover:text-rose-400 transition-colors">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </button>
-                    </div>`;
-            });
-            lucide.createIcons();
-        }
-
-        function addEntryType() {
-            const input = document.getElementById('new-entry-type');
-            const val = input.value.trim();
-            if(!val) return;
-            if(entryTypes.includes(val)) {
-                showToast('Bu setup zaten mevcut', 'error');
-                return;
+        // SIFIRLAMA
+        function clearCurrentAccountData() {
+            if (confirm("DİKKAT: Aktif hesaba ait tüm işlemler ve finansal veriler geri alınamaz şekilde temizlenecektir! Devam edilsin mi?")) {
+                state.trades[state.currentAccount] = [];
+                state.balanceHistory[state.currentAccount] = [];
+                state.initialBalance[state.currentAccount] = 10000;
+                saveToLocalStorage();
+                renderAllData();
+                switchView('dashboard');
             }
-            entryTypes.push(val);
-            localStorage.setItem('XAU_entryTypes', JSON.stringify(entryTypes));
-            input.value = '';
-            renderEntryTypes();
-            populateEntryTypeSelect();
-            showToast('Yeni setup modeli eklendi');
         }
 
-        function removeEntryType(index) {
-            entryTypes.splice(index, 1);
-            localStorage.setItem('XAU_entryTypes', JSON.stringify(entryTypes));
-            renderEntryTypes();
-            populateEntryTypeSelect();
-            showToast('Setup modeli kaldırıldı', 'info');
-        }
-
+        // VERİ DIŞA AKTARIMI
         function exportTrades() {
-            if(trades.length === 0) {
-                showToast('Dışa aktarılacak işlem bulunmuyor', 'error');
-                return;
-            }
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(trades, null, 2));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `XAU_Journal_Trades_${new Date().toISOString().slice(0,10)}.json`);
+            downloadAnchor.setAttribute("download", `XAU_Journal_${state.currentAccount}_Backup.json`);
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
-            showToast('İşlem geçmişi JSON olarak indirildi');
         }
 
-        function backupData() {
-            const fullBackup = {
-                accounts: accounts,
-                entryTypes: entryTypes,
-                currentAccountId: currentAccountId
-            };
-            accounts.forEach(acc => {
-                fullBackup[`trades_${acc.id}`] = JSON.parse(localStorage.getItem(`trades_${acc.id}`)) || [];
-                fullBackup[`notes_${acc.id}`] = JSON.parse(localStorage.getItem(`notes_${acc.id}`)) || [];
-                fullBackup[`balance_${acc.id}`] = localStorage.getItem(`balance_${acc.id}`) || '0';
-                fullBackup[`transactions_${acc.id}`] = JSON.parse(localStorage.getItem(`transactions_${acc.id}`)) || [];
-            });
+        // MODAL KONTROLLERİ (ANIMATED)
+        function openTradeModal() { openModal('modal-trade'); }
+        function closeTradeModal() { closeModal('modal-trade'); }
+        function openAccountModal() { openModal('modal-account'); }
+        function closeAccountModal() { closeModal('modal-account'); }
+        function openNoteModal() { openModal('modal-note'); }
+        function closeNoteModal() { closeModal('modal-note'); }
 
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullBackup, null, 2));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `XAU_Trading_Journal_FullBackup.json`);
-            document.body.appendChild(dlAnchor);
-            dlAnchor.click();
-            dlAnchor.remove();
-            showToast('Tüm veritabanı başarıyla yedeklendi');
+        function openModal(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            setTimeout(() => { el.classList.add('opacity-100'); }, 10);
         }
 
-        function restoreData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (imported.accounts && Array.isArray(imported.accounts)) {
-                        localStorage.setItem('XAU_accounts', JSON.stringify(imported.accounts));
-                        if(imported.entryTypes) localStorage.setItem('XAU_entryTypes', JSON.stringify(imported.entryTypes));
-                        if(imported.currentAccountId) localStorage.setItem('XAU_currentAccountId', imported.currentAccountId);
-                        
-                        imported.accounts.forEach(acc => {
-                            if(imported[`trades_${acc.id}`]) localStorage.setItem(`trades_${acc.id}`, JSON.stringify(imported[`trades_${acc.id}`]));
-                            if(imported[`notes_${acc.id}`]) localStorage.setItem(`notes_${acc.id}`, JSON.stringify(imported[`notes_${acc.id}`]));
-                            if(imported[`balance_${acc.id}`]) localStorage.setItem(`balance_${acc.id}`, imported[`balance_${acc.id}`]);
-                            if(imported[`transactions_${acc.id}`]) localStorage.setItem(`transactions_${acc.id}`, JSON.stringify(imported[`transactions_${acc.id}`]));
-                        });
-                        
-                        showToast('Tüm sistem yedekten başarıyla geri yüklendi');
-                        setTimeout(() => window.location.reload(), 1000);
-                    } else {
-                        showToast('Hatalı yedekleme dosyası formatı', 'error');
-                    }
-                } catch (err) {
-                    showToast('Dosya okunurken hata oluştu', 'error');
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        let confirmCallback = null;
-        function showConfirm(title, message, callback) {
-            document.getElementById('confirm-title').innerText = title;
-            document.getElementById('confirm-message').innerText = message;
-            document.getElementById('confirm-modal').classList.remove('hidden');
-            confirmCallback = callback;
-            
-            document.getElementById('confirm-action-btn').onclick = () => {
-                if(confirmCallback) confirmCallback();
-            };
-        }
-
-        function closeConfirmModal() {
-            document.getElementById('confirm-modal').classList.add('hidden');
-            confirmCallback = null;
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const msgEl = document.getElementById('toast-message');
-            const iconEl = document.getElementById('toast-icon');
-            
-            if(!toast || !msgEl) return;
-            msgEl.innerText = message;
-
-            if (type === 'error') {
-                iconEl.setAttribute('data-lucide', 'alert-circle');
-                iconEl.className = 'w-5 h-5 text-rose-500';
-            } else if (type === 'info') {
-                iconEl.setAttribute('data-lucide', 'info');
-                iconEl.className = 'w-5 h-5 text-amber-500';
-            } else {
-                iconEl.setAttribute('data-lucide', 'check-circle');
-                iconEl.className = 'w-5 h-5 text-emerald-500';
-            }
-            
-            lucide.createIcons();
-            toast.classList.remove('hidden');
-            
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
-        }
-
-        function updateDateDisplay() {
-            const display = document.getElementById('current-date-display');
-            if (display) {
-                display.innerText = new Date().toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            }
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('opacity-100');
+            setTimeout(() => { el.classList.add('hidden'); }, 300);
         }
     </script>
-
-    <!-- MODAL: STRATEJİ NOTU EKLEME PANELİ -->
-    <div id="note-modal" class="fixed inset-0 bg-[#030712]/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-[#0b1329] w-full max-w-lg rounded-3xl border border-slate-800 p-6 space-y-5 shadow-2xl">
-            <div class="flex justify-between items-center pb-3 border-b border-slate-800">
-                <h3 id="note-modal-title" class="text-base font-bold text-slate-100">Yeni Strateji Notu</h3>
-                <button onclick="closeNoteModal()" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="space-y-4">
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-400">Not Başlığı</label>
-                    <input type="text" id="note-title" placeholder="Örn: Silver Bullet Saat Kuralları veya Altın Korelasyonu" class="w-full bg-[#030712] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-amber-500">
-                </div>
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-slate-400">İçerik Detayları & TV Linkleri</label>
-                    <textarea id="note-content" rows="6" placeholder="Kuralları buraya alt alta yazabilirsiniz..." class="w-full bg-[#030712] border border-slate-700/60 rounded-xl p-4 text-sm font-medium focus:outline-none focus:border-amber-500"></textarea>
-                </div>
-            </div>
-            <div class="pt-2 flex gap-3">
-                <button onclick="closeNoteModal()" class="flex-1 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold transition-all">Kapat</button>
-                <button onclick="saveNote()" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-wider transition-all">Notu Hafızaya Kaydet</button>
-            </div>
-        </div>
-    </div>
-
 </body>
 </html>
