@@ -222,7 +222,7 @@
                         </button>
                     </div>
                     <div class="flex space-x-2">
-                        <!-- MT5 OCR UPLOAD -->
+                        <!-- MT5 OCR YÜKLEME BUTONU -->
                         <button onclick="document.getElementById('mt5-upload-input').click()" class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-4 sm:px-6 py-2.5 rounded-xl font-bold hover:bg-emerald-600/30 transition-all flex items-center space-x-2">
                             <i data-lucide="camera" class="w-5 h-5"></i>
                             <span class="hidden sm:inline">MT5 Yükle</span>
@@ -789,7 +789,7 @@
             </div>
             <div class="p-6 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center">
                 <span id="mt5-total-info" class="text-sm font-medium text-slate-400"></span>
-                <button onclick="saveMT5Trades()" class="bg-sky-600 px-10 py-3 rounded-xl font-bold text-white hover:bg-sky-700 transition-all shadow-lg">
+                <button onclick="saveMT5Trades()" class="bg-sky-600 px-10 py-3 rounded-xl font-bold text-white hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
                     Sisteme Kaydet
                 </button>
             </div>
@@ -1109,6 +1109,9 @@
             'Patient', 'Discipline', 'Perfect Execution', 'Early Exit', 'Late Entry'
         ];
 
+        const setupAvailableItems = ['FVG', 'CISD', 'Order Block', 'Breaker', 'Mitigation', 'Liquidity Sweep', 'SMT', 'MSS', 'BOS'];
+        const entryAvailableItems = ['FVG', 'CISD', 'OB', 'SMT', 'MSS', 'BOS', 'Liquidity Sweep'];
+
         // Connection Flag Tracker
         let accountsLoaded = false;
         let entryTypesLoaded = false;
@@ -1285,6 +1288,15 @@
             lucide.createIcons();
             document.getElementById('lock-password-input').focus();
             initFirebaseSync();
+
+            // Safety Loader Guard: Force hide loader after 3.5 seconds to prevent locking!
+            setTimeout(() => {
+                const loader = document.getElementById('cloud-loader');
+                if (loader && !loader.classList.contains('hidden')) {
+                    console.warn("Otomatik Aşım Mekanizması: Yükleme ekranı zorla kapatıldı.");
+                    loader.classList.add('hidden');
+                }
+            }, 3500);
         };
 
         // Cloud Loader Guard logic
@@ -1396,18 +1408,28 @@
             });
         }
 
-        // Data Access Getters (Binds current state variables)
+        // Robust Safe Converters (Converts Objects or Arrays safely)
         function getTrades() {
-            return allTrades[currentAccountId] || [];
+            if (!currentAccountId) return [];
+            const raw = allTrades[currentAccountId];
+            if (!raw) return [];
+            return Array.isArray(raw) ? raw : Object.values(raw);
         }
         function getNotes() {
-            return allNotes[currentAccountId] || [];
+            if (!currentAccountId) return [];
+            const raw = allNotes[currentAccountId];
+            if (!raw) return [];
+            return Array.isArray(raw) ? raw : Object.values(raw);
         }
         function getBalance() {
+            if (!currentAccountId) return 0;
             return allBalances[currentAccountId] !== undefined ? parseFloat(allBalances[currentAccountId]) : 0;
         }
         function getTransactions() {
-            return allTransactions[currentAccountId] || [];
+            if (!currentAccountId) return [];
+            const raw = allTransactions[currentAccountId];
+            if (!raw) return [];
+            return Array.isArray(raw) ? raw : Object.values(raw);
         }
 
         // Live Re-rendering Controller
@@ -1419,7 +1441,8 @@
             transactions = getTransactions();
 
             const account = accounts.find(a => a.id === currentAccountId);
-            document.getElementById('account-badge').innerText = account ? account.name : 'MT';
+            const badgeEl = document.getElementById('account-badge');
+            if (badgeEl) badgeEl.innerText = account ? account.name : 'MT';
 
             const initialBalanceInput = document.getElementById('initial-balance-input');
             if (initialBalanceInput) initialBalanceInput.value = balance > 0 ? balance : '';
@@ -1570,11 +1593,10 @@
             lucide.createIcons();
         }
 
-        function updatePendingPnL(index, val) {
-            if (pendingMT5Trades[index]) pendingMT5Trades[index].pnl = parseFloat(val) || 0;
+        function updatePendingPnL(index, val) { 
+            if (pendingMT5Trades[index]) pendingMT5Trades[index].pnl = parseFloat(val) || 0; 
         }
-
-        function updatePendingSetup(index, val) {
+        function updatePendingSetup(index, val) { 
             if (pendingMT5Trades[index]) {
                 pendingMT5Trades[index].setup = {
                     timeframes: { "15M": false, "5M": false },
@@ -1582,10 +1604,9 @@
                 };
             }
         }
-
-        function closeMT5Review() {
+        function closeMT5Review() { 
             const modal = document.getElementById('mt5-review-modal');
-            if (modal) modal.classList.add('hidden');
+            if (modal) modal.classList.add('hidden'); 
         }
 
         function saveMT5Trades() {
@@ -1597,6 +1618,7 @@
             updateStatsAndRefresh();
         }
 
+        // --- AUTH & NAVIGATION ---
         function checkLockPassword() {
             const input = document.getElementById('lock-password-input');
             const error = document.getElementById('lock-error');
@@ -2171,7 +2193,7 @@
             });
         }
 
-        // --- SETUP VE ENTRY ÇOKLU SEÇİM CHIPLERİ ---
+        // Setup & Entry Multi-Select rendering
         window.renderSetupItemButtons = (selectedItems = []) => {
             const container = document.getElementById('setup-items-container');
             if (!container) return;
@@ -2278,6 +2300,7 @@
             }
         };
 
+        // --- ACCOUNT & STATS ---
         function changeMonth(delta) {
             currentDate.setMonth(currentDate.getMonth() + delta);
             renderCalendar();
@@ -2401,1644 +2424,155 @@
             updateRRDisplay();
         }
 
-        function setSession(session) {
-            if (!session) {
-                document.getElementById('trade-session').value = '';
-                ['Asia','London','New York','Kill Zone'].forEach(opt => {
-                    const idSafe = opt.replace(/\s+/g, '');
-                    const btn = document.getElementById(`btn-session-${idSafe}`);
-                    if (!btn) return;
-                    btn.classList.remove('bg-sky-600','text-white','border-sky-600');
-                    btn.classList.add('bg-slate-800','text-slate-400','border-slate-700');
-                });
-                return;
-            }
-            document.getElementById('trade-session').value = session;
-            updateButtonGroupUI('session', session, ['Asia', 'London', 'New York', 'Kill Zone'], {
-                'Asia': 'bg-sky-600',
-                'London': 'bg-sky-600',
-                'New York': 'bg-sky-600',
-                'Kill Zone': 'bg-sky-600'
-            });
-        }
-
-        function renderPsychologyButtons(selectedPsych = []) {
-            const container = document.getElementById('psychology-buttons-container');
-            if (!container) return;
-            container.innerHTML = psychologyList.map(item => {
-                const isSelected = selectedPsych.includes(item);
-                const idSafe = item.replace(/\s+/g, '');
-                return `
-                    <button type="button" 
-                            onclick="togglePsychology('${item}')" 
-                            id="btn-psych-${idSafe}"
-                            class="py-2.5 px-2 rounded-xl font-bold border text-xs transition-all ${
-                                isSelected 
-                                    ? 'bg-sky-600 border-sky-600 text-white' 
-                                    : 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700'
-                            }">
-                        ${item}
-                    </button>
-                `;
-            }).join('');
-            document.getElementById('trade-psychology').value = selectedPsych.join(',');
-        }
-
-        function togglePsychology(item) {
-            const hiddenInput = document.getElementById('trade-psychology');
-            let selected = hiddenInput.value ? hiddenInput.value.split(',') : [];
-            if (selected.includes(item)) {
-                selected = selected.filter(x => x !== item);
-            } else {
-                selected.push(item);
-            }
-            hiddenInput.value = selected.join(',');
-            const idSafe = item.replace(/\s+/g, '');
-            const btn = document.getElementById(`btn-psych-${idSafe}`);
-            if (btn) {
-                if (selected.includes(item)) {
-                    btn.className = 'py-2.5 px-2 rounded-xl font-bold border text-xs transition-all bg-sky-600 border-sky-600 text-white';
-                } else {
-                    btn.className = 'py-2.5 px-2 rounded-xl font-bold border text-xs transition-all border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700';
-                }
-            }
-        }
-
-        function _lastSundayUTC(year, monthIndex) {
-            const lastDay = new Date(Date.UTC(year, monthIndex + 1, 0));
-            const dow = lastDay.getUTCDay();
-            lastDay.setUTCDate(lastDay.getUTCDate() - dow);
-            return lastDay;
-        }
-
-        function _nthSundayUTC(year, monthIndex, n) {
-            const first = new Date(Date.UTC(year, monthIndex, 1));
-            const dow = first.getUTCDay();
-            const firstSunday = dow === 0 ? 1 : 8 - dow;
-            return new Date(Date.UTC(year, monthIndex, firstSunday + (n - 1) * 7));
-        }
-
-        function _getDSTOffsets(dateUTC) {
-            const y = dateUTC.getUTCFullYear();
-            const londonStart = _lastSundayUTC(y, 2);
-            londonStart.setUTCHours(1);
-            const londonEnd = _lastSundayUTC(y, 9);
-            londonEnd.setUTCHours(1);
-            const londonSummer = dateUTC >= londonStart && dateUTC < londonEnd;
-            const londonOffset = londonSummer ? 1 : 0;
-
-            const nyStart = _nthSundayUTC(y, 2, 2);
-            nyStart.setUTCHours(7);
-            const nyEnd = _nthSundayUTC(y, 10, 1);
-            nyEnd.setUTCHours(6);
-            const nySummer = dateUTC >= nyStart && dateUTC < nyEnd;
-            const nyOffset = nySummer ? -4 : -5;
-
-            return { londonOffset, nyOffset };
-        }
-
-        function getKillzoneForDateTime(dateStr, timeStr) {
-            if (!dateStr || !timeStr) return 'Outside Killzone';
-            try {
-                const [y, m, d] = dateStr.split('-').map(Number);
-                const [h, min] = timeStr.split(':').map(Number);
-
-                const utc = new Date(Date.UTC(y, m - 1, d, h - 3, min));
-                const { londonOffset, nyOffset } = _getDSTOffsets(utc);
-
-                const trMins = h * 60 + min;
-                const londonDiff = 3 - londonOffset;
-                const nyDiff     = 3 - nyOffset;
-
-                const frankfurtDiff = 1 - londonOffset;
-                const frankfurtStart = (9 + frankfurtDiff) * 60 + 1;
-                const frankfurtEnd   = (10 + frankfurtDiff) * 60 - 1;
-
-                const londonOpenStart  = (8  + londonDiff) * 60;
-                const londonOpenEnd    = (11 + londonDiff) * 60;
-
-                const nyOpenStart      = (8  + nyDiff) * 60;
-                const nyOpenEnd        = (10 + nyDiff) * 60;
-
-                const nyPMStart        = (10 + nyDiff) * 60;
-                const nyPMEnd          = (11 + nyDiff) * 60;
-
-                const londonCloseStart = (16 + londonDiff) * 60;
-                const londonCloseEnd   = (18 + londonDiff) * 60;
-
-                const inRange = (t, s, e) => t >= s && t < e;
-
-                if (inRange(trMins, frankfurtStart, frankfurtEnd)) return 'Frankfurt';
-                if (inRange(trMins, londonOpenStart, londonOpenEnd)) return 'London Open';
-                if (inRange(trMins, nyOpenStart, nyOpenEnd)) return 'NY Open';
-                if (inRange(trMins, nyPMStart, nyPMEnd)) return 'NY PM';
-                if (inRange(trMins, londonCloseStart, londonCloseEnd)) return 'London Close';
-
-                return 'Outside Killzone';
-            } catch (e) {
-                console.error('Killzone evaluation failed:', e);
-                return 'Outside Killzone';
-            }
-        }
-
-        function updateKillzone() {
-            const dateVal = document.getElementById('trade-date').value;
-            const timeVal = document.getElementById('trade-time').value;
-            if (!dateVal || !timeVal) return;
-            const kz = getKillzoneForDateTime(dateVal, timeVal);
-            document.getElementById('trade-killzone').value = kz;
-        }
-
-        function updateRRDisplay() {
-            const pnl = parseFloat(document.getElementById('trade-pnl').value) || 0;
-            const rPercent = parseFloat(document.getElementById('trade-r-percent').value) || 0;
-            const rrDisplay = document.getElementById('trade-rr-display');
-            if (balance > 0 && rPercent > 0) {
-                const riskAmount = balance * (rPercent / 100);
-                const rr = (pnl / riskAmount).toFixed(1);
-                rrDisplay.innerText = `RR: ${rr}R`;
-            } else {
-                rrDisplay.innerText = 'RR: -';
-            }
-        }
-
-        function editTrade(id) {
-            const trade = trades.find(t => t.id === id);
-            if (trade) {
-                openTradeModal(null, trade);
-            }
-        }
-
-        function setTradeType(type) {
-            document.getElementById('trade-type').value = type;
-            updateButtonGroupUI('type', type, ['Long', 'Short'], {
-                Long: 'bg-emerald-600',
-                Short: 'bg-rose-400'
-            });
-        }
-
-        function setExitReason(reason) {
-            document.getElementById('trade-exit-reason').value = reason;
-            updateButtonGroupUI('exit', reason, ['TP', 'Manuel', 'SL'], {
-                TP: 'bg-sky-600',
-                Manuel: 'bg-slate-600',
-                SL: 'bg-rose-600'
-            });
-        }
-
-        function setBias(bias) {
-            const current = document.getElementById('trade-bias').value;
-            if (current === bias) {
-                document.getElementById('trade-bias').value = '';
-                ['Bullish','Bearish','Neutral'].forEach(opt => {
-                    const btn = document.getElementById(`btn-bias-${opt}`);
-                    if (!btn) return;
-                    btn.classList.remove('bg-sky-600','bg-rose-600','bg-slate-600','text-white','border-sky-600','border-rose-600','border-slate-600');
-                    btn.classList.add('bg-slate-800','text-slate-400','border-slate-700');
-                });
-                return;
-            }
-            document.getElementById('trade-bias').value = bias;
-            updateButtonGroupUI('bias', bias, ['Bullish', 'Bearish', 'Neutral'], {
-                Bullish: 'bg-sky-600',
-                Bearish: 'bg-rose-600',
-                Neutral: 'bg-slate-600'
-            });
-        }
-
-        function updateButtonGroupUI(groupId, activeValue, options, colorMap) {
-            options.forEach(opt => {
-                const btn = document.getElementById(`btn-${groupId}-${opt.replace(/\s+/g, '')}`);
-                if (!btn) return;
-                
-                const activeColor = colorMap[opt];
-                const activeBorder = activeColor.replace('bg-', 'border-');
-
-                if (opt === activeValue) {
-                    btn.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700');
-                    btn.classList.add(activeColor, 'text-white', activeBorder);
-                } else {
-                    btn.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700');
-                    Object.values(colorMap).forEach(color => {
-                        btn.classList.remove(color, 'text-white', color.replace('bg-', 'border-'));
-                    });
-                }
-            });
-        }
-
-        function closeTradeModal() {
-            document.body.classList.remove('overflow-hidden');
-            document.getElementById('trade-modal').classList.add('hidden');
-        }
-
-        function handleTradeSubmit(e) {
-            e.preventDefault();
-            
-            const id = document.getElementById('trade-id').value;
-            let pnl = parseFloat(document.getElementById('trade-pnl').value);
-            const rPercent = parseFloat(document.getElementById('trade-r-percent').value) || 0;
-            const exitReason = document.getElementById('trade-exit-reason').value;
-            
-            if (!document.getElementById('trade-date').value || !document.getElementById('trade-time').value) {
-                showToast('Lütfen tarih ve saat seçin', 'alert-circle', 'rose');
-                return;
-            }
-            if (isNaN(pnl)) {
-                showToast('Lütfen PnL değeri girin', 'alert-circle', 'rose');
-                return;
-            }
-            
-            if (exitReason === 'SL' && pnl > 0) {
-                pnl = -pnl;
-            }
-            
-            let rrValue = '-';
-            if (balance > 0 && rPercent > 0) {
-                rrValue = (pnl / (balance * (rPercent / 100))).toFixed(1);
-            }
-
-            // Upgraded model schemas
-            const qtfVal = document.getElementById('trade-quick-tf').value;
-            const quickTimeframeObj = {
-                "1M": qtfVal === '1M',
-                "5M": qtfVal === '5M',
-                "15M": qtfVal === '15M',
-                "1H": qtfVal === '1H',
-                "4H": qtfVal === '4H'
-            };
-
-            const biasObj = {
-                "1H": document.getElementById('bias-1h').checked,
-                "4H": document.getElementById('bias-4h').checked
-            };
-
-            const setupObj = {
-                timeframes: {
-                    "15M": document.getElementById('setup-tf-15m').checked,
-                    "5M": document.getElementById('setup-tf-5m').checked
-                },
-                items: document.getElementById('trade-setup-items').value ? document.getElementById('trade-setup-items').value.split(',') : []
-            };
-
-            const entryObj = {
-                timeframes: {
-                    "1M": document.getElementById('entry-tf-1m').checked,
-                    "5M": document.getElementById('entry-tf-5m').checked
-                },
-                items: document.getElementById('trade-entry-items').value ? document.getElementById('trade-entry-items').value.split(',') : []
-            };
-
-            const sessionVal = document.getElementById('trade-session').value;
-            const psychologyVal = document.getElementById('trade-psychology').value;
-
-            const tradeData = {
-                id: id || Date.now().toString(),
-                symbol: document.getElementById('trade-symbol').value || 'XAUUSD',
-                date: document.getElementById('trade-date').value,
-                time: document.getElementById('trade-time').value,
-                type: document.getElementById('trade-type').value,
-                killzone: document.getElementById('trade-killzone').value,
-                rPercent: rPercent,
-                rr: rrValue,
-                lot: parseFloat(document.getElementById('trade-lot').value) || 0,
-                pnl: pnl,
-                exitReason: exitReason,
-                notes: document.getElementById('trade-notes').value,
-                session: sessionVal || '',
-                psychology: psychologyVal ? psychologyVal.split(',').map(s => s.trim()) : [],
-                bias: biasObj,
-                quickTimeframe: quickTimeframeObj,
-                setup: setupObj,
-                entry: entryObj
-            };
-
-            if (id) {
-                const index = trades.findIndex(t => t.id === id);
-                if (index !== -1) {
-                    trades[index] = tradeData;
-                }
-            } else {
-                trades.push(tradeData);
-            }
-
-            saveCurrentAccountData();
-            closeTradeModal();
-            showToast('İşlem kaydedildi', 'check-circle', 'emerald');
-        }
-
-        function deleteTrade(id) {
-            showConfirm('İşlemi Sil', 'Bu işlemi silmek istediğinize emin misiniz?', () => {
-                trades = trades.filter(t => t.id !== id);
-                saveCurrentAccountData();
-                closeConfirmModal();
-                showToast('İşlem silindi', 'trash-2', 'rose');
-            });
-        }
-
-        function exportTrades() {
-            if (trades.length === 0) {
-                showToast('Dışa aktarılacak işlem bulunmuyor', 'alert-circle', 'rose');
-                return;
-            }
-            const blob = new Blob([JSON.stringify(trades, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const account = accounts.find(acc => acc.id === currentAccountId);
-            const accountName = account ? account.name.replace(/\s+/g, '') : 'Hesap';
-            a.download = `${accountName}-islemgecmisi.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('İşlemler dışa aktarıldı');
-        }
-
-        function getTradeSetups(t) {
-            if (t.setup && t.setup.items && t.setup.items.length > 0) {
-                return t.setup.items;
-            }
-            if (t.setupTypes && t.setupTypes.length > 0) {
-                return t.setupTypes;
-            }
-            if (t.entryType) {
-                return [t.entryType];
-            }
-            return [];
-        }
-
-        function renderInsights(profitFactor, winRate, rrRatio) {
-            const insightsEl = document.getElementById('report-insights');
-            if (!insightsEl) return;
-            
-            let html = '';
-            if (profitFactor >= 1.5) {
-                html += '<p class="text-emerald-400 font-semibold mb-2">✓ Güçlü Karlılık rasyosu!</p>';
-            } else if (profitFactor >= 1.0) {
-                html += '<p class="text-sky-400 font-semibold mb-2">⚠ Karlılık sınırda, risk yönetimini gözden geçirin.</p>';
-            } else {
-                html += '<p class="text-rose-400 font-semibold mb-2">✗ Negatif Karlılık! Stratejinizi revize etmeniz önerilir.</p>';
-            }
-
-            if (winRate >= 0.5) {
-                html += `<p class="text-slate-300">Kazanma oranınız (%${(winRate * 100).toFixed(0)}) gayet iyi düzeyde. Psikolojinizi koruyarak devam edin.</p>`;
-            } else {
-                html += `<p class="text-slate-300">Kazanma oranınız (%${(winRate * 100).toFixed(0)}) düşük. Setup kalitenizi artırmayı hedefleyin.</p>`;
-            }
-
-            if (rrRatio >= 1.5) {
-                html += `<p class="text-slate-300 mt-2">Ortalama kazanç/kayıp oranınız (${rrRatio.toFixed(2)}) tatminkar. Risk ödül dengesini koruyorsunuz.</p>`;
-            } else {
-                html += `<p class="text-slate-300 mt-2">Ortalama kazanç/kayıp oranınız (${rrRatio.toFixed(2)}) zayıf. SL noktalarını daha disiplinli belirleyin.</p>`;
-            }
-
-            insightsEl.innerHTML = html;
-        }
-
-        function renderAnalysis() {
-            if (trades.length === 0) {
-                const reportElement = document.getElementById('report-insights');
-                if (reportElement) reportElement.innerHTML = '<p class="italic">Henüz analiz edilecek işlem bulunmuyor.</p>';
-                
-                ['stat-best-session', 'stat-worst-session', 'stat-psych-mistake', 'stat-psych-positive',
-                 'stat-bias-best-wr', 'stat-bias-worst-wr', 'stat-profitable-setup', 'stat-wr-setup', 'stat-used-setup'].forEach(id => {
-                     const el = document.getElementById(id);
-                     if (el) el.innerText = '-';
-                 });
-                const sTbody = document.getElementById('session-adv-body');
-                if (sTbody) sTbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-500 italic">Veri bulunmuyor</td></tr>';
-                const mSessionContainer = document.getElementById('monthly-session-perf');
-                if (mSessionContainer) mSessionContainer.innerHTML = '<p class="text-slate-500 italic text-center py-2">Veri bulunmuyor</p>';
-                const psychWRContainer = document.getElementById('psychology-wr-list');
-                if (psychWRContainer) psychWRContainer.innerHTML = '<p class="text-slate-500 italic text-center py-2">Veri bulunmuyor</p>';
-                return;
-            }
-
-            const now = new Date();
-            const todayStr = toLocalDateStr(now);
-            
-            const dailyPnL = trades.filter(t => t.date === todayStr).reduce((sum, t) => sum + t.pnl, 0);
-            
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
-            const weeklyPnL = trades.filter(t => safeParseDate(t.date) >= startOfWeek).reduce((sum, t) => sum + t.pnl, 0);
-            
-            const monthlyPnL = trades.filter(t => {
-                const d = safeParseDate(t.date);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            }).reduce((sum, t) => sum + t.pnl, 0);
-
-            document.getElementById('report-daily-pnl').innerText = `${dailyPnL >= 0 ? '+' : ''}$${dailyPnL.toFixed(2)}`;
-            document.getElementById('report-daily-pnl').className = `font-bold ${dailyPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-            
-            document.getElementById('report-weekly-pnl').innerText = `${weeklyPnL >= 0 ? '+' : ''}$${weeklyPnL.toFixed(2)}`;
-            document.getElementById('report-weekly-pnl').className = `font-bold ${weeklyPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-            
-            document.getElementById('report-monthly-pnl').innerText = `${monthlyPnL >= 0 ? '+' : ''}$${monthlyPnL.toFixed(2)}`;
-            document.getElementById('report-monthly-pnl').className = `font-bold ${monthlyPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-
-            const wins = trades.filter(t => t.pnl > 0);
-            const losses = trades.filter(t => t.pnl < 0);
-            const grossProfit = wins.reduce((sum, t) => sum + t.pnl, 0);
-            const grossLoss = Math.abs(losses.reduce((sum, t) => sum + t.pnl, 0));
-            const profitFactor = grossLoss === 0 ? (grossProfit > 0 ? 99.9 : 0) : (grossProfit / grossLoss);
-            
-            document.getElementById('stat-profit-factor').innerText = profitFactor.toFixed(2);
-            document.getElementById('stat-profit-factor').className = `text-3xl font-bold ${profitFactor >= 1.5 ? 'text-emerald-400' : (profitFactor >= 1 ? 'text-sky-500' : 'text-rose-400')}`;
-
+        // --- Analysis Logic ---
+        function updateStats() {
             const totalTrades = trades.length;
-            const winRate = totalTrades > 0 ? (wins.length / totalTrades) : 0;
-            const lossRate = totalTrades > 0 ? (losses.length / totalTrades) : 0;
-            const avgWin = wins.length > 0 ? (grossProfit / wins.length) : 0;
-            const avgLoss = losses.length > 0 ? (grossLoss / losses.length) : 0;
-            const expectancy = (winRate * avgWin) - (lossRate * avgLoss);
+            const winsCount = trades.filter(t => t.pnl > 0).length;
+            const winRate = totalTrades > 0 ? Math.round((winsCount / totalTrades) * 100) : 0;
+            const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
             
-            const expectancyEl = document.getElementById('report-expectancy-val');
+            const avgWin = winsCount > 0 ? (trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0) / winsCount) : 0;
+            const lossesCount = totalTrades - winsCount;
+            const avgLoss = lossesCount > 0 ? (Math.abs(trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0)) / lossesCount) : 0;
+            const expectancy = (totalTrades > 0) ? ( (winsCount/totalTrades) * avgWin ) - ( (lossesCount/totalTrades) * avgLoss ) : 0;
+
+            const totalTransactions = transactions.reduce((sum, t) => t.type === 'deposit' ? sum + t.amount : sum - t.amount, 0);
+            const currentBudget = balance + totalPnL + totalTransactions;
+
+            const winRateEl = document.getElementById('stat-win-rate');
+            const totalPnLEl = document.getElementById('stat-total-pnl');
+            const currentBudgetEl = document.getElementById('stat-current-budget');
+            const expectancyEl = document.getElementById('stat-expectancy');
+
+            if (winRateEl) winRateEl.innerText = `${winRate}%`;
+            if (totalPnLEl) {
+                totalPnLEl.innerText = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
+                totalPnLEl.className = `text-3xl font-bold ${totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            }
+            if (currentBudgetEl) currentBudgetEl.innerText = `$${currentBudget.toFixed(2)}`;
             if (expectancyEl) {
-                expectancyEl.innerText = `$${expectancy.toFixed(2)}`;
-                expectancyEl.className = `font-bold ${expectancy >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+                expectancyEl.innerText = `${expectancy >= 0 ? '+' : ''}$${expectancy.toFixed(2)}`;
+                expectancyEl.className = `text-3xl font-bold ${expectancy >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
             }
 
-            const rrRatio = avgLoss === 0 ? 0 : (avgWin / avgLoss);
-            document.getElementById('report-rr-ratio').innerText = rrRatio.toFixed(2);
+            const totalDeposit = transactions.filter(t => t.type === 'deposit').reduce((sum, t) => sum + t.amount, 0);
+            const totalWithdraw = transactions.filter(t => t.type === 'withdraw').reduce((sum, t) => sum + t.amount, 0);
+            const currentBalance = balance + totalPnL + totalDeposit - totalWithdraw;
 
-            let maxWinStreak = 0;
-            let maxLossStreak = 0;
-            let currentWinStreak = 0;
-            let currentLossStreak = 0;
-            
-            [...trades].sort((a, b) => safeParseDate(a.date) - safeParseDate(b.date)).forEach(t => {
-                if (t.pnl > 0) {
-                    currentWinStreak++;
-                    currentLossStreak = 0;
-                    if (currentWinStreak > maxWinStreak) maxWinStreak = currentWinStreak;
-                } else if (t.pnl < 0) {
-                    currentLossStreak++;
-                    currentWinStreak = 0;
-                    if (currentLossStreak > maxLossStreak) maxLossStreak = currentLossStreak;
-                }
-            });
-            document.getElementById('report-win-streak').innerText = maxWinStreak;
-            document.getElementById('report-loss-streak').innerText = maxLossStreak;
+            const balanceCurrentEl = document.getElementById('balance-current');
+            const balanceDepositEl = document.getElementById('balance-total-deposit');
+            const balanceWithdrawEl = document.getElementById('balance-total-withdraw');
 
-            const symbolStats = {};
-            trades.forEach(t => {
-                if (!symbolStats[t.symbol]) symbolStats[t.symbol] = 0;
-                symbolStats[t.symbol] += t.pnl;
-            });
-
-            const sortedSymbols = Object.entries(symbolStats).sort((a, b) => b[1] - a[1]);
-            
-            const bestContainer = document.getElementById('report-best-pairs');
-            const worstContainer = document.getElementById('report-worst-pairs');
-            if (bestContainer && worstContainer) {
-                bestContainer.innerHTML = '';
-                worstContainer.innerHTML = '';
-
-                sortedSymbols.slice(0, 3).forEach(([sym, pnl]) => {
-                    if (pnl <= 0) return;
-                    bestContainer.innerHTML += `
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-slate-300 font-medium">${sym}</span>
-                            <span class="text-emerald-400 font-bold">+$${pnl.toFixed(2)}</span>
-                        </div>
-                    `;
-                });
-
-                sortedSymbols.slice(-3).reverse().forEach(([sym, pnl]) => {
-                    if (pnl >= 0) return;
-                    worstContainer.innerHTML += `
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-slate-300 font-medium">${sym}</span>
-                            <span class="text-rose-400 font-bold">-$${Math.abs(pnl).toFixed(2)}</span>
-                        </div>
-                    `;
-                });
-            }
-
-            // Setup Advanced Analytics
-            const setupPnL = {};
-            const setupWins = {};
-            const setupCounts = {};
-            trades.forEach(t => {
-                getTradeSetups(t).forEach(setup => {
-                    setupCounts[setup] = (setupCounts[setup] || 0) + 1;
-                    setupPnL[setup] = (setupPnL[setup] || 0) + t.pnl;
-                    if (t.pnl > 0) {
-                        setupWins[setup] = (setupWins[setup] || 0) + 1;
-                    }
-                });
-            });
-
-            // 1. Most Profitable Setup
-            let mostProfitableSetup = '-';
-            let maxSetupPnL = -Infinity;
-            Object.entries(setupPnL).forEach(([setup, pnl]) => {
-                if (pnl > maxSetupPnL) {
-                    maxSetupPnL = pnl;
-                    mostProfitableSetup = `${setup} (+$${pnl.toFixed(0)})`;
-                }
-            });
-
-            // 2. Highest Win Rate Setup
-            let highestWRSetup = '-';
-            let maxSetupWR = -1;
-            Object.entries(setupCounts).forEach(([setup, count]) => {
-                const wr = (setupWins[setup] || 0) / count;
-                if (wr > maxSetupWR) {
-                    maxSetupWR = wr;
-                    highestWRSetup = `${setup} (%${(wr * 100).toFixed(0)})`;
-                }
-            });
-
-            // 3. Most Used Setup
-            let mostUsedSetup = '-';
-            let maxSetupCount = 0;
-            Object.entries(setupCounts).forEach(([setup, count]) => {
-                if (count > maxSetupCount) {
-                    maxSetupCount = count;
-                    mostUsedSetup = `${setup} (${count} kez)`;
-                }
-            });
-
-            // Session Advanced Analytics
-            const sessionPnL = { 'Asia': 0, 'London': 0, 'New York': 0, 'Kill Zone': 0 };
-            const sessionTrades = { 'Asia': [], 'London': [], 'New York': [], 'Kill Zone': [] };
-            trades.forEach(t => {
-                if (t.session && sessionPnL.hasOwnProperty(t.session)) {
-                    sessionPnL[t.session] += t.pnl;
-                    sessionTrades[t.session].push(t);
-                }
-            });
-
-            // 4. Best & Worst Trading Session
-            let bestSession = '-';
-            let bestSessionPnL = -Infinity;
-            let worstSession = '-';
-            let worstSessionPnL = Infinity;
-
-            Object.entries(sessionPnL).forEach(([sess, pnl]) => {
-                if (sessionTrades[sess].length > 0) {
-                    if (pnl > bestSessionPnL) {
-                        bestSessionPnL = pnl;
-                        bestSession = `${sess} (+$${pnl.toFixed(0)})`;
-                    }
-                    if (pnl < worstSessionPnL) {
-                        worstSessionPnL = pnl;
-                        worstSession = `${sess} ($${pnl.toFixed(0)})`;
-                    }
-                }
-            });
-
-            // 5. Win Rate, Average RR, and Average Profit by Session
-            const sessionMetrics = {};
-            ['Asia', 'London', 'New York', 'Kill Zone'].forEach(sess => {
-                const sTrades = sessionTrades[sess] || [];
-                const count = sTrades.length;
-                const winsCount = sTrades.filter(t => t.pnl > 0).length;
-                const wr = count > 0 ? ((winsCount / count) * 100).toFixed(0) : '0';
-                
-                const totalRR = sTrades.reduce((acc, t) => acc + (parseFloat(t.rr) || 0), 0);
-                const avgRR = count > 0 ? (totalRR / count).toFixed(2) : '0.00';
-                
-                const totalProfit = sTrades.reduce((acc, t) => acc + t.pnl, 0);
-                const avgProfit = count > 0 ? (totalProfit / count).toFixed(2) : '0.00';
-                
-                sessionMetrics[sess] = { count, wr, avgRR, avgProfit };
-            });
-
-            // HTF Bias Analytics
-            const biasWins = { '1H': 0, '4H': 0 };
-            const biasCounts = { '1H': 0, '4H': 0 };
-            trades.forEach(t => {
-                if (t.bias && typeof t.bias === 'object') {
-                    Object.entries(t.bias).forEach(([biasName, active]) => {
-                        if (active) {
-                            biasCounts[biasName]++;
-                            if (t.pnl > 0) biasWins[biasName]++;
-                        }
-                    });
-                }
-            });
-
-            // 6. Highest & Lowest Win Rate HTF Bias
-            let highestWRBias = '-';
-            let maxBiasWR = -1;
-            let lowestWRBias = '-';
-            let minBiasWR = Infinity;
-
-            Object.entries(biasCounts).forEach(([bias, count]) => {
-                if (count > 0) {
-                    const wr = biasWins[bias] / count;
-                    if (wr > maxBiasWR) {
-                        maxBiasWR = wr;
-                        highestWRBias = `${bias} (%${(wr * 100).toFixed(0)})`;
-                    }
-                    if (wr < minBiasWR) {
-                        minBiasWR = wr;
-                        lowestWRBias = `${bias} (%${(wr * 100).toFixed(0)})`;
-                    }
-                }
-            });
-
-            // Psychology Analytics
-            const mistakeList = ['FOMO', 'Revenge Trade', 'Fear', 'Greed', 'Overconfidence', 'Early Exit', 'Late Entry'];
-            const positiveList = ['Patient', 'Discipline', 'Perfect Execution'];
-            const psychCounts = {};
-            const psychWins = {};
-            trades.forEach(t => {
-                if (t.psychology && Array.isArray(t.psychology)) {
-                    t.psychology.forEach(item => {
-                        psychCounts[item] = (psychCounts[item] || 0) + 1;
-                        if (t.pnl > 0) {
-                            psychWins[item] = (psychWins[item] || 0) + 1;
-                        }
-                    });
-                }
-            });
-
-            // 7. Most Common Psychology Mistake
-            let commonMistake = '-';
-            let maxMistakeCount = 0;
-            mistakeList.forEach(m => {
-                const count = psychCounts[m] || 0;
-                if (count > maxMistakeCount) {
-                    maxMistakeCount = count;
-                    commonMistake = `${m} (${count} kez)`;
-                }
-            });
-
-            // 8. Most Common Positive Psychology
-            let commonPositive = '-';
-            let maxPositiveCount = 0;
-            positiveList.forEach(p => {
-                const count = psychCounts[p] || 0;
-                if (count > maxPositiveCount) {
-                    maxPositiveCount = count;
-                    commonPositive = `${p} (${count} kez)`;
-                }
-            });
-
-            // 9. Win Rate by Psychology HTML Generation
-            let psychologyWRHTML = '';
-            psychologyList.forEach(item => {
-                const count = psychCounts[item] || 0;
-                if (count > 0) {
-                    const winsCount = psychWins[item] || 0;
-                    const wr = ((winsCount / count) * 100).toFixed(0);
-                    psychologyWRHTML += `
-                        <div class="flex justify-between items-center text-sm py-1 border-b border-slate-800/30">
-                            <span class="text-slate-400">${item}</span>
-                            <span class="font-bold ${wr >= 50 ? 'text-emerald-400' : 'text-rose-400'}">%${wr} (${count} İşlem)</span>
-                        </div>
-                    `;
-                }
-            });
-            if (!psychologyWRHTML) {
-                psychologyWRHTML = '<p class="text-xs text-slate-500 italic text-center py-2">Henüz psikolojik analiz verisi bulunmuyor.</p>';
-            }
-
-            // 10. Average Monthly Session Performance
-            const monthlySessionPerformance = {};
-            trades.forEach(t => {
-                if (t.session && ['Asia', 'London', 'New York', 'Kill Zone'].includes(t.session)) {
-                    const d = safeParseDate(t.date);
-                    const monthYear = d.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
-                    if (!monthlySessionPerformance[monthYear]) {
-                        monthlySessionPerformance[monthYear] = { 'Asia': 0, 'London': 0, 'New York': 0, 'Kill Zone': 0 };
-                    }
-                    monthlySessionPerformance[monthYear][t.session] += t.pnl;
-                }
-            });
-
-            // Push computations into Advanced UI Nodes
-            document.getElementById('stat-profitable-setup').innerText = mostProfitableSetup;
-            document.getElementById('stat-wr-setup').innerText = highestWRSetup;
-            document.getElementById('stat-used-setup').innerText = mostUsedSetup;
-
-            document.getElementById('stat-best-session').innerText = bestSession;
-            document.getElementById('stat-worst-session').innerText = worstSession;
-
-            const sTbody = document.getElementById('session-adv-body');
-            if (sTbody) {
-                sTbody.innerHTML = ['Asia', 'London', 'New York', 'Kill Zone'].map(sess => {
-                    const metrics = sessionMetrics[sess];
-                    const profitColor = parseFloat(metrics.avgProfit) >= 0 ? 'text-emerald-400' : 'text-rose-400';
-                    return `
-                        <tr class="text-slate-300 hover:bg-slate-800/30 transition-colors">
-                            <td class="py-2.5 font-medium">${sess}</td>
-                            <td class="py-2.5 text-center">${metrics.count}</td>
-                            <td class="py-2.5 text-center font-bold text-sky-400">${metrics.wr}%</td>
-                            <td class="py-2.5 text-center font-semibold">${metrics.avgRR}R</td>
-                            <td class="py-2.5 text-right font-bold ${profitColor}">$${metrics.avgProfit}</td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-
-            const mSessionContainer = document.getElementById('monthly-session-perf');
-            if (mSessionContainer) {
-                let mSessHTML = '';
-                Object.entries(monthlySessionPerformance).sort((a,b) => b[0].localeCompare(a[0])).forEach(([mYear, sessions]) => {
-                    mSessHTML += `
-                        <div class="bg-slate-950/20 p-2.5 rounded-xl border border-slate-800/50 space-y-2">
-                            <div class="font-bold text-slate-300">${mYear}</div>
-                            <div class="grid grid-cols-4 gap-2 text-center text-[10px]">
-                                ${['Asia', 'London', 'New York', 'Kill Zone'].map(s => {
-                                    const val = sessions[s] || 0;
-                                    const valColor = val >= 0 ? 'text-emerald-400' : 'text-rose-400';
-                                    return `
-                                        <div>
-                                            <span class="text-slate-500 font-medium block">${s}</span>
-                                            <span class="font-bold ${valColor}">${val >= 0 ? '+' : ''}$${val.toFixed(0)}</span>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-                    `;
-                });
-                mSessionContainer.innerHTML = mSessHTML || '<p class="text-slate-500 italic text-center py-2">Seans verisi bulunan işlem yok.</p>';
-            }
-
-            document.getElementById('stat-psych-mistake').innerText = commonMistake;
-            document.getElementById('stat-psych-positive').innerText = commonPositive;
-
-            document.getElementById('stat-bias-best-wr').innerText = highestWRBias;
-            document.getElementById('stat-bias-worst-wr').innerText = lowestWRBias;
-
-            const psychWRContainer = document.getElementById('psychology-wr-list');
-            if (psychWRContainer) {
-                psychWRContainer.innerHTML = psychologyWRHTML;
-            }
-
-            // Generate contextual DOM insights safely
-            renderInsights(profitFactor, winRate, rrRatio);
-
-            drawEquityChart();
-            drawSymbolChart(symbolStats);
-            drawDayChart();
-            drawRRDistributionChart();
-            drawKillzoneWinRateChart();
-            
-            renderHourlyPerformance();
-            renderDailyWinRate();
-            renderSetupPerformance();
-            renderBiasAccuracy();
-            renderSessionPerformance();
-            renderHeatmap();
+            if (balanceCurrentEl) balanceCurrentEl.innerText = `$${currentBalance.toFixed(2)}`;
+            if (balanceDepositEl) balanceDepositEl.innerText = `$${totalDeposit.toFixed(2)}`;
+            if (balanceWithdrawEl) balanceWithdrawEl.innerText = `$${totalWithdraw.toFixed(2)}`;
         }
 
-        function drawEquityChart() {
-            const container = document.getElementById('equity-chart');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const margin = { top: 20, right: 20, bottom: 30, left: 50 };
-            const width = container.clientWidth - margin.left - margin.right;
-            const height = container.clientHeight - margin.top - margin.bottom;
-            if (width <= 0 || height <= 0) return;
-            
-            const sortedTrades = [...trades].sort((a, b) => safeParseDate(a.date) - safeParseDate(b.date));
-            let cumulative = balance;
-            const data = [{ date: safeParseDate(sortedTrades[0]?.date || new Date()), value: cumulative }];
-            
-            let maxEquity = cumulative;
-            let maxDD = 0;
-
-            sortedTrades.forEach(t => {
-                cumulative += t.pnl;
-                if (cumulative > maxEquity) maxEquity = cumulative;
-                const dd = maxEquity > 0 ? ((maxEquity - cumulative) / maxEquity) * 100 : 0;
-                if (dd > maxDD) maxDD = dd;
-                data.push({ date: safeParseDate(t.date), value: cumulative });
-            });
-
-            document.getElementById('report-drawdown').innerText = `Max DD: ${maxDD.toFixed(1)}%`;
-
-            const svg = d3.select("#equity-chart")
-                .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
-
-            const x = d3.scaleTime()
-                .domain(d3.extent(data, d => d.date))
-                .range([0, width]);
-
-            const y = d3.scaleLinear()
-                .domain([d3.min(data, d => d.value) * 0.95, d3.max(data, d => d.value) * 1.05])
-                .range([height, 0]);
-
-            svg.append("g")
-                .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%d %b")))
-                .attr("color", "#475569");
-
-            svg.append("g")
-                .call(d3.axisLeft(y).ticks(5))
-                .attr("color", "#475569");
-
-            const line = d3.line()
-                .x(d => x(d.date))
-                .y(d => y(d.value))
-                .curve(d3.curveMonotoneX);
-
-            svg.append("path")
-                .datum(data)
-                .attr("fill", "none")
-                .attr("stroke", "#0ea5e9")
-                .attr("stroke-width", 3)
-                .attr("d", line);
-                
-            const area = d3.area()
-                .x(d => x(d.date))
-                .y0(height)
-                .y1(d => y(d.value))
-                .curve(d3.curveMonotoneX);
-                
-            svg.append("path")
-                .datum(data)
-                .attr("fill", "url(#equity-gradient)")
-                .attr("d", area);
-                
-            const defs = svg.append("defs");
-            const gradient = defs.append("linearGradient")
-                .attr("id", "equity-gradient")
-                .attr("x1", "0%").attr("y1", "0%")
-                .attr("x2", "0%").attr("y2", "100%");
-            gradient.append("stop").attr("offset", "0%").attr("stop-color", "#0ea5e9").attr("stop-opacity", 0.2);
-            gradient.append("stop").attr("offset", "100%").attr("stop-color", "#0ea5e9").attr("stop-opacity", 0);
-        }
-
-        function drawDayChart() {
-            const container = document.getElementById('day-chart');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const margin = { top: 20, right: 20, bottom: 40, left: 60 };
-            const width = container.clientWidth - margin.left - margin.right;
-            const height = container.clientHeight - margin.top - margin.bottom;
-            if (width <= 0 || height <= 0) return;
-            
-            const days = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
-            const dayPnL = [0, 0, 0, 0, 0, 0, 0];
-            
-            trades.forEach(t => {
-                const day = safeParseDate(t.date).getDay();
-                dayPnL[day] += t.pnl;
-            });
-
-            const data = days.map((name, i) => ({ name, value: dayPnL[i] }));
-
-            const svg = d3.select("#day-chart")
-                .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
-
-            const x = d3.scaleBand()
-                .range([0, width])
-                .domain(data.map(d => d.name))
-                .padding(0.4);
-
-            const y = d3.scaleLinear()
-                .domain([Math.min(0, d3.min(data, d => d.value)), d3.max(data, d => d.value)])
-                .range([height, 0]);
-
-            svg.append("g")
-                .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x))
-                .attr("color", "#475569");
-
-            svg.append("g")
-                .call(d3.axisLeft(y).ticks(5))
-                .attr("color", "#475569");
-
-            svg.selectAll("bar")
-                .data(data)
-                .enter()
-                .append("rect")
-                .attr("x", d => x(d.name))
-                .attr("y", d => y(Math.max(0, d.value)))
-                .attr("width", x.bandwidth())
-                .attr("height", d => Math.abs(y(d.value) - y(0)))
-                .attr("fill", d => d.value >= 0 ? "#10b981" : "#f43f5e")
-                .attr("rx", 4);
-        }
-
-        function drawRRDistributionChart() {
-            const container = document.getElementById('rr-distribution-chart');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const margin = { top: 20, right: 20, bottom: 40, left: 40 };
-            const width = container.clientWidth - margin.left - margin.right;
-            const height = container.clientHeight - margin.top - margin.bottom;
-            if (width <= 0 || height <= 0) return;
-            
-            const rrValues = trades
-                .filter(t => t.pnl > 0 && t.rr && t.rr !== '-')
-                .map(t => parseFloat(t.rr));
-
-            if (rrValues.length === 0) {
-                container.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500 text-sm italic">RR verisi bulunmuyor.</div>';
-                return;
+        function renderBalance() {
+            try {
+                drawBalanceChart();
+            } catch (e) {
+                console.error("Balance chart drawing failed:", e);
             }
+            const historyBody = document.getElementById('balance-history-body');
 
-            const svg = d3.select("#rr-distribution-chart")
-                .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
-
-            const x = d3.scaleLinear()
-                .domain([0, d3.max(rrValues) + 1])
-                .range([0, width]);
-
-            const histogram = d3.histogram()
-                .value(d => d)
-                .domain(x.domain())
-                .thresholds(x.ticks(10));
-
-            const bins = histogram(rrValues);
-
-            const y = d3.scaleLinear()
-                .range([height, 0])
-                .domain([0, d3.max(bins, d => d.length)]);
-
-            svg.append("g")
-                .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x))
-                .attr("color", "#475569");
-
-            svg.append("g")
-                .call(d3.axisLeft(y).ticks(5))
-                .attr("color", "#475569");
-
-            svg.selectAll("rect")
-                .data(bins)
-                .enter()
-                .append("rect")
-                .attr("x", 1)
-                .attr("transform", d => `translate(${x(d.x0)},${y(d.length)})`)
-                .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
-                .attr("height", d => height - y(d.length))
-                .style("fill", "#0ea5e9")
-                .attr("rx", 2);
-        }
-
-        function drawKillzoneWinRateChart() {
-            const container = document.getElementById('killzone-winrate-chart');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const margin = { top: 20, right: 20, bottom: 40, left: 60 };
-            const width = container.clientWidth - margin.left - margin.right;
-            const height = container.clientHeight - margin.top - margin.bottom;
-            if (width <= 0 || height <= 0) return;
-            
-            const killzones = ["London Open", "NY Open", "London Close", "NY PM", "Outside Killzone"];
-            const stats = killzones.map(kz => {
-                const kzTrades = trades.filter(t => t.killzone === kz);
-                const wins = kzTrades.filter(t => t.pnl > 0).length;
-                const winRate = kzTrades.length > 0 ? (wins / kzTrades.length) * 100 : 0;
-                return { name: kz, value: winRate, count: kzTrades.length };
-            });
-
-            const svg = d3.select("#killzone-winrate-chart")
-                .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
-
-            const x = d3.scaleBand()
-                .range([0, width])
-                .domain(stats.map(d => d.name))
-                .padding(0.4);
-
-            const y = d3.scaleLinear()
-                .domain([0, 100])
-                .range([height, 0]);
-
-            svg.append("g")
-                .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x))
-                .attr("color", "#475569");
-
-            svg.append("g")
-                .call(d3.axisLeft(y).ticks(5).tickFormat(d => d + "%"))
-                .attr("color", "#475569");
-
-            svg.selectAll("bar")
-                .data(stats)
-                .enter()
-                .append("rect")
-                .attr("x", d => x(d.name))
-                .attr("y", d => y(d.value))
-                .attr("width", x.bandwidth())
-                .attr("height", d => height - y(d.value))
-                .attr("fill", d => d.value >= 50 ? "#10b981" : "#f43f5e")
-                .attr("rx", 4);
-
-            svg.selectAll("text.label")
-                .data(stats)
-                .enter()
-                .append("text")
-                .attr("class", "label")
-                .attr("x", d => x(d.name) + x.bandwidth() / 2)
-                .attr("y", d => y(d.value) - 5)
-                .attr("text-anchor", "middle")
-                .attr("fill", "#94a3b8")
-                .style("font-size", "10px")
-                .text(d => d.count > 0 ? d.value.toFixed(0) + "%" : "");
-        }
-
-        function drawSymbolChart(symbolStats) {
-            const container = document.getElementById('symbol-chart');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const margin = { top: 20, right: 20, bottom: 40, left: 60 };
-            const width = container.clientWidth - margin.left - margin.right;
-            const height = container.clientHeight - margin.top - margin.bottom;
-            if (width <= 0 || height <= 0) return;
-            
-            const data = Object.entries(symbolStats)
-                .map(([name, value]) => ({ name, value }))
-                .sort((a, b) => b.value - a.value);
-
-            if (data.length === 0) return;
-
-            const svg = d3.select("#symbol-chart")
-                .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
-
-            const x = d3.scaleBand()
-                .range([0, width])
-                .domain(data.map(d => d.name))
-                .padding(0.4);
-
-            const y = d3.scaleLinear()
-                .domain([Math.min(0, d3.min(data, d => d.value)), d3.max(data, d => d.value)])
-                .range([height, 0]);
-
-            svg.append("g")
-                .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x))
-                .selectAll("text")
-                .attr("color", "#475569")
-                .style("text-anchor", "middle");
-
-            svg.append("g")
-                .call(d3.axisLeft(y).ticks(5))
-                .attr("color", "#475569");
-
-            svg.selectAll("bar")
-                .data(data)
-                .enter()
-                .append("rect")
-                .attr("x", d => x(d.name))
-                .attr("y", d => y(Math.max(0, d.value)))
-                .attr("width", x.bandwidth())
-                .attr("height", d => Math.abs(y(d.value) - y(0)))
-                .attr("fill", d => d.value >= 0 ? "#10b981" : "#f43f5e")
-                .attr("rx", 4);
-        }
-
-        function drawBalanceChart() {
-            const container = document.getElementById('balance-chart');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const margin = { top: 40, right: 40, bottom: 40, left: 60 };
-            const width = container.clientWidth - margin.left - margin.right;
-            const height = container.clientHeight - margin.top - margin.bottom;
-            if (width <= 0 || height <= 0) return;
-
-            const events = [];
-            trades.forEach(t => events.push({ date: safeParseDate(t.date), amount: t.pnl, type: 'trade' }));
-            transactions.forEach(t => events.push({ date: safeParseDate(t.date), amount: t.type === 'deposit' ? t.amount : -t.amount, type: t.type }));
-
-            const year2026Events = events.filter(e => e.date.getFullYear() === 2026);
-            year2026Events.sort((a, b) => a.date - b.date);
-
-            let currentBalance = balance;
-            const before2026Events = events.filter(e => e.date.getFullYear() < 2026);
-            before2026Events.forEach(e => currentBalance += e.amount);
-
-            const data = [];
-            const startOfYear = new Date(2026, 0, 1);
-            const endOfYear = new Date(2026, 11, 31);
-
-            if (year2026Events.length === 0) {
-                data.push({ date: startOfYear, value: currentBalance });
-                data.push({ date: endOfYear, value: currentBalance });
-            } else {
-                data.push({ date: startOfYear, value: currentBalance });
-                
-                year2026Events.forEach(e => {
-                    currentBalance += e.amount;
-                    data.push({ date: e.date, value: currentBalance, eventType: e.type });
-                });
-                
-                const today = new Date();
-                if (today.getFullYear() === 2026) {
-                    data.push({ date: today, value: currentBalance });
-                } else if (today.getFullYear() > 2026) {
-                    data.push({ date: endOfYear, value: currentBalance });
-                }
-            }
-
-            const x = d3.scaleTime()
-                .domain([startOfYear, endOfYear])
-                .range([0, width]);
-
-            const y = d3.scaleLinear()
-                .domain([d3.min(data, d => d.value) * 0.9, d3.max(data, d => d.value) * 1.1])
-                .range([height, 0]);
-
-            const svg = d3.select("#balance-chart")
-                .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
-
-            svg.append("g")
-                .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x).ticks(12).tickFormat(d3.timeFormat("%b")))
-                .attr("color", "#475569");
-
-            svg.append("g")
-                .call(d3.axisLeft(y).ticks(5))
-                .attr("color", "#475569");
-
-            const line = d3.line()
-                .x(d => x(d.date))
-                .y(d => y(d.value))
-                .curve(d3.curveStepAfter);
-
-            svg.append("path")
-                .datum(data)
-                .attr("fill", "none")
-                .attr("stroke", "#0ea5e9")
-                .attr("stroke-width", 2)
-                .attr("d", line);
-
-            const transactionData = data.filter(d => d.eventType === 'deposit' || d.eventType === 'withdraw');
-            
-            svg.selectAll(".transaction-icon")
-                .data(transactionData)
-                .enter()
-                .append("g")
-                .attr("transform", d => `translate(${x(d.date)}, ${y(d.value)})`)
-                .each(function(d) {
-                    const g = d3.select(this);
-                    if (d.eventType === 'deposit') {
-                        g.append("circle").attr("r", 8).attr("fill", "#10b981").attr("fill-opacity", 0.2);
-                        g.append("circle").attr("r", 3).attr("fill", "#10b981");
-                    } else {
-                        g.append("circle").attr("r", 8).attr("fill", "#f43f5e").attr("fill-opacity", 0.2);
-                        g.append("circle").attr("r", 3).attr("fill", "#f43f5e");
-                    }
-                });
-        }
-
-        function renderHourlyPerformance() {
-            const body = document.getElementById('hourly-perf-body');
-            if (!body) return;
-            body.innerHTML = '';
-            
-            const hours = {};
-            trades.forEach(t => {
-                if (!t.time) return;
-                const hr = t.time.split(':')[0] + ":00";
-                if (!hours[hr]) hours[hr] = { count: 0, wins: 0, pnl: 0 };
-                hours[hr].count++;
-                hours[hr].pnl += t.pnl;
-                if (t.pnl > 0) hours[hr].wins++;
-            });
-
-            const sorted = Object.entries(hours).sort((a,b) => b[1].pnl - a[1].pnl);
-            if (sorted.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
-                return;
-            }
-
-            sorted.forEach(([hr, stats]) => {
-                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
-                body.innerHTML += `
-                    <tr>
-                        <td class="py-3 text-slate-300 font-medium">${hr}</td>
-                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
-                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
-                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+            if (historyBody) {
+                historyBody.innerHTML = transactions.slice().reverse().map(t => `
+                    <tr class="text-sm border-b border-slate-800/50">
+                        <td class="py-4 text-slate-400">${new Date(t.date).toLocaleDateString('tr-TR')}</td>
+                        <td class="py-4">
+                            <span class="px-2 py-1 rounded-lg text-xs font-bold ${t.type === 'deposit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">
+                                ${t.type === 'deposit' ? 'Yatırma' : 'Çekme'}
+                            </span>
+                        </td>
+                        <td class="py-4 font-bold ${t.type === 'deposit' ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${t.type === 'deposit' ? '+' : '-'}$${t.amount.toFixed(2)}
+                        </td>
                     </tr>
-                `;
-            });
-        }
-
-        function renderDailyWinRate() {
-            const body = document.getElementById('daily-wr-body');
-            if (!body) return;
-            body.innerHTML = '';
-
-            const daysMap = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
-            const days = {};
-            trades.forEach(t => {
-                const dayIndex = safeParseDate(t.date).getDay();
-                const dayName = daysMap[dayIndex];
-                if (!days[dayName]) days[dayName] = { count: 0, wins: 0, pnl: 0 };
-                days[dayName].count++;
-                days[dayName].pnl += t.pnl;
-                if (t.pnl > 0) days[dayName].wins++;
-            });
-
-            const sorted = Object.entries(days).sort((a,b) => b[1].pnl - a[1].pnl);
-            if (sorted.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
-                return;
+                `).join('');
             }
-
-            sorted.forEach(([day, stats]) => {
-                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
-                body.innerHTML += `
-                    <tr>
-                        <td class="py-3 text-slate-300 font-medium">${day}</td>
-                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
-                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
-                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
-                    </tr>
-                `;
-            });
         }
 
-        function renderSetupPerformance() {
-            const body = document.getElementById('setup-perf-body');
-            if (!body) return;
-            body.innerHTML = '';
-
-            const setups = {};
-            trades.forEach(t => {
-                getTradeSetups(t).forEach(setup => {
-                    if (!setups[setup]) setups[setup] = { count: 0, wins: 0, rrSum: 0 };
-                    setups[setup].count++;
-                    if (t.pnl > 0) setups[setup].wins++;
-                    setups[setup].rrSum += (parseFloat(t.rr) || 0);
-                });
-            });
-
-            const sorted = Object.entries(setups).sort((a,b) => b[1].count - a[1].count);
-            if (sorted.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
-                return;
-            }
-
-            sorted.forEach(([setup, stats]) => {
-                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
-                const avgRR = (stats.rrSum / stats.count).toFixed(2);
-                body.innerHTML += `
-                    <tr>
-                        <td class="py-3 text-slate-300 font-medium">${setup}</td>
-                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
-                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
-                        <td class="py-3 text-right text-slate-300 font-bold">${avgRR}R</td>
-                    </tr>
-                `;
-            });
-        }
-
-        function renderBiasAccuracy() {
-            const body = document.getElementById('bias-acc-body');
-            if (!body) return;
-            body.innerHTML = '';
-
-            const biases = {};
-            trades.forEach(t => {
-                if (t.bias && typeof t.bias === 'object') {
-                    Object.entries(t.bias).forEach(([biasName, active]) => {
-                        if (active) {
-                            if (!biases[biasName]) biases[biasName] = { count: 0, wins: 0, pnl: 0 };
-                            biases[biasName].count++;
-                            biases[biasName].pnl += t.pnl;
-                            if (t.pnl > 0) biases[biasName].wins++;
-                        }
-                    });
-                }
-            });
-
-            const sorted = Object.entries(biases).sort((a,b) => b[1].pnl - a[1].pnl);
-            if (sorted.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
-                return;
-            }
-
-            sorted.forEach(([bias, stats]) => {
-                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
-                body.innerHTML += `
-                    <tr>
-                        <td class="py-3 text-slate-300 font-medium">${bias}</td>
-                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
-                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
-                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        function renderSessionPerformance() {
-            const body = document.getElementById('session-perf-body');
-            if (!body) return;
-            body.innerHTML = '';
-
-            const sessions = {};
-            trades.forEach(t => {
-                if (!t.session) return;
-                if (!sessions[t.session]) sessions[t.session] = { count: 0, wins: 0, pnl: 0 };
-                sessions[t.session].count++;
-                sessions[t.session].pnl += t.pnl;
-                if (t.pnl > 0) sessions[t.session].wins++;
-            });
-
-            const sorted = Object.entries(sessions).sort((a,b) => b[1].pnl - a[1].pnl);
-            if (sorted.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
-                return;
-            }
-
-            sorted.forEach(([sess, stats]) => {
-                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
-                body.innerHTML += `
-                    <tr>
-                        <td class="py-3 text-slate-300 font-medium">${sess}</td>
-                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
-                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
-                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        function renderHeatmap() {
-            const container = document.getElementById('heatmap-container');
+        function renderNotes() {
+            const container = document.getElementById('notes-container');
             if (!container) return;
             container.innerHTML = '';
 
-            const days = ["Pzt", "Sal", "Çar", "Per", "Cum"];
-            const hourIntervals = ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"];
-            
-            let html = `<div class="grid grid-cols-6 gap-2 text-center text-xs">`;
-            html += `<div></div>`;
-            hourIntervals.forEach(h => {
-                html += `<div class="font-bold text-slate-500">${h}</div>`;
+            notes.forEach((note, index) => {
+                const div = document.createElement('div');
+                div.className = 'bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm space-y-4 relative group cursor-pointer hover:border-sky-500/50 transition-all';
+                div.onclick = () => openNoteModal(index);
+                div.innerHTML = `
+                    <button onclick="event.stopPropagation(); deleteNote(${index})" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-2 text-slate-600 hover:text-rose-400 transition-all">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                    <h5 class="font-bold text-slate-100 pr-8">${note.title}</h5>
+                    <p class="text-sm text-slate-400 leading-relaxed line-clamp-3">${note.content}</p>
+                    <p class="text-[10px] text-slate-600 font-bold uppercase tracking-wider">${note.date}</p>
+                `;
+                container.appendChild(div);
             });
-
-            days.forEach((day, dIdx) => {
-                html += `<div class="font-bold text-slate-400 flex items-center justify-center">${day}</div>`;
-                hourIntervals.forEach(interval => {
-                    const startHour = parseInt(interval.split(':')[0]);
-                    
-                    const cellTrades = trades.filter(t => {
-                        const dateObj = safeParseDate(t.date);
-                        const dayMatch = dateObj.getDay() === (dIdx + 1); // Monday is 1, Friday is 5
-                        if (!dayMatch || !t.time) return false;
-                        const tHour = parseInt(t.time.split(':')[0]);
-                        return tHour >= startHour && tHour < (startHour + 2);
-                    });
-
-                    const count = cellTrades.length;
-                    const pnl = cellTrades.reduce((sum, t) => sum + t.pnl, 0);
-                    
-                    let bg = "bg-slate-900/30";
-                    let text = "text-slate-600";
-                    if (count > 0) {
-                        if (pnl > 0) {
-                            bg = "bg-emerald-950/80 border border-emerald-500/30";
-                            text = "text-emerald-400";
-                        } else if (pnl < 0) {
-                            bg = "bg-rose-950/80 border border-rose-500/30";
-                            text = "text-rose-400";
-                        } else {
-                            bg = "bg-slate-800 border border-slate-700";
-                            text = "text-slate-300";
-                        }
-                    }
-
-                    html += `
-                        <div class="p-3 rounded-lg ${bg} ${text} flex flex-col items-center justify-center min-h-[50px] transition-all" title="${count} işlem, PnL: $${pnl.toFixed(1)}">
-                            <span class="font-bold">${count > 0 ? (pnl >= 0 ? '+' : '') + pnl.toFixed(0) : '-'}</span>
-                            <span class="text-[9px] opacity-60">${count > 0 ? count + ' Tx' : ''}</span>
-                        </div>
-                    `;
-                });
-            });
-
-            html += `</div>`;
-            container.innerHTML = html;
-        }
-
-        function checkBalanceButton() {
-            const btn = document.getElementById('save-balance-btn');
-            const inp = document.getElementById('initial-balance-input');
-            if (!btn) return;
-            if (balance > 0) {
-                btn.innerText = 'Bakiyeyi Gir';
-                btn.disabled = true;
-                btn.onclick = null;
-                btn.className = "w-full bg-slate-700 opacity-50 cursor-not-allowed text-white py-3 rounded-xl font-bold";
-                if (inp) {
-                    inp.disabled = true;
-                    inp.classList.add('opacity-50', 'cursor-not-allowed');
-                }
-            } else {
-                btn.innerText = 'Bakiyeyi Gir';
-                btn.disabled = false;
-                btn.onclick = saveInitialBalance;
-                btn.className = "w-full bg-sky-600 hover:bg-sky-700 text-white py-3 rounded-xl font-bold transition-all";
-                if (inp) {
-                    inp.disabled = false;
-                    inp.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-            }
-        }
-
-        function saveInitialBalance() {
-            if (balance > 0) return;
-            const val = parseFloat(document.getElementById('initial-balance-input').value);
-            if (isNaN(val) || val <= 0) {
-                showToast('Lütfen geçerli bir bakiye girin', 'alert-circle', 'rose');
-                return;
-            }
-            balance = val;
-            saveCurrentAccountData();
-            showToast('Başlangıç bakiyesi kaydedildi');
-        }
-
-        function executeTransaction(type) {
-            const amountInput = document.getElementById('transaction-amount-input');
-            const amount = parseFloat(amountInput.value);
-            
-            if (isNaN(amount) || amount <= 0) {
-                showToast('Lütfen geçerli bir tutar girin', 'alert-circle', 'rose');
-                return;
-            }
-
-            transactions.push({
-                type,
-                amount,
-                date: new Date().toISOString()
-            });
-
-            saveCurrentAccountData();
-            amountInput.value = '';
-            showToast(`${type === 'deposit' ? 'Yatırma' : 'Çekme'} işlemi kaydedildi`);
-        }
-
-        function backupData() {
-            const backup = {
-                accounts: accounts,
-                currentAccountId: currentAccountId,
-                entryTypes: entryTypes,
-                data: {}
-            };
-
-            accounts.forEach(acc => {
-                backup.data[`trades_${acc.id}`] = allTrades[acc.id] || [];
-                backup.data[`notes_${acc.id}`] = allNotes[acc.id] || [];
-                backup.data[`balance_${acc.id}`] = (allBalances[acc.id] !== undefined ? allBalances[acc.id] : 0).toString();
-                backup.data[`transactions_${acc.id}`] = allTransactions[acc.id] || [];
-            });
-
-            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            
-            const account = accounts.find(acc => acc.id === currentAccountId);
-            const accountName = account ? account.name.replace(/\s+/g, '') : 'Hesap';
-            const date = new Date();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            a.download = `${accountName}-${month}-${year}.json`;
-            
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('Veriler yedeklendi: ' + a.download);
-        }
-
-        function restoreData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const backup = JSON.parse(e.target.result);
-                    
-                    if (backup.accounts) {
-                        accounts = backup.accounts;
-                    }
-                    if (backup.currentAccountId) {
-                        currentAccountId = backup.currentAccountId;
-                    }
-                    if (backup.entryTypes) {
-                        entryTypes = backup.entryTypes;
-                    }
-                    
-                    const updates = {};
-                    if (backup.accounts) updates["tradeJournal/6592/accounts"] = backup.accounts;
-                    if (backup.entryTypes) updates["tradeJournal/6592/entryTypes"] = backup.entryTypes;
-
-                    if (backup.data) {
-                        Object.keys(backup.data).forEach(key => {
-                            const val = backup.data[key];
-                            const match = key.match(/^(trades|notes|balance|transactions)_(acc_\d+)$/);
-                            if (match) {
-                                const [_, type, accId] = match;
-                                const parsedVal = (type === 'balance') ? parseFloat(val) : (typeof val === 'string' ? JSON.parse(val) : val);
-                                updates[`tradeJournal/6592/${type}/${accId}`] = parsedVal;
-                            }
-                        });
-                    }
-
-                    updateSyncStatus(isOnline, "Geri Yükleniyor...");
-                    update(ref(db), updates)
-                        .then(() => {
-                            showToast('Tüm veriler başarıyla geri yüklendi!', 'refresh-cw', 'emerald');
-                            setTimeout(() => location.reload(), 1500);
-                        })
-                        .catch(err => {
-                            console.error("Firebase restore failed:", err);
-                            showToast('Senkronizasyon hatası oluştu', 'alert-triangle', 'amber');
-                        });
-                } catch (err) {
-                    console.error('Restore failed:', err);
-                    showToast('Geçersiz yedek dosyası!', 'alert-triangle', 'rose');
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        let confirmCallback = null;
-
-        function showConfirm(title, message, callback) {
-            document.body.classList.add('overflow-hidden');
-            const confirmTitleEl = document.getElementById('confirm-title');
-            const confirmMsgEl = document.getElementById('confirm-message');
-            if (confirmTitleEl && confirmMsgEl) {
-                confirmTitleEl.innerText = title;
-                confirmMsgEl.innerText = message;
-            }
-            confirmCallback = callback;
-            document.getElementById('confirm-modal').classList.remove('hidden');
-            
-            const actionBtn = document.getElementById('confirm-action-btn');
-            if (actionBtn) {
-                actionBtn.onclick = () => {
-                    if (confirmCallback) confirmCallback();
-                    closeConfirmModal();
-                };
-            }
-        }
-
-        function closeConfirmModal() {
-            document.body.classList.remove('overflow-hidden');
-            document.getElementById('confirm-modal').classList.add('hidden');
-            confirmCallback = null;
-        }
-
-        function showToast(message, icon = 'check-circle', color = 'sky') {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toast-message');
-            const toastIcon = document.getElementById('toast-icon');
-            if (!toast || !toastMsg || !toastIcon) return;
-            
-            toastMsg.innerText = message;
-            toastIcon.setAttribute('data-lucide', icon);
-            toastIcon.className = `w-5 h-5 text-${color}-500`;
-            
-            toast.classList.remove('hidden');
             lucide.createIcons();
-            
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
         }
 
-        function updateDateDisplay() {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const el = document.getElementById('current-date-display');
-            if (el) el.innerText = new Date().toLocaleDateString('tr-TR', options);
+        function openNoteModal(index = null) {
+            document.body.classList.add('overflow-hidden');
+            editingNoteIndex = index;
+            const modal = document.getElementById('note-modal');
+            const titleInput = document.getElementById('note-title');
+            const contentInput = document.getElementById('note-content');
+            const modalTitle = document.getElementById('note-modal-title');
+
+            if (index !== null) {
+                const note = notes[index];
+                titleInput.value = note.title;
+                contentInput.value = note.content;
+                modalTitle.innerText = 'Notu Düzenle';
+            } else {
+                titleInput.value = '';
+                contentInput.value = '';
+                modalTitle.innerText = 'Not Ekle';
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeNoteModal() {
+            document.body.classList.remove('overflow-hidden');
+            document.getElementById('note-modal').classList.add('hidden');
+        }
+
+        function saveNote() {
+            const title = document.getElementById('note-title').value;
+            const content = document.getElementById('note-content').value;
+
+            if (!title && !content) return;
+
+            const noteData = {
+                title: title || 'Başlıksız Not',
+                content,
+                date: new Date().toLocaleDateString('tr-TR')
+            };
+
+            if (editingNoteIndex !== null) {
+                notes[editingNoteIndex] = noteData;
+            } else {
+                notes.push(noteData);
+            }
+
+            saveCurrentAccountData();
+            closeNoteModal();
+            renderNotes();
+        }
+
+        function deleteNote(index) {
+            showConfirm('Notu Sil', 'Bu notu silmek istediğinize emin misiniz?', () => {
+                notes.splice(index, 1);
+                saveCurrentAccountData();
+                renderNotes();
+                showToast('Not silindi', 'trash-2', 'rose');
+            });
         }
 
         function renderEntryTypes() {
