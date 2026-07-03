@@ -327,7 +327,7 @@
                     </div>
                     <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
                         <p class="text-sm font-medium text-slate-500 mb-1">Expectancy</p>
-                        <p id="stat-expectancy" class="text-3xl font-bold text-slate-100">$0.00</p>
+                        <p id="stat-total-pnl" class="text-3xl font-bold text-slate-100">$0</p>
                     </div>
                 </div>
 
@@ -875,12 +875,12 @@
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Bias</label>
                         <div class="flex space-x-4 bg-slate-800/40 p-3 border border-slate-700/60 rounded-xl">
                             <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" id="bias-1h" value="1H" class="w-4 h-4 rounded text-sky-500 bg-slate-700 border-slate-600 focus:ring-sky-500 focus:ring-offset-0">
-                                <span class="text-xs font-bold text-slate-200 uppercase tracking-wider">1H</span>
+                                <input type="checkbox" id="bias-1h" value="1H" class="w-4 h-4 rounded text-sky-500 bg-slate-700 border-slate-600 focus:ring-sky-500">
+                                <span class="text-xs font-bold text-slate-200">1H</span>
                             </label>
                             <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" id="bias-4h" value="4H" class="w-4 h-4 rounded text-sky-500 bg-slate-700 border-slate-600 focus:ring-sky-500 focus:ring-offset-0">
-                                <span class="text-xs font-bold text-slate-200 uppercase tracking-wider">4H</span>
+                                <input type="checkbox" id="bias-4h" value="4H" class="w-4 h-4 rounded text-sky-500 bg-slate-700 border-slate-600 focus:ring-sky-500">
+                                <span class="text-xs font-bold text-slate-200">4H</span>
                             </label>
                         </div>
                     </div>
@@ -1283,13 +1283,15 @@
             }
         }
 
-        // On Load Routines
-        window.onload = () => {
+        // ASYNC-SAFE INITIALIZATION ROUTINE (RESOLVES INTRODUCTORY LOADER STUCK ISSUE)
+        function startApp() {
             lucide.createIcons();
-            document.getElementById('lock-password-input').focus();
+            const lockInput = document.getElementById('lock-password-input');
+            if (lockInput) lockInput.focus();
+            
             initFirebaseSync();
 
-            // Safety Loader Guard: Force hide loader after 3.5 seconds to prevent locking!
+            // Safety Loader Guard: Force hide loader after 3.5 seconds to guarantee access!
             setTimeout(() => {
                 const loader = document.getElementById('cloud-loader');
                 if (loader && !loader.classList.contains('hidden')) {
@@ -1297,7 +1299,14 @@
                     loader.classList.add('hidden');
                 }
             }, 3500);
-        };
+        }
+
+        // Bind startup routine immediately depending on DOM loaded state
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            startApp();
+        } else {
+            window.addEventListener('DOMContentLoaded', startApp);
+        }
 
         // Cloud Loader Guard logic
         function checkInitialLoadComplete() {
@@ -1408,18 +1417,20 @@
             });
         }
 
-        // Robust Safe Converters (Converts Objects or Arrays safely)
-        function getTrades() {
-            if (!currentAccountId) return [];
-            const raw = allTrades[currentAccountId];
+        // Safe Convertors (Ensures sparse/push arrays from Firebase map correctly)
+        function safeArray(raw) {
             if (!raw) return [];
             return Array.isArray(raw) ? raw : Object.values(raw);
         }
+
+        // Data Access Getters (Binds current state variables)
+        function getTrades() {
+            if (!currentAccountId) return [];
+            return safeArray(allTrades[currentAccountId]);
+        }
         function getNotes() {
             if (!currentAccountId) return [];
-            const raw = allNotes[currentAccountId];
-            if (!raw) return [];
-            return Array.isArray(raw) ? raw : Object.values(raw);
+            return safeArray(allNotes[currentAccountId]);
         }
         function getBalance() {
             if (!currentAccountId) return 0;
@@ -1427,22 +1438,19 @@
         }
         function getTransactions() {
             if (!currentAccountId) return [];
-            const raw = allTransactions[currentAccountId];
-            if (!raw) return [];
-            return Array.isArray(raw) ? raw : Object.values(raw);
+            return safeArray(allTransactions[currentAccountId]);
         }
 
         // Live Re-rendering Controller
         function updateStatsAndRefresh() {
             if (!currentAccountId) return;
-            trades = getTrades().map(migrateTradeFormat); // Force robust sanitization
+            trades = getTrades().map(migrateTradeFormat); // Force robust sanitization on load
             notes = getNotes();
             balance = getBalance();
             transactions = getTransactions();
 
             const account = accounts.find(a => a.id === currentAccountId);
-            const badgeEl = document.getElementById('account-badge');
-            if (badgeEl) badgeEl.innerText = account ? account.name : 'MT';
+            document.getElementById('account-badge').innerText = account ? account.name : 'MT';
 
             const initialBalanceInput = document.getElementById('initial-balance-input');
             if (initialBalanceInput) initialBalanceInput.value = balance > 0 ? balance : '';
@@ -1574,7 +1582,7 @@
                     <td class="py-4 text-slate-400 text-xs">${trade.date}<br><span class="text-slate-500">${trade.time || ''}</span></td>
                     <td class="py-4"><span class="px-2 py-1 rounded text-[10px] font-bold ${trade.type === 'Long' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-rose-900/30 text-rose-400'}">${trade.type}</span></td>
                     <td class="py-4 text-slate-300 font-bold">${trade.lot}</td>
-                    <td class="py-4">
+                    <td class="py-4 font-bold ${trade.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
                         <input type="number" step="0.01" value="${trade.pnl}" onchange="updatePendingPnL(${index}, this.value)" 
                                class="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24 text-sm font-bold ${trade.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
                     </td>
@@ -1616,126 +1624,6 @@
             closeMT5Review();
             showToast(`${pendingMT5Trades.length} işlem başarıyla eklendi!`, 'check-circle', 'emerald');
             updateStatsAndRefresh();
-        }
-
-        // --- AUTH & NAVIGATION ---
-        function checkLockPassword() {
-            const input = document.getElementById('lock-password-input');
-            const error = document.getElementById('lock-error');
-            if (input.value === LOCK_PASSWORD) {
-                error.classList.add('hidden');
-                unlockApp();
-            } else {
-                error.classList.remove('hidden');
-                input.value = '';
-                input.focus();
-            }
-        }
-
-        function unlockApp() {
-            document.getElementById('lock-screen').classList.add('hidden');
-            updateDateDisplay();
-            switchTab('home');
-        }
-
-        function lockApp() {
-            showConfirm('Çıkış Yap', 'Uygulamadan çıkmak istediğinize emin misiniz?', () => {
-                location.reload();
-            });
-        }
-
-        function toggleMobileSidebar(show) {
-            const sidebar = document.getElementById('sidebar-menu');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (show) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        function loadAccountData(accountId) {
-            currentAccountId = accountId;
-            updateStatsAndRefresh();
-        }
-
-        function saveAccountsState() {
-            if (isOnline) {
-                updateSyncStatus(true, "Eşitleniyor...");
-                set(ref(db, "tradeJournal/6592/accounts"), accounts)
-                    .then(() => {
-                        updateSyncStatus(true);
-                    })
-                    .catch(err => {
-                        console.error("Firebase accounts save failed:", err);
-                        updateSyncStatus(false);
-                    });
-            } else {
-                updateSyncStatus(false);
-            }
-        }
-
-        function saveCurrentAccountData() {
-            if (!currentAccountId) return;
-            
-            if (isOnline) {
-                updateSyncStatus(true, "Eşitleniyor...");
-                const updates = {
-                    [`tradeJournal/6592/trades/${currentAccountId}`]: trades,
-                    [`tradeJournal/6592/notes/${currentAccountId}`]: notes,
-                    [`tradeJournal/6592/balance/${currentAccountId}`]: balance,
-                    [`tradeJournal/6592/transactions/${currentAccountId}`]: transactions
-                };
-
-                update(ref(db), updates)
-                    .then(() => {
-                        updateSyncStatus(true);
-                    })
-                    .catch(err => {
-                        console.error("Firebase sync error:", err);
-                        updateSyncStatus(false);
-                    });
-            } else {
-                updateSyncStatus(false);
-            }
-        }
-
-        function refreshCurrentView() {
-            updateStatsAndRefresh();
-        }
-
-        function switchTab(tab) {
-            currentView = tab;
-            toggleMobileSidebar(false);
-            
-            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active-tab'));
-            const navBtn = document.getElementById(`nav-${tab}`);
-            if (navBtn) navBtn.classList.add('active-tab');
-
-            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
-            document.getElementById(`section-${tab}`).classList.remove('hidden');
-
-            const accountNav = document.getElementById('account-nav');
-            const navHome = document.getElementById('nav-home');
-            const bottomHomeNav = document.getElementById('bottom-home-nav');
-
-            if (tab === 'home') {
-                accountNav.classList.add('hidden');
-                navHome.classList.add('hidden');
-                bottomHomeNav.classList.add('hidden');
-            } else {
-                accountNav.classList.remove('hidden');
-                navHome.classList.add('hidden');
-                bottomHomeNav.classList.remove('hidden');
-            }
-
-            const titles = { home: 'Ana Sayfa', calendar: 'Takvim', history: 'İşlemler', analysis: 'Analiz', balance: 'Bakiye', notes: 'Notlar', settings: 'Ayarlar' };
-            document.getElementById('page-title').innerText = titles[tab];
-
-            updateStatsAndRefresh();
-            lucide.createIcons();
         }
 
         function openAccountModal() {
@@ -1783,8 +1671,11 @@
             accounts.forEach(acc => {
                 const isCurrent = acc.id === currentAccountId;
                 const accStartBalance  = allBalances[acc.id] !== undefined ? parseFloat(allBalances[acc.id]) : 0;
-                const accTrades        = allTrades[acc.id] || [];
-                const accTransactions  = allTransactions[acc.id] || [];
+                
+                // Safe Convert arrays from global state directly
+                const accTrades        = safeArray(allTrades[acc.id]).map(migrateTradeFormat);
+                const accTransactions  = safeArray(allTransactions[acc.id]);
+                
                 const accTotalPnL      = accTrades.reduce((s, t) => s + (parseFloat(t.pnl) || 0), 0);
                 const accTotalDeposit  = accTransactions.filter(t => t.type === 'deposit').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
                 const accTotalWithdraw = accTransactions.filter(t => t.type === 'withdraw').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
@@ -2282,7 +2173,7 @@
 
         window.toggleQuickTF = (tf) => {
             const activeClass = "bg-sky-600 border-sky-600 text-white";
-            const inactiveClass = "border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700";
+            const inactiveClass = "border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all";
             
             const input = document.getElementById('trade-quick-tf');
             let currentVal = input.value;
@@ -2300,354 +2191,435 @@
             }
         };
 
-        // --- ACCOUNT & STATS ---
-        function changeMonth(delta) {
-            currentDate.setMonth(currentDate.getMonth() + delta);
-            renderCalendar();
-        }
-
-        function isToday(y, m, d) {
-            const today = new Date();
-            return today.getFullYear() === y && today.getMonth() === m && today.getDate() === d;
-        }
-
-        function openTradeModal(date = null, trade = null) {
-            document.body.classList.add('overflow-hidden');
-            document.getElementById('trade-modal').classList.remove('hidden');
-            document.getElementById('trade-form').reset();
-            document.getElementById('trade-id').value = trade ? trade.id : '';
-            document.getElementById('modal-title').innerText = trade ? 'İşlemi Düzenle' : 'Yeni İşlem Ekle';
+        function renderHourlyPerformance() {
+            const body = document.getElementById('hourly-perf-body');
+            if (!body) return;
+            body.innerHTML = '';
             
-            const now = new Date();
-            const dateInput = document.getElementById('trade-date');
-            const timeInput = document.getElementById('trade-time');
-            
-            if (trade) {
-                const cleanTrade = migrateTradeFormat(trade);
-                
-                dateInput.value = cleanTrade.date;
-                timeInput.value = cleanTrade.time;
-                document.getElementById('trade-symbol').value = cleanTrade.symbol;
-                setTradeType(cleanTrade.type);
-                setExitReason(cleanTrade.exitReason);
-                document.getElementById('trade-pnl').value = cleanTrade.pnl;
-                document.getElementById('trade-lot').value = cleanTrade.lot || '';
-                document.getElementById('trade-r-percent').value = cleanTrade.rPercent || '';
-                
-                let kz = cleanTrade.killzone || 'Outside Killzone';
-                document.getElementById('trade-killzone').value = kz;
-                document.getElementById('trade-notes').value = cleanTrade.notes || '';
-                
-                // Bias checkboxes
-                document.getElementById('bias-1h').checked = cleanTrade.bias ? !!cleanTrade.bias['1H'] : false;
-                document.getElementById('bias-4h').checked = cleanTrade.bias ? !!cleanTrade.bias['4H'] : false;
-
-                // Quick Timeframe setting
-                let selectedQtf = "";
-                if (cleanTrade.quickTimeframe) {
-                    if (cleanTrade.quickTimeframe['1M']) selectedQtf = '1M';
-                    else if (cleanTrade.quickTimeframe['5M']) selectedQtf = '5M';
-                    else if (cleanTrade.quickTimeframe['15M']) selectedQtf = '15M';
-                    else if (cleanTrade.quickTimeframe['1H']) selectedQtf = '1H';
-                    else if (cleanTrade.quickTimeframe['4H']) selectedQtf = '4H';
-                }
-                ['1M', '5M', '15M', '1H', '4H'].forEach(tf => {
-                    document.getElementById(`btn-qtf-${tf}`).className = "px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all";
-                });
-                document.getElementById('trade-quick-tf').value = selectedQtf;
-                if (selectedQtf) {
-                    document.getElementById(`btn-qtf-${selectedQtf}`).className = "px-3 py-1.5 rounded-xl text-xs font-bold border bg-sky-600 border-sky-600 text-white transition-all";
-                }
-
-                // Setup checkboxes and buttons
-                document.getElementById('setup-tf-15m').checked = (cleanTrade.setup && cleanTrade.setup.timeframes) ? !!cleanTrade.setup.timeframes['15M'] : false;
-                document.getElementById('setup-tf-5m').checked = (cleanTrade.setup && cleanTrade.setup.timeframes) ? !!cleanTrade.setup.timeframes['5M'] : false;
-                renderSetupItemButtons((cleanTrade.setup && cleanTrade.setup.items) ? cleanTrade.setup.items : []);
-
-                // Entry checkboxes and buttons
-                document.getElementById('entry-tf-1m').checked = (cleanTrade.entry && cleanTrade.entry.timeframes) ? !!cleanTrade.entry.timeframes['1M'] : false;
-                document.getElementById('entry-tf-5m').checked = (cleanTrade.entry && cleanTrade.entry.timeframes) ? !!cleanTrade.entry.timeframes['5M'] : false;
-                renderEntryItemButtons((cleanTrade.entry && cleanTrade.entry.items) ? cleanTrade.entry.items : []);
-
-                // Trading Session loader
-                document.getElementById('trade-session').value = cleanTrade.session || '';
-                setSession(cleanTrade.session || '');
-
-                // Trading Psychology loader
-                const selectedPsych = cleanTrade.psychology || [];
-                renderPsychologyButtons(selectedPsych);
-            } else {
-                dateInput.value = date ? date : toLocalDateStr(now);
-                timeInput.value = toLocalTimeStr(now);
-                document.getElementById('trade-symbol').value = 'XAUUSD';
-                
-                setTradeType('Long');
-                setExitReason('TP');
-                
-                // Clear Bias checkboxes
-                document.getElementById('bias-1h').checked = false;
-                document.getElementById('bias-4h').checked = false;
-
-                // Clear Setup
-                document.getElementById('setup-tf-15m').checked = false;
-                document.getElementById('setup-tf-5m').checked = false;
-                renderSetupItemButtons([]);
-
-                // Clear Entry
-                document.getElementById('entry-tf-1m').checked = false;
-                document.getElementById('entry-tf-5m').checked = false;
-                renderEntryItemButtons([]);
-
-                // Clear Quick Timeframe
-                ['1M', '5M', '15M', '1H', '4H'].forEach(tf => {
-                    document.getElementById(`btn-qtf-${tf}`).className = "px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all";
-                });
-                document.getElementById('trade-quick-tf').value = "";
-
-                document.getElementById('trade-r-percent').value = 1;
-                updateKillzone();
-
-                // Trading Session clean defaults
-                document.getElementById('trade-session').value = '';
-                setSession('');
-
-                // Trading Psychology clean defaults
-                renderPsychologyButtons([]);
-            }
-            
-            populateEntryTypeSelect();
-            if (trade && trade.entryType) {
-                document.getElementById('trade-entry-type').value = trade.entryType;
-            }
-            
-            lucide.createIcons();
-            updateRRDisplay();
-        }
-
-        // --- Analysis Logic ---
-        function updateStats() {
-            const totalTrades = trades.length;
-            const winsCount = trades.filter(t => t.pnl > 0).length;
-            const winRate = totalTrades > 0 ? Math.round((winsCount / totalTrades) * 100) : 0;
-            const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
-            
-            const avgWin = winsCount > 0 ? (trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0) / winsCount) : 0;
-            const lossesCount = totalTrades - winsCount;
-            const avgLoss = lossesCount > 0 ? (Math.abs(trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0)) / lossesCount) : 0;
-            const expectancy = (totalTrades > 0) ? ( (winsCount/totalTrades) * avgWin ) - ( (lossesCount/totalTrades) * avgLoss ) : 0;
-
-            const totalTransactions = transactions.reduce((sum, t) => t.type === 'deposit' ? sum + t.amount : sum - t.amount, 0);
-            const currentBudget = balance + totalPnL + totalTransactions;
-
-            const winRateEl = document.getElementById('stat-win-rate');
-            const totalPnLEl = document.getElementById('stat-total-pnl');
-            const currentBudgetEl = document.getElementById('stat-current-budget');
-            const expectancyEl = document.getElementById('stat-expectancy');
-
-            if (winRateEl) winRateEl.innerText = `${winRate}%`;
-            if (totalPnLEl) {
-                totalPnLEl.innerText = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
-                totalPnLEl.className = `text-3xl font-bold ${totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-            }
-            if (currentBudgetEl) currentBudgetEl.innerText = `$${currentBudget.toFixed(2)}`;
-            if (expectancyEl) {
-                expectancyEl.innerText = `${expectancy >= 0 ? '+' : ''}$${expectancy.toFixed(2)}`;
-                expectancyEl.className = `text-3xl font-bold ${expectancy >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-            }
-
-            const totalDeposit = transactions.filter(t => t.type === 'deposit').reduce((sum, t) => sum + t.amount, 0);
-            const totalWithdraw = transactions.filter(t => t.type === 'withdraw').reduce((sum, t) => sum + t.amount, 0);
-            const currentBalance = balance + totalPnL + totalDeposit - totalWithdraw;
-
-            const balanceCurrentEl = document.getElementById('balance-current');
-            const balanceDepositEl = document.getElementById('balance-total-deposit');
-            const balanceWithdrawEl = document.getElementById('balance-total-withdraw');
-
-            if (balanceCurrentEl) balanceCurrentEl.innerText = `$${currentBalance.toFixed(2)}`;
-            if (balanceDepositEl) balanceDepositEl.innerText = `$${totalDeposit.toFixed(2)}`;
-            if (balanceWithdrawEl) balanceWithdrawEl.innerText = `$${totalWithdraw.toFixed(2)}`;
-        }
-
-        function renderBalance() {
-            try {
-                drawBalanceChart();
-            } catch (e) {
-                console.error("Balance chart drawing failed:", e);
-            }
-            const historyBody = document.getElementById('balance-history-body');
-
-            if (historyBody) {
-                historyBody.innerHTML = transactions.slice().reverse().map(t => `
-                    <tr class="text-sm border-b border-slate-800/50">
-                        <td class="py-4 text-slate-400">${new Date(t.date).toLocaleDateString('tr-TR')}</td>
-                        <td class="py-4">
-                            <span class="px-2 py-1 rounded-lg text-xs font-bold ${t.type === 'deposit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">
-                                ${t.type === 'deposit' ? 'Yatırma' : 'Çekme'}
-                            </span>
-                        </td>
-                        <td class="py-4 font-bold ${t.type === 'deposit' ? 'text-emerald-400' : 'text-rose-400'}">
-                            ${t.type === 'deposit' ? '+' : '-'}$${t.amount.toFixed(2)}
-                        </td>
-                    </tr>
-                `).join('');
-            }
-        }
-
-        function renderNotes() {
-            const container = document.getElementById('notes-container');
-            if (!container) return;
-            container.innerHTML = '';
-
-            notes.forEach((note, index) => {
-                const div = document.createElement('div');
-                div.className = 'bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm space-y-4 relative group cursor-pointer hover:border-sky-500/50 transition-all';
-                div.onclick = () => openNoteModal(index);
-                div.innerHTML = `
-                    <button onclick="event.stopPropagation(); deleteNote(${index})" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-2 text-slate-600 hover:text-rose-400 transition-all">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                    <h5 class="font-bold text-slate-100 pr-8">${note.title}</h5>
-                    <p class="text-sm text-slate-400 leading-relaxed line-clamp-3">${note.content}</p>
-                    <p class="text-[10px] text-slate-600 font-bold uppercase tracking-wider">${note.date}</p>
-                `;
-                container.appendChild(div);
+            const hours = {};
+            trades.forEach(t => {
+                if (!t.time) return;
+                const hr = t.time.split(':')[0] + ":00";
+                if (!hours[hr]) hours[hr] = { count: 0, wins: 0, pnl: 0 };
+                hours[hr].count++;
+                hours[hr].pnl += t.pnl;
+                if (t.pnl > 0) hours[hr].wins++;
             });
-            lucide.createIcons();
-        }
 
-        function openNoteModal(index = null) {
-            document.body.classList.add('overflow-hidden');
-            editingNoteIndex = index;
-            const modal = document.getElementById('note-modal');
-            const titleInput = document.getElementById('note-title');
-            const contentInput = document.getElementById('note-content');
-            const modalTitle = document.getElementById('note-modal-title');
-
-            if (index !== null) {
-                const note = notes[index];
-                titleInput.value = note.title;
-                contentInput.value = note.content;
-                modalTitle.innerText = 'Notu Düzenle';
-            } else {
-                titleInput.value = '';
-                contentInput.value = '';
-                modalTitle.innerText = 'Not Ekle';
-            }
-
-            modal.classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        function closeNoteModal() {
-            document.body.classList.remove('overflow-hidden');
-            document.getElementById('note-modal').classList.add('hidden');
-        }
-
-        function saveNote() {
-            const title = document.getElementById('note-title').value;
-            const content = document.getElementById('note-content').value;
-
-            if (!title && !content) return;
-
-            const noteData = {
-                title: title || 'Başlıksız Not',
-                content,
-                date: new Date().toLocaleDateString('tr-TR')
-            };
-
-            if (editingNoteIndex !== null) {
-                notes[editingNoteIndex] = noteData;
-            } else {
-                notes.push(noteData);
-            }
-
-            saveCurrentAccountData();
-            closeNoteModal();
-            renderNotes();
-        }
-
-        function deleteNote(index) {
-            showConfirm('Notu Sil', 'Bu notu silmek istediğinize emin misiniz?', () => {
-                notes.splice(index, 1);
-                saveCurrentAccountData();
-                renderNotes();
-                showToast('Not silindi', 'trash-2', 'rose');
-            });
-        }
-
-        function renderEntryTypes() {
-            const list = document.getElementById('entry-types-list');
-            if (!list) return;
-            list.innerHTML = '';
-
-            entryTypes.forEach((type, index) => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-3 bg-slate-800 rounded-xl border border-slate-700 group';
-                div.innerHTML = `
-                    <span class="text-sm font-medium text-slate-200">${type}</span>
-                    <button onclick="deleteEntryType(${index})" class="p-1.5 text-slate-500 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                `;
-                list.appendChild(div);
-            });
-            lucide.createIcons();
-        }
-
-        function addEntryType() {
-            const input = document.getElementById('new-entry-type');
-            const value = input.value.trim();
-            if (!value) return;
-
-            if (entryTypes.includes(value)) {
-                showToast('Bu Setup zaten mevcut', 'alert-circle', 'rose');
+            const sorted = Object.entries(hours).sort((a,b) => b[1].pnl - a[1].pnl);
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
                 return;
             }
 
-            entryTypes.push(value);
-            
-            updateSyncStatus(isOnline, "Eşitleniyor...");
-            set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
-                .then(() => {
-                    updateSyncStatus(true);
-                })
-                .catch(() => {
-                    updateSyncStatus(false);
-                });
-
-            input.value = '';
-            renderEntryTypes();
-            const modal = document.getElementById('trade-modal');
-            if (modal && modal.classList.contains('flex')) {
-                renderSetupButtons([]);
-            }
-            showToast('Setup eklendi');
+            sorted.forEach(([hr, stats]) => {
+                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
+                body.innerHTML += `
+                    <tr>
+                        <td class="py-3 text-slate-300 font-medium">${hr}</td>
+                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
         }
 
-        function deleteEntryType(index) {
-            entryTypes.splice(index, 1);
-            
-            updateSyncStatus(isOnline, "Eşitleniyor...");
-            set(ref(db, "tradeJournal/6592/entryTypes"), entryTypes)
-                .then(() => {
-                    updateSyncStatus(true);
-                })
-                .catch(() => {
-                    updateSyncStatus(false);
-                });
+        function renderDailyWinRate() {
+            const body = document.getElementById('daily-wr-body');
+            if (!body) return;
+            body.innerHTML = '';
 
-            renderEntryTypes();
-            const modal = document.getElementById('trade-modal');
-            if (modal && modal.classList.contains('flex')) {
-                renderSetupButtons([]);
+            const daysMap = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+            const days = {};
+            trades.forEach(t => {
+                const dayIndex = safeParseDate(t.date).getDay();
+                const dayName = daysMap[dayIndex];
+                if (!days[dayName]) days[dayName] = { count: 0, wins: 0, pnl: 0 };
+                days[dayName].count++;
+                days[dayName].pnl += t.pnl;
+                if (t.pnl > 0) days[dayName].wins++;
+            });
+
+            const sorted = Object.entries(days).sort((a,b) => b[1].pnl - a[1].pnl);
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
+                return;
             }
-            showToast('Setup silindi', 'trash-2', 'rose');
+
+            sorted.forEach(([day, stats]) => {
+                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
+                body.innerHTML += `
+                    <tr>
+                        <td class="py-3 text-slate-300 font-medium">${day}</td>
+                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
         }
 
-        function populateEntryTypeSelect() {
-            const select = document.getElementById('trade-entry-type');
-            if (!select) return;
-            select.innerHTML = entryTypes.map(type => `<option value="${type}">${type}</option>`).join('');
+        function renderSetupPerformance() {
+            const body = document.getElementById('setup-perf-body');
+            if (!body) return;
+            body.innerHTML = '';
+
+            const setups = {};
+            trades.forEach(t => {
+                getTradeSetups(t).forEach(setup => {
+                    if (!setups[setup]) setups[setup] = { count: 0, wins: 0, rrSum: 0 };
+                    setups[setup].count++;
+                    if (t.pnl > 0) setups[setup].wins++;
+                    setups[setup].rrSum += (parseFloat(t.rr) || 0);
+                });
+            });
+
+            const sorted = Object.entries(setups).sort((a,b) => b[1].count - a[1].count);
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
+                return;
+            }
+
+            sorted.forEach(([setup, stats]) => {
+                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
+                const avgRR = (stats.rrSum / stats.count).toFixed(2);
+                body.innerHTML += `
+                    <tr>
+                        <td class="py-3 text-slate-300 font-medium">${setup}</td>
+                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
+                        <td class="py-3 text-right text-slate-300 font-bold">${avgRR}R</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderBiasAccuracy() {
+            const body = document.getElementById('bias-acc-body');
+            if (!body) return;
+            body.innerHTML = '';
+
+            const biases = {};
+            trades.forEach(t => {
+                if (t.bias && typeof t.bias === 'object') {
+                    Object.entries(t.bias).forEach(([biasName, active]) => {
+                        if (active) {
+                            if (!biases[biasName]) biases[biasName] = { count: 0, wins: 0, pnl: 0 };
+                            biases[biasName].count++;
+                            biases[biasName].pnl += t.pnl;
+                            if (t.pnl > 0) biases[biasName].wins++;
+                        }
+                    });
+                }
+            });
+
+            const sorted = Object.entries(biases).sort((a,b) => b[1].pnl - a[1].pnl);
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
+                return;
+            }
+
+            sorted.forEach(([bias, stats]) => {
+                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
+                body.innerHTML += `
+                    <tr>
+                        <td class="py-3 text-slate-300 font-medium">${bias}</td>
+                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderSessionPerformance() {
+            const body = document.getElementById('session-perf-body');
+            if (!body) return;
+            body.innerHTML = '';
+
+            const sessions = {};
+            trades.forEach(t => {
+                if (!t.session) return;
+                if (!sessions[t.session]) sessions[t.session] = { count: 0, wins: 0, pnl: 0 };
+                sessions[t.session].count++;
+                sessions[t.session].pnl += t.pnl;
+                if (t.pnl > 0) sessions[t.session].wins++;
+            });
+
+            const sorted = Object.entries(sessions).sort((a,b) => b[1].pnl - a[1].pnl);
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Veri bulunmuyor</td></tr>';
+                return;
+            }
+
+            sorted.forEach(([sess, stats]) => {
+                const wr = ((stats.wins / stats.count) * 100).toFixed(0);
+                body.innerHTML += `
+                    <tr>
+                        <td class="py-3 text-slate-300 font-medium">${sess}</td>
+                        <td class="py-3 text-center text-slate-400">${stats.count}</td>
+                        <td class="py-3 text-center text-sky-400 font-semibold">${wr}%</td>
+                        <td class="py-3 text-right font-bold ${stats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderHeatmap() {
+            const container = document.getElementById('heatmap-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const days = ["Pzt", "Sal", "Çar", "Per", "Cum"];
+            const hourIntervals = ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"];
+            
+            let html = `<div class="grid grid-cols-6 gap-2 text-center text-xs">`;
+            html += `<div></div>`;
+            hourIntervals.forEach(h => {
+                html += `<div class="font-bold text-slate-500">${h}</div>`;
+            });
+
+            days.forEach((day, dIdx) => {
+                html += `<div class="font-bold text-slate-400 flex items-center justify-center">${day}</div>`;
+                hourIntervals.forEach(interval => {
+                    const startHour = parseInt(interval.split(':')[0]);
+                    
+                    const cellTrades = trades.filter(t => {
+                        const dateObj = safeParseDate(t.date);
+                        const dayMatch = dateObj.getDay() === (dIdx + 1); // Monday is 1, Friday is 5
+                        if (!dayMatch || !t.time) return false;
+                        const tHour = parseInt(t.time.split(':')[0]);
+                        return tHour >= startHour && tHour < (startHour + 2);
+                    });
+
+                    const count = cellTrades.length;
+                    const pnl = cellTrades.reduce((sum, t) => sum + t.pnl, 0);
+                    
+                    let bg = "bg-slate-900/30";
+                    let text = "text-slate-600";
+                    if (count > 0) {
+                        if (pnl > 0) {
+                            bg = "bg-emerald-950/80 border border-emerald-500/30";
+                            text = "text-emerald-400";
+                        } else if (pnl < 0) {
+                            bg = "bg-rose-950/80 border border-rose-500/30";
+                            text = "text-rose-400";
+                        } else {
+                            bg = "bg-slate-800 border border-slate-700";
+                            text = "text-slate-300";
+                        }
+                    }
+
+                    html += `
+                        <div class="p-3 rounded-lg ${bg} ${text} flex flex-col items-center justify-center min-h-[50px] transition-all" title="${count} işlem, PnL: $${pnl.toFixed(1)}">
+                            <span class="font-bold">${count > 0 ? (pnl >= 0 ? '+' : '') + pnl.toFixed(0) : '-'}</span>
+                            <span class="text-[9px] opacity-60">${count > 0 ? count + ' Tx' : ''}</span>
+                        </div>
+                    `;
+                });
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function checkBalanceButton() {
+            const btn = document.getElementById('save-balance-btn');
+            const inp = document.getElementById('initial-balance-input');
+            if (!btn) return;
+            if (balance > 0) {
+                btn.innerText = 'Bakiyeyi Gir';
+                btn.disabled = true;
+                btn.onclick = null;
+                btn.classList.remove('bg-sky-600', 'hover:bg-sky-700');
+                btn.classList.add('bg-slate-700', 'opacity-50', 'cursor-not-allowed');
+                if (inp) {
+                    inp.disabled = true;
+                    inp.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            } else {
+                btn.innerText = 'Bakiyeyi Gir';
+                btn.disabled = false;
+                btn.onclick = saveInitialBalance;
+                btn.classList.remove('bg-slate-700', 'opacity-50', 'cursor-not-allowed');
+                btn.classList.add('bg-sky-600', 'hover:bg-sky-700');
+                if (inp) {
+                    inp.disabled = false;
+                    inp.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        function saveInitialBalance() {
+            if (balance > 0) return;
+            const val = parseFloat(document.getElementById('initial-balance-input').value);
+            if (isNaN(val) || val <= 0) {
+                showToast('Lütfen geçerli bir bakiye girin', 'alert-circle', 'rose');
+                return;
+            }
+            balance = val;
+            saveCurrentAccountData();
+            showToast('Başlangıç bakiyesi kaydedildi');
+        }
+
+        function executeTransaction(type) {
+            const amountInput = document.getElementById('transaction-amount-input');
+            const amount = parseFloat(amountInput.value);
+            
+            if (isNaN(amount) || amount <= 0) {
+                showToast('Lütfen geçerli bir tutar girin', 'alert-circle', 'rose');
+                return;
+            }
+
+            transactions.push({
+                type,
+                amount,
+                date: new Date().toISOString()
+            });
+
+            saveCurrentAccountData();
+            amountInput.value = '';
+            showToast(`${type === 'deposit' ? 'Yatırma' : 'Çekme'} işlemi kaydedildi`);
+        }
+
+        function backupData() {
+            const backup = {
+                accounts: accounts,
+                currentAccountId: currentAccountId,
+                entryTypes: entryTypes,
+                data: {}
+            };
+
+            accounts.forEach(acc => {
+                backup.data[`trades_${acc.id}`] = allTrades[acc.id] || [];
+                backup.data[`notes_${acc.id}`] = allNotes[acc.id] || [];
+                backup.data[`balance_${acc.id}`] = (allBalances[acc.id] !== undefined ? allBalances[acc.id] : 0).toString();
+                backup.data[`transactions_${acc.id}`] = allTransactions[acc.id] || [];
+            });
+
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            const account = accounts.find(acc => acc.id === currentAccountId);
+            const accountName = account ? account.name.replace(/\s+/g, '') : 'Hesap';
+            const date = new Date();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            a.download = `${accountName}-${month}-${year}.json`;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Veriler yedeklendi: ' + a.download);
+        }
+
+        function restoreData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    
+                    if (backup.accounts) {
+                        accounts = backup.accounts;
+                    }
+                    if (backup.currentAccountId) {
+                        currentAccountId = backup.currentAccountId;
+                    }
+                    if (backup.entryTypes) {
+                        entryTypes = backup.entryTypes;
+                    }
+                    
+                    const updates = {};
+                    if (backup.accounts) updates["tradeJournal/6592/accounts"] = backup.accounts;
+                    if (backup.entryTypes) updates["tradeJournal/6592/entryTypes"] = backup.entryTypes;
+
+                    if (backup.data) {
+                        Object.keys(backup.data).forEach(key => {
+                            const val = backup.data[key];
+                            const match = key.match(/^(trades|notes|balance|transactions)_(acc_\d+)$/);
+                            if (match) {
+                                const [_, type, accId] = match;
+                                const parsedVal = (type === 'balance') ? parseFloat(val) : (typeof val === 'string' ? JSON.parse(val) : val);
+                                updates[`tradeJournal/6592/${type}/${accId}`] = parsedVal;
+                            }
+                        });
+                    }
+
+                    updateSyncStatus(isOnline, "Geri Yükleniyor...");
+                    update(ref(db), updates)
+                        .then(() => {
+                            showToast('Tüm veriler başarıyla geri yüklendi!', 'refresh-cw', 'emerald');
+                            setTimeout(() => location.reload(), 1500);
+                        })
+                        .catch(err => {
+                            console.error("Firebase restore failed:", err);
+                            showToast('Senkronizasyon hatası oluştu', 'alert-triangle', 'amber');
+                        });
+                } catch (err) {
+                    console.error('Restore failed:', err);
+                    showToast('Geçersiz yedek dosyası!', 'alert-triangle', 'rose');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        let confirmCallback = null;
+
+        function showConfirm(title, message, callback) {
+            document.body.classList.add('overflow-hidden');
+            const confirmTitleEl = document.getElementById('confirm-title');
+            const confirmMsgEl = document.getElementById('confirm-message');
+            if (confirmTitleEl && confirmMsgEl) {
+                confirmTitleEl.innerText = title;
+                confirmMsgEl.innerText = message;
+            }
+            confirmCallback = callback;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            
+            const actionBtn = document.getElementById('confirm-action-btn');
+            if (actionBtn) {
+                actionBtn.onclick = () => {
+                    if (confirmCallback) confirmCallback();
+                    closeConfirmModal();
+                };
+            }
+        }
+
+        function closeConfirmModal() {
+            document.body.classList.remove('overflow-hidden');
+            document.getElementById('confirm-modal').classList.add('hidden');
+            confirmCallback = null;
+        }
+
+        function showToast(message, icon = 'check-circle', color = 'sky') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            if (!toast || !toastMsg || !toastIcon) return;
+            
+            toastMsg.innerText = message;
+            toastIcon.setAttribute('data-lucide', icon);
+            toastIcon.className = `w-5 h-5 text-${color}-500`;
+            
+            toast.classList.remove('hidden');
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function updateDateDisplay() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const el = document.getElementById('current-date-display');
+            if (el) el.innerText = new Date().toLocaleDateString('tr-TR', options);
         }
 
         // Global Bindings Mapping
@@ -2696,9 +2668,7 @@
             saveMT5Trades,
             toggleQuickTF,
             toggleSetupItem,
-            toggleEntryItem,
-            renderSetupItemButtons,
-            renderEntryItemButtons
+            toggleEntryItem
         };
 
         Object.keys(globalFunctions).forEach(key => {
