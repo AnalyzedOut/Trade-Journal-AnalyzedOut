@@ -765,27 +765,143 @@
 
     <!-- MT5 Review Modal -->
     <div id="mt5-review-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[150] hidden flex items-center justify-center p-6">
-        <div class="bg-slate-900 w-full max-w-4xl max-h-[90vh] rounded-3xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div class="bg-slate-900 w-full max-w-5xl max-h-[92vh] rounded-3xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
             <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/20">
                 <div>
                     <h3 class="text-xl font-bold text-white">İşlemleri Onayla</h3>
-                    <p class="text-xs text-slate-500 mt-1">Lütfen her işlem için bir Setup seçin ve rakamları kontrol edin.</p>
+                    <p class="text-xs text-slate-500 mt-1">Lütfen her işlem için parametreleri kontrol edin ve onaylayın.</p>
                 </div>
                 <button onclick="closeMT5Review()" class="p-2 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
             </div>
-            <div class="p-6 overflow-y-auto flex-grow bg-slate-900 scrollbar-hide">
-                <table class="w-full text-left text-sm">
-                    <thead class="text-slate-500 uppercase text-[10px] font-bold border-b border-slate-800">
-                        <tr>
-                            <th class="pb-4">Zaman</th>
-                            <th class="pb-4">Tip</th>
-                            <th class="pb-4">Lot</th>
-                            <th class="pb-4">Kar/Zarar ($)</th>
-                            <th class="pb-4">Setup Seç</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mt5-review-body" class="divide-y divide-slate-800/50"></tbody>
-                </table>
+            
+            <!-- Bulk Apply Panel -->
+            <div class="bg-slate-950/40 p-5 border-b border-slate-800 space-y-3">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-2">
+                    <i data-lucide="sliders" class="w-4 h-4 text-sky-500"></i>
+                    <span>Toplu Uygula (Seçilenleri Tüm İşlemlere Tanımla)</span>
+                </h4>
+                <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-2">
+                    <!-- Setup -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Setup</label>
+                        <select id="bulk-setup" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="Hislerim">Hislerim</option>
+                        </select>
+                    </div>
+                    <!-- Psychology -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Psikoloji</label>
+                        <select id="bulk-psych" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="Patient">Patient</option>
+                            <option value="Discipline">Discipline</option>
+                            <option value="Perfect Execution">Perfect Execution</option>
+                            <option value="FOMO">FOMO</option>
+                            <option value="Revenge Trade">Revenge Trade</option>
+                            <option value="Fear">Fear</option>
+                            <option value="Greed">Greed</option>
+                            <option value="Overconfidence">Overconfidence</option>
+                            <option value="Early Exit">Early Exit</option>
+                            <option value="Late Entry">Late Entry</option>
+                        </select>
+                    </div>
+                    <!-- Session -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Seans</label>
+                        <select id="bulk-session" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="Asia">Asia</option>
+                            <option value="London">London</option>
+                            <option value="New York">New York</option>
+                            <option value="Kill Zone">Kill Zone</option>
+                        </select>
+                    </div>
+                    <!-- Killzone -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Killzone</label>
+                        <select id="bulk-killzone" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="Frankfurt">Frankfurt</option>
+                            <option value="London Open">London Open</option>
+                            <option value="NY Open">NY Open</option>
+                            <option value="NY PM">NY PM</option>
+                            <option value="London Close">London Close</option>
+                            <option value="Outside Killzone">Outside Killzone</option>
+                        </select>
+                    </div>
+                    <!-- Exit Reason -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Çıkış Sebebi</label>
+                        <select id="bulk-exit" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="TP">TP</option>
+                            <option value="SL">SL</option>
+                            <option value="Manuel">Manuel</option>
+                        </select>
+                    </div>
+                    <!-- Bias -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Bias</label>
+                        <select id="bulk-bias" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="1H">1H</option>
+                            <option value="4H">4H</option>
+                            <option value="Both">1H & 4H</option>
+                            <option value="None">Hiçbiri</option>
+                        </select>
+                    </div>
+                    <!-- Setup TF -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Setup TF</label>
+                        <select id="bulk-setup-tf" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="15M">15M</option>
+                            <option value="5M">5M</option>
+                            <option value="Both">15M & 5M</option>
+                            <option value="None">Hiçbiri</option>
+                        </select>
+                    </div>
+                    <!-- Entry TF -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Entry TF</label>
+                        <select id="bulk-entry-tf" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="1M">1M</option>
+                            <option value="5M">5M</option>
+                            <option value="Both">1M & 5M</option>
+                            <option value="None">Hiçbiri</option>
+                        </select>
+                    </div>
+                    <!-- Entry Trigger -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Entry Trig</label>
+                        <select id="bulk-entry-trigger" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="FVG">FVG</option>
+                            <option value="CISD">CISD</option>
+                            <option value="OB">OB</option>
+                            <option value="SMT">SMT</option>
+                            <option value="MSS">MSS</option>
+                            <option value="BOS">BOS</option>
+                            <option value="Liquidity Sweep">Liquidity Sweep</option>
+                        </select>
+                    </div>
+                    <!-- R (%) -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">R (%)</label>
+                        <input type="number" id="bulk-r" step="0.01" placeholder="1.00" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                    </div>
+                </div>
+                <div class="flex justify-end pt-1">
+                    <button onclick="applyBulkToPending()" type="button" class="bg-sky-600 text-[10px] px-3 py-1 rounded-lg font-bold hover:bg-sky-700 text-white transition-all shadow">
+                        Seçilenleri Toplu Uygula
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-grow bg-slate-900 scrollbar-hide" id="mt5-review-container">
+                <div id="mt5-review-body" class="space-y-4"></div>
             </div>
             <div class="p-6 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center">
                 <span id="mt5-total-info" class="text-sm font-medium text-slate-400"></span>
@@ -1431,6 +1547,16 @@
             });
         }
 
+        // Seans Öneri Yardımcısı
+        function getSuggestedSession(timeStr) {
+            if (!timeStr) return '';
+            const [h, min] = timeStr.split(':').map(Number);
+            if (h >= 0 && h < 8) return 'Asia';
+            if (h >= 8 && h < 14) return 'London';
+            if (h >= 14 && h < 22) return 'New York';
+            return 'Kill Zone';
+        }
+
         function parseMT5Text(rawText) {
             const lines = rawText.split('\n');
             pendingMT5Trades = [];
@@ -1454,7 +1580,15 @@
                             type: actionMatch[1].toLowerCase() === 'buy' ? 'Long' : 'Short',
                             lot: parseFloat(actionMatch[2]) || 0.01,
                             setup: { timeframes: [], items: ['Hislerim'] },
+                            entry: { timeframes: [], items: [] },
+                            bias: { "1H": false, "4H": false },
+                            quickTimeframe: { "1M": false, "5M": false, "15M": false, "1H": false, "4H": false },
                             exitReason: 'TP',
+                            rPercent: 1.00,
+                            rr: '-',
+                            session: '',
+                            killzone: 'Outside Killzone',
+                            psychology: [],
                             notes: 'MT5 Otomatik Yükleme',
                             date: toLocalDateStr(new Date()),
                             time: toLocalTimeStr(new Date())
@@ -1471,6 +1605,15 @@
                 const pnlMatch = cleanLine.match(pnlPattern);
                 if (pnlMatch && currentTrade && !currentTrade.pnl) {
                     currentTrade.pnl = parseFloat(pnlMatch[1]);
+                    
+                    // Otomatik doldurma ve Killzone hesaplama
+                    currentTrade.killzone = getKillzoneForDateTime(currentTrade.date, currentTrade.time);
+                    currentTrade.session = getSuggestedSession(currentTrade.time);
+                    if (balance > 0) {
+                        const riskAmount = balance * (1 / 100);
+                        currentTrade.rr = (currentTrade.pnl / riskAmount).toFixed(1);
+                    }
+
                     pendingMT5Trades.push({...currentTrade});
                     currentTrade = null;
                 }
@@ -1483,37 +1626,428 @@
             }
         }
 
+        // Onaylama Ekranı Kart Yönetimi ve Renderlama
         function showMT5Review() {
             const modal = document.getElementById('mt5-review-modal');
+            if (!modal) return;
+            
+            // Toplu uygulama menüsüne dynamic setupları bağlama
+            const bulkSetup = document.getElementById('bulk-setup');
+            if (bulkSetup) {
+                bulkSetup.innerHTML = '<option value="">-- Değiştirme --</option><option value="Hislerim">Hislerim</option>' + 
+                    entryTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+            }
+
+            renderPendingTrades();
+            modal.classList.remove('hidden');
+        }
+
+        function renderPendingTrades() {
             const body = document.getElementById('mt5-review-body');
-            const info = document.getElementById('mt5-total-info');
-            if (!modal || !body) return;
+            if (!body) return;
             body.innerHTML = '';
 
             pendingMT5Trades.forEach((trade, index) => {
-                const tr = document.createElement('tr');
-                tr.className = 'border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors';
-                tr.innerHTML = `
-                    <td class="py-4 text-slate-400 text-xs">${trade.date}<br><span class="text-slate-500">${trade.time || ''}</span></td>
-                    <td class="py-4"><span class="px-2 py-1 rounded text-[10px] font-bold ${trade.type === 'Long' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-rose-900/30 text-rose-400'}">${trade.type}</span></td>
-                    <td class="py-4 text-slate-300 font-bold">${trade.lot}</td>
-                    <td class="py-4">
-                        <input type="number" step="0.01" value="${trade.pnl}" onchange="updatePendingPnL(${index}, this.value)" 
-                               class="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24 text-sm font-bold ${trade.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                    </td>
-                    <td class="py-4">
-                        <select onchange="updatePendingSetup(${index}, this.value)" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs w-36 outline-none text-slate-200">
-                            ${entryTypes.map(t => `<option value="${t}">${t}</option>`).join('')}
-                            <option value="Hislerim" selected>Hislerim</option>
-                        </select>
-                    </td>
-                `;
-                body.appendChild(tr);
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800/30 p-5 rounded-2xl border border-slate-800 space-y-4 relative';
+                
+                // Setups dynamic loading
+                const setupsHtml = ['Hislerim', ...entryTypes].map(setup => {
+                    const isSelected = trade.setup?.items?.includes(setup);
+                    return `
+                        <button type="button" onclick="togglePendingArrayValue(${index}, 'setup', 'items', '${setup}')" class="px-2 py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
+                            ${setup}
+                        </button>
+                    `;
+                }).join('');
+
+                const psychsHtml = psychologyList.map(psych => {
+                    const isSelected = trade.psychology?.includes(psych);
+                    return `
+                        <button type="button" onclick="togglePendingPsychologyValue(${index}, '${psych}')" class="px-2 py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
+                            ${psych}
+                        </button>
+                    `;
+                }).join('');
+
+                const triggersHtml = ['FVG', 'CISD', 'OB', 'SMT', 'MSS', 'BOS', 'Liquidity Sweep'].map(trigger => {
+                    const isSelected = trade.entry?.items?.includes(trigger);
+                    return `
+                        <button type="button" onclick="togglePendingArrayValue(${index}, 'entry', 'items', '${trigger}')" class="px-2 py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
+                            ${trigger}
+                        </button>
+                    `;
+                }).join('');
+
+                card.innerHTML = `
+                    <!-- Header with basic info -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-2 border-b border-slate-800 gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-sm font-bold text-slate-200">İşlem #${index + 1}</span>
+                            <input type="text" value="${trade.symbol}" oninput="updatePendingField(${index}, 'symbol', this.value)" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-bold w-20 text-center text-white">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${trade.type === 'Long' ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' : 'bg-rose-950 text-rose-400 border border-rose-500/30'}">
+                                ${trade.type}
+                            </span>
+                            <button onclick="togglePendingType(${index})" class="text-[10px] text-sky-400 hover:underline">Tipi Değiştir</button>
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs text-slate-400 w-full sm:w-auto justify-between sm:justify-end">
+                            <div class="flex space-x-1">
+                                <input type="date" value="${trade.date}" onchange="updatePendingField(${index}, 'date', this.value); autoSuggestPendingValues(${index})" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300">
+                                <input type="time" value="${trade.time ? trade.time.substring(0,5) : '12:00'}" onchange="updatePendingField(${index}, 'time', this.value); autoSuggestPendingValues(${index})" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300">
+                            </div>
+                            <button onclick="removePendingTrade(${index})" class="p-1 hover:text-rose-500 transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4 text-slate-500 hover:text-rose-400"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Parameters Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                        <!-- Lot -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Lot</label>
+                            <input type="number" step="0.01" value="${trade.lot}" oninput="updatePendingField(${index}, 'lot', parseFloat(this.value) || 0)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none font-semibold">
+                        </div>
+                        <!-- PnL -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">PnL ($)</label>
+                            <input type="number" step="0.01" value="${trade.pnl}" oninput="updatePendingField(${index}, 'pnl', parseFloat(this.value) || 0); recalculatePendingRR(${index})" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none font-semibold ${trade.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                        </div>
+                        <!-- R (%) -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">R (%)</label>
+                            <input type="number" step="0.01" value="${trade.rPercent || 1.00}" oninput="updatePendingField(${index}, 'rPercent', parseFloat(this.value) || 0); recalculatePendingRR(${index})" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none font-semibold text-slate-400">
+                        </div>
+                        <!-- Calculated RR Display -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">RR</label>
+                            <div class="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-2 py-1.5 text-xs font-semibold text-sky-400 flex items-center justify-center h-[34px]">
+                                ${trade.rr || '-'}
+                            </div>
+                        </div>
+                        <!-- Session -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Seans</label>
+                            <select onchange="updatePendingField(${index}, 'session', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none">
+                                <option value="" ${!trade.session ? 'selected' : ''}>Seçilmedi</option>
+                                <option value="Asia" ${trade.session === 'Asia' ? 'selected' : ''}>Asia</option>
+                                <option value="London" ${trade.session === 'London' ? 'selected' : ''}>London</option>
+                                <option value="New York" ${trade.session === 'New York' ? 'selected' : ''}>New York</option>
+                                <option value="Kill Zone" ${trade.session === 'Kill Zone' ? 'selected' : ''}>Kill Zone</option>
+                            </select>
+                        </div>
+                        <!-- Killzone -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Killzone</label>
+                            <select onchange="updatePendingField(${index}, 'killzone', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none">
+                                <option value="Outside Killzone" ${trade.killzone === 'Outside Killzone' ? 'selected' : ''}>Outside Killzone</option>
+                                <option value="Frankfurt" ${trade.killzone === 'Frankfurt' ? 'selected' : ''}>Frankfurt</option>
+                                <option value="London Open" ${trade.killzone === 'London Open' ? 'selected' : ''}>London Open</option>
+                                <option value="NY Open" ${trade.killzone === 'NY Open' ? 'selected' : ''}>NY Open</option>
+                                <option value="NY PM" ${trade.killzone === 'NY PM' ? 'selected' : ''}>NY PM</option>
+                                <option value="London Close" ${trade.killzone === 'London Close' ? 'selected' : ''}>London Close</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Structural Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Checkbox structures: Bias, Setup TF, Entry TF -->
+                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Bias:</span>
+                                <div class="flex space-x-3 text-xs">
+                                    <label class="flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" ${trade.bias?.['1H'] ? 'checked' : ''} onchange="updatePendingCheckbox(${index}, 'bias', '1H', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                                        <span>1H</span>
+                                    </label>
+                                    <label class="flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" ${trade.bias?.['4H'] ? 'checked' : ''} onchange="updatePendingCheckbox(${index}, 'bias', '4H', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                                        <span>4H</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Setup TF:</span>
+                                <div class="flex space-x-3 text-xs">
+                                    <label class="flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" ${trade.setup?.timeframes?.includes('15M') ? 'checked' : ''} onchange="updatePendingArrayField(${index}, 'setup', 'timeframes', '15M', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                                        <span>15M</span>
+                                    </label>
+                                    <label class="flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" ${trade.setup?.timeframes?.includes('5M') ? 'checked' : ''} onchange="updatePendingArrayField(${index}, 'setup', 'timeframes', '5M', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                                        <span>5M</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Entry TF:</span>
+                                <div class="flex space-x-3 text-xs">
+                                    <label class="flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" ${trade.entry?.timeframes?.includes('1M') ? 'checked' : ''} onchange="updatePendingArrayField(${index}, 'entry', 'timeframes', '1M', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                                        <span>1M</span>
+                                    </label>
+                                    <label class="flex items-center space-x-1 cursor-pointer">
+                                        <input type="checkbox" ${trade.entry?.timeframes?.includes('5M') ? 'checked' : ''} onchange="updatePendingArrayField(${index}, 'entry', 'timeframes', '5M', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                                        <span>5M</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Setup Items -->
+                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Setups (Çoklu Seçim)</label>
+                            <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
+                                ${setupsHtml}
+                            </div>
+                        </div>
+
+                        <!-- Psychology -->
+                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Psikoloji (Çoklu Seçim)</label>
+                            <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
+                                ${psychsHtml}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Entry Trigger & Exit Reason / Notes row -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 text-xs">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Entry Trigger (Çoklu Seçim)</label>
+                            <div class="flex flex-wrap gap-1">
+                                ${triggersHtml}
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 text-xs flex flex-col justify-between gap-1">
+                            <span class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Çıkış Sebebi</span>
+                            <div class="grid grid-cols-3 gap-1">
+                                ${['TP', 'Manuel', 'SL'].map(reason => {
+                                    const isSelected = trade.exitReason === reason;
+                                    return `
+                                        <button type="button" onclick="updatePendingField(${index}, 'exitReason', '${reason}')" class="py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
+                                            ${reason}
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 text-xs flex flex-col justify-between">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Notlar</label>
+                                <input type="text" value="${trade.notes || ''}" oninput="updatePendingField(${index}, 'notes', this.value)" placeholder="Örn: MT5 Otomatik Yükleme..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 outline-none mb-2">
+                            </div>
+                            <div class="flex space-x-1">
+                                ${['1M', '5M', '15M', '1H', '4H'].map(tf => {
+                                    const isSelected = trade.quickTimeframe?.[tf];
+                                    return `
+                                        <button type="button" onclick="updatePendingCheckbox(${index}, 'quickTimeframe', '${tf}', ${!isSelected})" class="flex-1 py-0.5 rounded text-[9px] font-medium border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
+                                            ${tf}
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+            `;
+            body.appendChild(card);
             });
 
+            const info = document.getElementById('mt5-total-info');
             if (info) info.innerText = `Toplam ${pendingMT5Trades.length} yeni işlem bulundu.`;
-            modal.classList.remove('hidden');
             lucide.createIcons();
+        }
+
+        // --- DYNAMIC INTERACTIONS FOR PENDING MODAL ---
+        function autoSuggestPendingValues(index) {
+            const trade = pendingMT5Trades[index];
+            if (!trade) return;
+            if (trade.date && trade.time) {
+                trade.killzone = getKillzoneForDateTime(trade.date, trade.time);
+            }
+            if (trade.time) {
+                trade.session = getSuggestedSession(trade.time);
+            }
+            renderPendingTrades();
+        }
+
+        function recalculatePendingRR(index) {
+            const trade = pendingMT5Trades[index];
+            if (!trade) return;
+            const pnl = parseFloat(trade.pnl) || 0;
+            const rPercent = parseFloat(trade.rPercent) || 1.00;
+            if (balance > 0 && rPercent > 0) {
+                const riskAmount = balance * (rPercent / 100);
+                trade.rr = (pnl / riskAmount).toFixed(1);
+            } else {
+                trade.rr = '-';
+            }
+            renderPendingTrades();
+        }
+
+        function updatePendingField(index, field, value) {
+            if (pendingMT5Trades[index]) {
+                pendingMT5Trades[index][field] = value;
+                if (field === 'pnl' || field === 'rPercent') {
+                    recalculatePendingRR(index);
+                } else {
+                    renderPendingTrades();
+                }
+            }
+        }
+
+        function togglePendingType(index) {
+            if (pendingMT5Trades[index]) {
+                pendingMT5Trades[index].type = pendingMT5Trades[index].type === 'Long' ? 'Short' : 'Long';
+                renderPendingTrades();
+            }
+        }
+
+        function updatePendingCheckbox(index, parentField, field, value) {
+            if (pendingMT5Trades[index]) {
+                if (!pendingMT5Trades[index][parentField]) {
+                    pendingMT5Trades[index][parentField] = {};
+                }
+                pendingMT5Trades[index][parentField][field] = value;
+                renderPendingTrades();
+            }
+        }
+
+        function updatePendingArrayField(index, parentField, arrayField, value, isChecked) {
+            if (pendingMT5Trades[index]) {
+                if (!pendingMT5Trades[index][parentField]) {
+                    pendingMT5Trades[index][parentField] = {};
+                }
+                if (!pendingMT5Trades[index][parentField][arrayField]) {
+                    pendingMT5Trades[index][parentField][arrayField] = [];
+                }
+                let arr = pendingMT5Trades[index][parentField][arrayField];
+                if (isChecked) {
+                    if (!arr.includes(value)) arr.push(value);
+                } else {
+                    pendingMT5Trades[index][parentField][arrayField] = arr.filter(x => x !== value);
+                }
+                renderPendingTrades();
+            }
+        }
+
+        function togglePendingArrayValue(index, parentField, arrayField, value) {
+            if (pendingMT5Trades[index]) {
+                if (!pendingMT5Trades[index][parentField]) {
+                    pendingMT5Trades[index][parentField] = {};
+                }
+                if (!pendingMT5Trades[index][parentField][arrayField]) {
+                    pendingMT5Trades[index][parentField][arrayField] = [];
+                }
+                let arr = pendingMT5Trades[index][parentField][arrayField];
+                if (arr.includes(value)) {
+                    pendingMT5Trades[index][parentField][arrayField] = arr.filter(x => x !== value);
+                } else {
+                    arr.push(value);
+                }
+                renderPendingTrades();
+            }
+        }
+
+        function togglePendingPsychologyValue(index, value) {
+            if (pendingMT5Trades[index]) {
+                if (!pendingMT5Trades[index].psychology) {
+                    pendingMT5Trades[index].psychology = [];
+                }
+                let arr = pendingMT5Trades[index].psychology;
+                if (arr.includes(value)) {
+                    pendingMT5Trades[index].psychology = arr.filter(x => x !== value);
+                } else {
+                    arr.push(value);
+                }
+                renderPendingTrades();
+            }
+        }
+
+        function removePendingTrade(index) {
+            pendingMT5Trades.splice(index, 1);
+            if (pendingMT5Trades.length === 0) {
+                closeMT5Review();
+            } else {
+                renderPendingTrades();
+            }
+        }
+
+        // --- BULK APPLY ENGINE ---
+        function applyBulkToPending() {
+            const setupVal = document.getElementById('bulk-setup').value;
+            const psychVal = document.getElementById('bulk-psych').value;
+            const sessionVal = document.getElementById('bulk-session').value;
+            const killzoneVal = document.getElementById('bulk-killzone').value;
+            const exitVal = document.getElementById('bulk-exit').value;
+            const biasVal = document.getElementById('bulk-bias').value;
+            const setupTfVal = document.getElementById('bulk-setup-tf').value;
+            const entryTfVal = document.getElementById('bulk-entry-tf').value;
+            const triggerVal = document.getElementById('bulk-entry-trigger').value;
+            const rVal = parseFloat(document.getElementById('bulk-r').value);
+
+            pendingMT5Trades.forEach((trade) => {
+                if (setupVal) {
+                    if (!trade.setup) trade.setup = { timeframes: [], items: [] };
+                    trade.setup.items = [setupVal];
+                }
+                if (psychVal) {
+                    trade.psychology = [psychVal];
+                }
+                if (sessionVal) {
+                    trade.session = sessionVal;
+                }
+                if (killzoneVal) {
+                    trade.killzone = killzoneVal;
+                }
+                if (exitVal) {
+                    trade.exitReason = exitVal;
+                }
+                if (biasVal) {
+                    if (!trade.bias) trade.bias = { "1H": false, "4H": false };
+                    if (biasVal === '1H') { trade.bias['1H'] = true; trade.bias['4H'] = false; }
+                    else if (biasVal === '4H') { trade.bias['1H'] = false; trade.bias['4H'] = true; }
+                    else if (biasVal === 'Both') { trade.bias['1H'] = true; trade.bias['4H'] = true; }
+                    else if (biasVal === 'None') { trade.bias['1H'] = false; trade.bias['4H'] = false; }
+                }
+                if (setupTfVal) {
+                    if (!trade.setup) trade.setup = { timeframes: [], items: [] };
+                    if (setupTfVal === '15M') trade.setup.timeframes = ['15M'];
+                    else if (setupTfVal === '5M') trade.setup.timeframes = ['5M'];
+                    else if (setupTfVal === 'Both') trade.setup.timeframes = ['15M', '5M'];
+                    else if (setupTfVal === 'None') trade.setup.timeframes = [];
+                }
+                if (entryTfVal) {
+                    if (!trade.entry) trade.entry = { timeframes: [], items: [] };
+                    if (entryTfVal === '1M') trade.entry.timeframes = ['1M'];
+                    else if (entryTfVal === '5M') trade.entry.timeframes = ['5M'];
+                    else if (entryTfVal === 'Both') trade.entry.timeframes = ['1M', '5M'];
+                    else if (entryTfVal === 'None') trade.entry.timeframes = [];
+                }
+                if (triggerVal) {
+                    if (!trade.entry) trade.entry = { timeframes: [], items: [] };
+                    trade.entry.items = [triggerVal];
+                }
+                if (!isNaN(rVal) && rVal > 0) {
+                    trade.rPercent = rVal;
+                }
+                
+                // Recalculate RR
+                const pnl = parseFloat(trade.pnl) || 0;
+                const rPercent = parseFloat(trade.rPercent) || 1.00;
+                if (balance > 0 && rPercent > 0) {
+                    const riskAmount = balance * (rPercent / 100);
+                    trade.rr = (pnl / riskAmount).toFixed(1);
+                } else {
+                    trade.rr = '-';
+                }
+            });
+
+            renderPendingTrades();
+            showToast("Seçilen toplu değişiklikler tanımlandı!", "check-circle", "emerald");
         }
 
         function updatePendingPnL(index, val) { 
@@ -1693,11 +2227,11 @@
 
         function renderAccounts() {
             const activeList = document.getElementById('active-accounts-list');
-            const passiveList = document.getElementById('passive-accounts-list');
-            if (!activeList || !passiveList) return;
+            const textPassiveList = document.getElementById('passive-accounts-list');
+            if (!activeList || !textPassiveList) return;
             
             activeList.innerHTML = '';
-            passiveList.innerHTML = '';
+            textPassiveList.innerHTML = '';
 
             accounts.forEach(acc => {
                 const isCurrent = acc.id === currentAccountId;
@@ -1753,15 +2287,15 @@
                 if (acc.isActive) {
                     activeList.appendChild(card);
                 } else {
-                    passiveList.appendChild(card);
+                    textPassiveList.appendChild(card);
                 }
             });
 
             if (activeList.children.length === 0) {
                 activeList.innerHTML = '<div class="col-span-full py-8 text-center text-slate-500 italic">Aktif hesap bulunamadı.</div>';
             }
-            if (passiveList.children.length === 0) {
-                passiveList.innerHTML = '<div class="col-span-full py-8 text-center text-slate-500 italic">Pasif hesap bulunamadı.</div>';
+            if (textPassiveList.children.length === 0) {
+                textPassiveList.innerHTML = '<div class="col-span-full py-8 text-center text-slate-500 italic">Pasif hesap bulunamadı.</div>';
             }
 
             lucide.createIcons();
@@ -2260,12 +2794,12 @@
                 selected = selected.filter(o => o !== tf);
                 btn.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700');
                 btn.classList.remove('bg-sky-600', 'border-sky-600', 'text-white');
-                checkbox.className = "w-3 h-3 rounded border border-slate-600 flex items-center justify-center text-[8px] text-transparent bg-slate-900";
+                checkbox.className = "w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[8px] text-transparent bg-slate-900";
             } else {
                 selected.push(tf);
                 btn.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700');
                 btn.classList.add('bg-sky-600', 'border-sky-600', 'text-white');
-                checkbox.className = "w-3 h-3 rounded border border-sky-600 flex items-center justify-center text-[8px] text-white bg-sky-500";
+                checkbox.className = "w-3.5 h-3.5 rounded border border-sky-600 flex items-center justify-center text-[8px] text-white bg-sky-500";
             }
             hiddenInput.value = selected.join(',');
         }
@@ -4174,7 +4708,7 @@
             window.addEventListener('DOMContentLoaded', initApp);
         }
 
-        // Global Bindings Mapping (Corrected without undefined references)
+        // Global Bindings Mapping
         const globalFunctions = {
             checkLockPassword,
             toggleMobileSidebar,
@@ -4221,7 +4755,20 @@
             toggleSetupTF,
             toggleSetupItem,
             toggleEntryTF,
-            toggleEntryItem
+            toggleEntryItem,
+            
+            // Onaylama Ekranı & Toplu Uygulama Fonksiyon Bağlantıları
+            autoSuggestPendingValues,
+            recalculatePendingRR,
+            updatePendingField,
+            togglePendingType,
+            updatePendingCheckbox,
+            updatePendingArrayField,
+            togglePendingArrayValue,
+            togglePendingPsychologyValue,
+            removePendingTrade,
+            applyBulkToPending,
+            getSuggestedSession
         };
 
         Object.keys(globalFunctions).forEach(key => {
