@@ -905,7 +905,7 @@
                         <input type="hidden" id="trade-quick-timeframe" value="">
                     </div>
 
-                    <!-- Bias Selection -->
+                    <!-- Bias Selection (1H and 4H) -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Bias (Çoklu Seçim)</label>
                         <div class="flex space-x-2">
@@ -1019,6 +1019,7 @@
                         <input type="hidden" id="trade-psychology" value="">
                     </div>
 
+                    <!-- Legacy selector hidden -->
                     <select id="trade-entry-type" class="hidden"></select>
 
                     <div>
@@ -2947,9 +2948,8 @@
 
             const symbolStats = {};
             trades.forEach(t => {
-                const sym = t.symbol || 'XAUUSD';
-                if (!symbolStats[sym]) symbolStats[sym] = 0;
-                symbolStats[sym] += t.pnl;
+                if (!symbolStats[t.symbol]) symbolStats[t.symbol] = 0;
+                symbolStats[t.symbol] += t.pnl;
             });
 
             const sortedSymbols = Object.entries(symbolStats).sort((a, b) => b[1] - a[1]);
@@ -4174,7 +4174,7 @@
             window.addEventListener('DOMContentLoaded', initApp);
         }
 
-        // Global Bindings Mapping
+        // Global Bindings Mapping (Corrected without undefined references)
         const globalFunctions = {
             checkLockPassword,
             toggleMobileSidebar,
@@ -4191,7 +4191,6 @@
             closeTradeModal,
             handleTradeSubmit,
             setTradeType,
-            setBias,
             updateKillzone,
             updateRRDisplay,
             setExitReason,
@@ -4210,7 +4209,6 @@
             editTrade,
             deleteTrade,
             selectAccount,
-            toggleSetup,
             setSession,
             togglePsychology,
             processMT5Screenshot,
