@@ -728,7 +728,7 @@
                         </select>
                     </div>
 
-                    <!-- Timeframes Block: Bias, Setup TF, Entry TF (Strictly isolated as requested) -->
+                    <!-- Timeframes Block: Bias, Setup TF, Entry TF -->
                     <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80 space-y-4">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Timeframe Yönetimi</h4>
                         
@@ -768,7 +768,7 @@
                                 <span>1M</span>
                             </button>
                             <button type="button" onclick="toggleEntryTF('5M')" id="btn-entryTF-5M" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
-                                <span id="checkbox-entryTF-5M" class="w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[9px] text-transparent bg-slate-900">✓</span>
+                                <span id="checkbox-entryTF-5M" class="w-3.5 h-3.5 rounded border border-sky-600 flex items-center justify-center text-[9px] text-white bg-sky-500">✓</span>
                                 <span>5M</span>
                             </button>
                             <input type="hidden" id="trade-entry-timeframes" value="">
@@ -784,7 +784,7 @@
                         <input type="hidden" id="trade-setup-items" value="">
                     </div>
 
-                    <!-- Clean Entry Trigger (Triggers only, strictly as requested) -->
+                    <!-- Clean Entry Trigger -->
                     <div class="space-y-3 bg-slate-950/30 p-4 rounded-2xl border border-slate-800/80">
                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Entry Trigger (Çoklu Seçim)</label>
                         <div class="grid grid-cols-3 gap-2" id="entry-items-container">
@@ -816,7 +816,7 @@
                     <!-- Standard legacy hidden inputs -->
                     <select id="trade-entry-type" class="hidden"></select>
 
-                    <!-- Notes field (standard clean textarea) -->
+                    <!-- Notes field -->
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Notlar</label>
                         <textarea id="trade-notes" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none resize-none transition-all" placeholder="İşlem notları..."></textarea>
@@ -1219,8 +1219,7 @@
         }
 
         function parseMT5Text(rawText) {
-            const lines = rawText.split('
-');
+            const lines = rawText.split('\n');
             pendingMT5Trades = [];
 
             const symbolPattern = /XAUUSD/i;
@@ -1530,6 +1529,7 @@
             }
         }
 
+        // Checkbox alignment handlers
         function updatePendingCheckbox(index, parentField, field, value) {
             if (pendingMT5Trades[index]) {
                 if (!pendingMT5Trades[index][parentField]) {
@@ -1681,6 +1681,7 @@
             if (modal) modal.classList.add('hidden'); 
         }
 
+        // Saving pending trades
         function saveMT5Trades() {
             if (!currentAccountId || pendingMT5Trades.length === 0) return;
             const migratedPending = pendingMT5Trades.map(t => migrateTrade(t));
@@ -1705,6 +1706,7 @@
             }
         }
 
+        // Unlocking Dashboard view
         function unlockApp() {
             document.getElementById('lock-screen').classList.add('hidden');
             updateDateDisplay();
