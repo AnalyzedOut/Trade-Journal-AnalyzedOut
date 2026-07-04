@@ -598,7 +598,7 @@
                             </div>
                             <div class="pt-4 border-t border-slate-800 space-y-4">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-slate-400">Ort. Kazanç / Kayıp (R:R)</span>
+                                    <span class="text-slate-400">Ort. Kazanan R:R Seviyesi</span>
                                     <span id="report-rr-ratio" class="font-bold text-sky-500">0.00</span>
                                 </div>
                                 <div class="flex justify-between items-center">
@@ -1369,6 +1369,21 @@
             }
             if (!t.psychology) t.psychology = [];
             return t;
+        }
+
+        // Realized RR Calculation Helper (Compatible with legacy data)
+        function getTradeRealizedRR(t, currentBalance) {
+            if (t.rr && t.rr !== '-') {
+                const parsed = parseFloat(t.rr);
+                if (!isNaN(parsed)) return parsed;
+            }
+            const bal = currentBalance > 0 ? currentBalance : 10000;
+            const rPercent = parseFloat(t.rPercent) || 1.0;
+            const riskAmount = bal * (rPercent / 100);
+            if (riskAmount > 0) {
+                return t.pnl / riskAmount;
+            }
+            return 0;
         }
 
         // Firebase Sync Initialize Routines
@@ -3371,38 +3386,191 @@
             return [];
         }
 
-        function renderInsights(profitFactor, winRate, rrRatio) {
+        // --- Gelişmiş, Tutarlı ve Profesyonel Risk Yönetim Yorum Motoru ---
+        function renderInsights(profitFactor, winRate, avgWinRR, netProfit, maxDD, totalTrades, avgWin, avgLoss, manualExitRate) {
             const insightsEl = document.getElementById('report-insights');
             if (!insightsEl) return;
             
+            const candidates = [];
+
+            // 1. İşlem Sayısı / Güvenilirlik Sınırı (Trade count under 10)
+            if (totalTrades < 10) {
+                candidates.push({
+                    id: 'low_sample',
+                    category: 'warning',
+                    title: 'Düşük Veri Güvenilirliği (İşlem Sayısı < 10)',
+                    message: `Şu an sistemde sadece ${totalTrades} adet işlem kaydı bulunmaktadır. Bu hacimdeki istatistiksel sonuçlar geçici tesadüflere veya piyasa döngüsünün anlık seyrine bağlı olabilir. Profesyonel ve tutarlı bir strateji haritası çıkarmak için en az 25-30 işlem kaydı biriktirmeniz önerilir.`,
+                    score: 100
+                });
+            }
+
+            // 2. Net Zarar Durumu (Negative Net Profit)
+            if (netProfit < 0) {
+                candidates.push({
+                    id: 'negative_profit',
+                    category: 'danger',
+                    title: 'Sermaye Aşınması & Net Zarar',
+                    message: `Hesabınız toplamda -$${Math.abs(netProfit).toFixed(2)} net zarar ile işlem görmektedir. Bu durum, mevcut modelin veya alınan risk parametrelerinin sermayeyi erittiğini göstermektedir. İşlem başına aldığınız R (%) miktarını derhal düşürmeli ve ana kurulumlarınız dışındaki işlemlerden uzak durmalısınız.`,
+                    score: 95
+                             });
+            }
+
+                    // 3. Profit Factor < 1.0 (Unprofitable)
+            if (profitFactor < 1.0 && totalTrades >= 5) {
+                candidates.push({
+                    id: 'low_pf',
+                    category: 'danger',
+                    title: 'Yetersiz Kâr Faktörü (Profit Factor < 1.0)',
+                    message: `Kâr faktörünüz ${profitFactor.toFixed(2)}. Her 1$ kayıp karşılığında 1$'dan daha az kâr üretiyorsunuz, yani sisteminiz kayıplarınızı telafi edemiyor. Stop-loss noktalarınızı daha titiz seçmeli veya hedef kâr mesafenizi büyütmelisiniz.`,
+                    score: 90
+                });
+            }
+
+            // 4. Expectancy < 0 (Negative Mathematical expectancy)
+            if (expectancy < 0 && totalTrades >= 5) {
+                candidates.push({
+                    id: 'negative_expectancy',
+                    category: 'danger',
+                    title: 'Negatif Matematiksel Beklenti',
+                    message: `İşlem başına matematiksel beklentiniz negatif (-$${Math.abs(expectancy).toFixed(2)}). Bu durum, yaptığınız her yeni işlemin istatistiksel olarak sizi zarara yaklaştırdığını gösterir. Giriş kriterlerinizde daha seçici (High Quality Setups) olmalısınız.`,
+                    score: 85
+                });
+            }
+
+            // 5. Penny Picker Trap (High Win Rate, Very Low RR)
+            if (winRate >= 0.70 && avgWinRR < 1.0 && totalTrades >= 5) {
+                candidates.push({
+                    id: 'penny_picker',
+                    category: 'warning',
+                    title: 'Penny-Picker Sendromu (Yüksek WR, Çok Düşük RR)',
+                    message: `Kazanma oranınız %${(winRate * 100).toFixed(0)} gibi çok yüksek bir seviyede olmasına rağmen, kazanan işlemlerinizin ortalama ödülü sadece ${avgWinRR.toFixed(1)}R. Küçük kazançları heyecanla erken realize ediyor, ancak stop işlemlerini sonuna kadar bekletiyor olabilirsiniz. Hedeflere sadık kalın.`,
+                    score: 80
+                });
+            }
+
+            // 6. Sniper Setup (Low Win Rate, High RR)
+            if (winRate < 0.35 && avgWinRR >= 2.5 && totalTrades >= 5) {
+                candidates.push({
+                    id: 'low_wr_high_rr',
+                    category: 'warning',
+                    title: 'Düşük Giriş İsabeti, Güçlü Ödül Oranı',
+                    message: `Kazanma oranınız %${(winRate * 100).toFixed(0)} ile düşük seyrediyor fakat kazandığınızda ortalama ${avgWinRR.toFixed(1)}R gibi yüksek bir getiri elde ediyorsunuz. Risk yönetimi yapınız mükemmel ancak çok fazla gereksiz işleme girip stop oluyorsunuz. Giriş yönünüzü (Bias) ve tetikleyicilerinizi iyileştirmelisiniz.`,
+                    score: 75
+                });
+            }
+
+            // 7. Extreme Drawdown (> 15%)
+            if (maxDD > 15) {
+                candidates.push({
+                    id: 'high_drawdown',
+                    category: 'danger',
+                    title: 'Tehlikeli Sermaye Çekilmesi (Max DD > %15)',
+                    message: `Hesabınız zirve noktasından %${maxDD.toFixed(1)} oranında gerilemiş. Bu seviyedeki çekilmeler genellikle üst üste gelen intikam işlemlerinden (Revenge Trading) veya aşırı lot riski almaktan kaynaklanır. İşlem başına riski acilen %0.5'e sabitleyin.`,
+                    score: 70
+                });
+            }
+
+            // 8. Negative Asymmetry (Average Loss > Average Win)
+            if (avgLoss > avgWin && totalTrades >= 5) {
+                candidates.push({
+                    id: 'negative_asymmetry',
+                    category: 'warning',
+                    title: 'Negatif Kazanç/Kayıp Oranı',
+                    message: `Ortalama kaybınız ($${avgLoss.toFixed(2)}), ortalama kazancınızdan ($${avgWin.toFixed(2)}) daha büyük. Kazanma oranınız yüksek olsa bile, bu asimetri sizi tek bir kötü günde iflasa götürebilir. Kayıpları planlandığı yerde kesmeyi (SL disiplini) öğrenmelisiniz.`,
+                    score: 65
+                });
+            }
+
+            // 9. Over-management / Manual Exits
+            if (manualExitRate > 0.40 && totalTrades >= 5) {
+                candidates.push({
+                    id: 'excessive_manual',
+                    category: 'warning',
+                    title: 'Yoğun Manuel Müdahale (Psikolojik Sabırsızlık)',
+                    message: `İşlemlerinizin %${(manualExitRate * 100).toFixed(0)} kadarını planlanan TP/SL noktalarına ulaşmadan manuel kapattınız. Bu durum piyasayı izlerken yaşadığınız korku ve sabırsızlığın göstergesidir. Lot miktarını azaltmayı ve işlemi başlattıktan sonra ekranı kapatmayı deneyin.`,
+                    score: 60
+                });
+            }
+
+            // 10. Golden Run (High PF, High WR, Low DD)
+            if (profitFactor >= 2.0 && winRate >= 0.55 && maxDD < 10 && totalTrades >= 10) {
+                candidates.push({
+                    id: 'golden_run',
+                    category: 'success',
+                    title: 'Üstün Sistem Verimliliği (Golden Run)',
+                    message: `Kâr faktörünüz ${profitFactor.toFixed(2)}, kazanma oranınız %${(winRate * 100).toFixed(0)} ve maksimum çekilmeniz sadece %${maxDD.toFixed(1)}. Mevcut sisteminiz kusursuz işliyor. En büyük riskiniz, bu kârlı serinin yarattığı aşırı güvenle (Overconfidence) disiplini terk etmektir. Plana sadık kalın.`,
+                    score: 55
+                });
+            }
+
+            // 11. Break-even Trader (Profit Factor 1.0 - 1.3)
+            if (netProfit >= 0 && profitFactor >= 1.0 && profitFactor < 1.3 && totalTrades >= 10) {
+                candidates.push({
+                    id: 'breakeven_trader',
+                    category: 'info',
+                    title: 'Sınırda Kârlılık (Optimizasyon Gereksinimi)',
+                    message: `Hesabınız başabaş noktasına yakın bir kârla seyrediyor (Profit Factor: ${profitFactor.toFixed(2)}). Gelişmiş Seans Analizi tablosundan en zararlı seansınızı inceleyin ve o saat dilimlerinde işlem yapmayı bırakarak verimliliği artırın.`,
+                    score: 45
+                });
+            }
+
+            // Sort candidates by score descending
+            candidates.sort((a, b) => b.score - a.score);
+
+            // Get top 3
+            const top3 = candidates.slice(0, 3);
+
+            // Render Top 3 as styled warning/success/info cards
             let html = '';
-            if (profitFactor >= 1.5) {
-                html += '<p class="text-emerald-400 font-semibold mb-2">✓ Güçlü Karlılık rasyosu!</p>';
-            } else if (profitFactor >= 1.0) {
-                html += '<p class="text-sky-400 font-semibold mb-2">⚠ Karlılık sınırda, risk yönetimini gözden geçirin.</p>';
-            } else {
-                html += '<p class="text-rose-400 font-semibold mb-2">✗ Negatif Karlılık! Stratejinizi revize etmeniz önerilir.</p>';
-            }
+            top3.forEach((ins, idx) => {
+                let borderColor = 'border-slate-800';
+                let textColor = 'text-slate-100';
+                let bgColor = 'bg-slate-900/50';
+                let indicatorColor = 'bg-slate-500';
 
-            if (winRate >= 0.5) {
-                html += `<p class="text-slate-300">Kazanma oranınız (%${(winRate * 100).toFixed(0)}) gayet iyi düzeyde. Psikolojinizi koruyarak devam edin.</p>`;
-            } else {
-                html += `<p class="text-slate-300">Kazanma oranınız (%${(winRate * 100).toFixed(0)}) düşük. Setup kalitenizi artırmayı hedefleyin.</p>`;
-            }
+                if (ins.category === 'danger') {
+                    borderColor = 'border-rose-500/20';
+                    textColor = 'text-rose-400';
+                    bgColor = 'bg-rose-950/20';
+                    indicatorColor = 'bg-rose-500';
+                } else if (ins.category === 'warning') {
+                    borderColor = 'border-amber-500/20';
+                    textColor = 'text-amber-400';
+                    bgColor = 'bg-amber-950/20';
+                    indicatorColor = 'bg-amber-500';
+                } else if (ins.category === 'success') {
+                    borderColor = 'border-emerald-500/20';
+                    textColor = 'text-emerald-400';
+                    bgColor = 'bg-emerald-950/20';
+                    indicatorColor = 'bg-emerald-500';
+                } else if (ins.category === 'info') {
+                    borderColor = 'border-sky-500/20';
+                    textColor = 'text-sky-400';
+                    bgColor = 'bg-sky-950/20';
+                    indicatorColor = 'bg-sky-500';
+                }
 
-            if (rrRatio >= 1.5) {
-                html += `<p class="text-slate-300 mt-2">Ortalama kazanç/kayıp oranınız (${rrRatio.toFixed(2)}) tatminkar. Risk ödül dengesini koruyorsunuz.</p>`;
-            } else {
-                html += `<p class="text-slate-300 mt-2">Ortalama kazanç/kayıp oranınız (${rrRatio.toFixed(2)}) zayıf. SL noktalarını daha disiplinli belirleyin.</p>`;
-            }
+                html += `
+                    <div class="p-4 rounded-2xl border ${borderColor} ${bgColor} flex flex-col space-y-1.5 transition-all hover:scale-[1.01] duration-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-2 h-2 rounded-full ${indicatorColor}"></span>
+                                <h5 class="font-bold text-sm ${textColor}">${ins.title}</h5>
+                            </div>
+                            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Öncelik #${idx + 1}</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">${ins.message}</p>
+                    </div>
+                `;
+            });
 
-            insightsEl.innerHTML = html;
+            insightsEl.innerHTML = html || '<p class="text-xs text-slate-500 italic">Analiz için yeterli veri kriteri karşılanmadı.</p>';
         }
 
         function renderAnalysis() {
             if (trades.length === 0) {
                 const reportElement = document.getElementById('report-insights');
-                if (reportElement) reportElement.innerHTML = '<p class="italic">Henüz analiz edilecek işlem bulunmuyor.</p>';
+                if (reportElement) reportElement.innerHTML = '<p class="italic text-slate-500">Henüz analiz edilecek işlem bulunmuyor.</p>';
                 
                 ['stat-best-session', 'stat-worst-session', 'stat-psych-mistake', 'stat-psych-positive',
                  'stat-bias-best-wr', 'stat-bias-worst-wr', 'stat-profitable-setup', 'stat-wr-setup', 'stat-used-setup'].forEach(id => {
@@ -3444,7 +3612,7 @@
             const losses = trades.filter(t => t.pnl < 0);
             const grossProfit = wins.reduce((sum, t) => sum + t.pnl, 0);
             const grossLoss = Math.abs(losses.reduce((sum, t) => sum + t.pnl, 0));
-            const profitFactor = grossLoss === 0 ? (grossProfit > 0 ? 99.9 : 0) : (grossProfit / grossLoss);
+            const profitFactor = grossLoss === 0 ? (grossProfit > 0 ? 99.99 : 0) : (grossProfit / grossLoss);
             
             document.getElementById('stat-profit-factor').innerText = profitFactor.toFixed(2);
             document.getElementById('stat-profit-factor').className = `text-3xl font-bold ${profitFactor >= 1.5 ? 'text-emerald-400' : (profitFactor >= 1 ? 'text-sky-500' : 'text-rose-400')}`;
@@ -3458,12 +3626,22 @@
             
             const expectancyEl = document.getElementById('report-expectancy-val');
             if (expectancyEl) {
-                expectancyEl.innerText = `$${expectancy.toFixed(2)}`;
+                expectancyEl.innerText = `${expectancy >= 0 ? '+' : ''}$${expectancy.toFixed(2)}`;
                 expectancyEl.className = `font-bold ${expectancy >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
             }
 
-            const rrRatio = avgLoss === 0 ? 0 : (avgWin / avgLoss);
-            document.getElementById('report-rr-ratio').innerText = rrRatio.toFixed(2);
+            // Average Realized RR of Winners
+            let totalWinRR = 0;
+            let winRRCount = 0;
+            wins.forEach(t => {
+                const rrVal = getTradeRealizedRR(t, balance);
+                if (rrVal > 0) {
+                    totalWinRR += rrVal;
+                    winRRCount++;
+                }
+            });
+            const avgWinRR = winRRCount > 0 ? (totalWinRR / winRRCount) : 0;
+            document.getElementById('report-rr-ratio').innerText = avgWinRR.toFixed(2);
 
             let maxWinStreak = 0; let maxLossStreak = 0;
             let currentWinStreak = 0; let currentLossStreak = 0;
@@ -3564,23 +3742,23 @@
             const biasWins = { '1H': 0, '4H': 0 };
             const biasCounts = { '1H': 0, '4H': 0 };
             trades.forEach(t => {
+                const activeBiases = [];
                 if (t.bias && typeof t.bias === 'object') {
-                    if (t.bias['1H']) {
-                        biasCounts['1H']++;
-                        if (t.pnl > 0) biasWins['1H']++;
-                    }
-                    if (t.bias['4H']) {
-                        biasCounts['4H']++;
-                        if (t.pnl > 0) biasWins['4H']++;
+                    if (t.bias['1H']) activeBiases.push('1H');
+                    if (t.bias['4H']) activeBiases.push('4H');
+                    if (activeBiases.length === 0 && t.bias.legacy) {
+                        activeBiases.push(t.bias.legacy);
                     }
                 } else if (typeof t.bias === 'string') {
-                    if (!biasCounts[t.bias]) {
-                        biasCounts[t.bias] = 0;
-                        biasWins[t.bias] = 0;
-                    }
-                    biasCounts[t.bias]++;
-                    if (t.pnl > 0) biasWins[t.bias]++;
+                    activeBiases.push(t.bias);
                 }
+
+                activeBiases.forEach(bias => {
+                    if (!biases[bias]) biases[bias] = { count: 0, wins: 0, pnl: 0 };
+                    biases[bias].count++;
+                    biases[bias].pnl += t.pnl;
+                    if (t.pnl > 0) biases[bias].wins++;
+                });
             });
 
             let highestWRBias = '-'; let maxBiasWR = -1;
@@ -3703,7 +3881,7 @@
             const psychWRContainer = document.getElementById('psychology-wr-list');
             if (psychWRContainer) psychWRContainer.innerHTML = psychologyWRHTML;
 
-            renderInsights(profitFactor, winRate, rrRatio);
+            // Draw charts
             drawEquityChart();
             drawSymbolChart(symbolStats);
             drawDayChart();
@@ -3715,6 +3893,23 @@
             renderBiasAccuracy();
             renderSessionPerformance();
             renderHeatmap();
+
+            // Unified, prioritized, non-contradicting insights rendering
+            let calculatedMaxDD = 0;
+            let cumulativeCap = balance > 0 ? balance : 10000;
+            let peakEquity = cumulativeCap;
+            const chronTrades = [...trades].sort((a, b) => safeParseDate(a.date) - safeParseDate(b.date));
+            chronTrades.forEach(t => {
+                cumulativeCap += t.pnl;
+                if (cumulativeCap > peakEquity) peakEquity = cumulativeCap;
+                const dd = peakEquity > 0 ? ((peakEquity - cumulativeCap) / peakEquity) * 100 : 0;
+                if (dd > calculatedMaxDD) calculatedMaxDD = dd;
+            });
+
+            const mExits = trades.filter(t => t.exitReason === 'Manuel').length;
+            const manualRate = totalTrades > 0 ? (mExits / totalTrades) : 0;
+
+            renderInsights(profitFactor, winRate, avgWinRR, netProfit, calculatedMaxDD, totalTrades, avgWin, avgLoss, manualRate);
         }
 
         function drawEquityChart() {
