@@ -46,8 +46,8 @@
         }
         .dark-input:focus {
             border-color: #0ea5e9;
-            ring: 2px;
-            ring-color: #0ea5e9;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.4);
         }
     </style>
 </head>
@@ -527,16 +527,16 @@
                         <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Psikoloji</label>
                         <select id="bulk-psych" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
                             <option value="">-- Değiştirme --</option>
-                            <option value="Patient">Patient</option>
-                            <option value="Discipline">Discipline</option>
-                            <option value="Perfect Execution">Perfect Execution</option>
-                            <option value="FOMO">FOMO</option>
-                            <option value="Revenge Trade">Revenge Trade</option>
-                            <option value="Fear">Fear</option>
-                            <option value="Greed">Greed</option>
-                            <option value="Overconfidence">Overconfidence</option>
-                            <option value="Early Exit">Early Exit</option>
-                            <option value="Late Entry">Late Entry</option>
+                            <option value="Patient">Sabır</option>
+                            <option value="Discipline">Disiplin</option>
+                            <option value="Perfect Execution">Kusursuz Uygulama</option>
+                            <option value="FOMO">FOMO (Fırsatı Kaçırma)</option>
+                            <option value="Revenge Trade">İntikam İşlemi</option>
+                            <option value="Fear">Korku</option>
+                            <option value="Greed">Açgözlülük</option>
+                            <option value="Overconfidence">Aşırı Güven</option>
+                            <option value="Early Exit">Erken Çıkış</option>
+                            <option value="Late Entry">Geç Giriş</option>
                         </select>
                     </div>
                     <!-- Killzone -->
@@ -933,6 +933,19 @@
             'Patient', 'Discipline', 'Perfect Execution', 'Early Exit', 'Late Entry'
         ];
 
+        const psychologyTranslations = {
+            'FOMO': 'FOMO (Fırsatı Kaçırma)',
+            'Revenge Trade': 'İntikam İşlemi',
+            'Fear': 'Korku',
+            'Greed': 'Açgözlülük',
+            'Overconfidence': 'Aşırı Güven',
+            'Patient': 'Sabır',
+            'Discipline': 'Disiplin',
+            'Perfect Execution': 'Kusursuz Uygulama',
+            'Early Exit': 'Erken Çıkış',
+            'Late Entry': 'Geç Giriş'
+        };
+
         // Connection Flag Tracker
         let accountsLoaded = false;
         let entryTypesLoaded = false;
@@ -940,6 +953,17 @@
         let notesLoaded = false;
         let balancesLoaded = false;
         let transactionsLoaded = false;
+
+        // Secure HTML escaping helper for innerHTML targets
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
         // Date Parsing Helper
         function safeParseDate(dateStr) {
@@ -952,11 +976,12 @@
             return new Date(dateStr);
         }
 
-        // Link formatted helper
+        // Link formatted helper with safe sanitization first
         function formatNoteLinks(text) {
             if (!text) return '-';
+            const escaped = escapeHtml(text);
             const urlRegex = /(https?:\/\/[^\s]+)/g;
-            return text.replace(urlRegex, url =>
+            return escaped.replace(urlRegex, url =>
                 `<a href="${url}" target="_blank" rel="noopener noreferrer"
                     class="text-sky-400 hover:text-sky-300 underline underline-offset-2 break-all"
                     onclick="event.stopPropagation()">${url}</a>`
@@ -1188,6 +1213,35 @@
             if (currentView === 'home') renderAccounts();
         }
 
+        // Real RR calculation helper based on Entry, SL, TP, and Lot metrics
+        function calculateRealRR(t) {
+            const entry = parseFloat(t.entryPrice || t.entry_price || t.entry);
+            const sl = parseFloat(t.sl || t.slPrice);
+            const tp = parseFloat(t.tp || t.tpPrice);
+            if (!isNaN(entry) && !isNaN(sl) && !isNaN(tp) && entry > 0 && sl > 0 && tp > 0) {
+                const direction = (t.type || '').toLowerCase();
+                const isLong = direction === 'long' || direction === 'buy';
+                const risk = isLong ? (entry - sl) : (sl - entry);
+                const reward = isLong ? (tp - entry) : (entry - tp);
+                if (risk > 0 && reward > 0) {
+                    return (reward / risk).toFixed(1);
+                }
+            }
+            return null;
+        }
+
+        // Falls back to existing R% vs balance calculation if SL/TP/Entry are missing
+        function getTradeRR(t) {
+            const realRR = calculateRealRR(t);
+            if (realRR !== null) return realRR;
+            if (t.rr && t.rr !== '-') return t.rr;
+            if (balance > 0 && t.rPercent > 0) {
+                const riskAmount = balance * (t.rPercent / 100);
+                return (t.pnl / riskAmount).toFixed(1);
+            }
+            return '-';
+        }
+
         // --- MT5 SCREENSHOT OCR ENGINE ---
         function processMT5Screenshot(event) {
             const file = event.target.files[0];
@@ -1222,10 +1276,10 @@
             const lines = rawText.split('\n');
             pendingMT5Trades = [];
 
-            const symbolPattern = /XAUUSD/i;
-            const actionPattern = /(buy|sell)\s+(\d+\.\d+)/i;
-            const datePattern = /(\d{4})\.(\d{2})\.(\d{2})\s+(\d{2}:\d{2}:\d{2})/;
-            const pnlPattern = /(\d+\.\d{1,2})$/;
+            const symbolPattern = /(XAUUSD(\.r|m|pro)?|GOLD(\.r|m)?)/i;
+            const actionPattern = /(buy|sell)\s+(\d+[\.,]\d+)/i;
+            const datePattern = /(\d{4})[\.\-/](\d{2})[\.\-/](\d{2})\s+(\d{2}:\d{2}(:\d{2})?)/;
+            const pnlPattern = /([+-]?\d+[\.,]\d{1,2})$/;
 
             let currentTrade = null;
 
@@ -1235,11 +1289,13 @@
                 if (symbolPattern.test(cleanLine)) {
                     const actionMatch = cleanLine.match(actionPattern);
                     if (actionMatch) {
+                        let lotStr = actionMatch[2].replace(',', '.');
+                        const matchSymbol = cleanLine.match(symbolPattern);
                         currentTrade = {
                             id: 'mt5_' + Date.now() + Math.random().toString(36).substr(2, 5),
-                            symbol: 'XAUUSD',
+                            symbol: matchSymbol ? matchSymbol[0].toUpperCase() : 'XAUUSD',
                             type: actionMatch[1].toLowerCase() === 'buy' ? 'Long' : 'Short',
-                            lot: parseFloat(actionMatch[2]) || 0.01,
+                            lot: parseFloat(lotStr) || 0.01,
                             setup: { timeframes: [], items: ['Hislerim'] },
                             entry: { timeframes: [], items: [] },
                             bias: { "1H": false, "4H": false },
@@ -1260,15 +1316,12 @@
 
                 const pnlMatch = cleanLine.match(pnlPattern);
                 if (pnlMatch && currentTrade && !currentTrade.pnl) {
-                    currentTrade.pnl = parseFloat(pnlMatch[1]);
+                    let pnlStr = pnlMatch[1].replace(',', '.');
+                    currentTrade.pnl = parseFloat(pnlStr);
                     currentTrade.killzone = getKillzoneForDateTime(currentTrade.date, currentTrade.time);
                     
-                    if (balance > 0) {
-                        const riskAmount = balance * (1 / 100);
-                        currentTrade.rr = (currentTrade.pnl / riskAmount).toFixed(1);
-                    } else {
-                        currentTrade.rr = '-';
-                    }
+                    const rrVal = getTradeRR(currentTrade);
+                    currentTrade.rr = rrVal;
 
                     pendingMT5Trades.push({...currentTrade});
                     currentTrade = null;
@@ -1289,7 +1342,7 @@
             const bulkSetup = document.getElementById('bulk-setup');
             if (bulkSetup) {
                 bulkSetup.innerHTML = '<option value="">-- Değiştirme --</option><option value="Hislerim">Hislerim</option>' + 
-                    entryTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+                    entryTypes.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
             }
 
             renderPendingTrades();
@@ -1310,16 +1363,17 @@
                     const isSelected = trade.setup?.items?.includes(setup);
                     return `
                         <button type="button" onclick="togglePendingArrayValue(${index}, 'setup', 'items', '${setup}')" class="px-2 py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
-                            ${setup}
+                            ${escapeHtml(setup)}
                         </button>
                     `;
                 }).join('');
 
                 const psychsHtml = psychologyList.map(psych => {
                     const isSelected = trade.psychology?.includes(psych);
+                    const displayLabel = psychologyTranslations[psych] || psych;
                     return `
                         <button type="button" onclick="togglePendingPsychologyValue(${index}, '${psych}')" class="px-2 py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
-                            ${psych}
+                            ${escapeHtml(displayLabel)}
                         </button>
                     `;
                 }).join('');
@@ -1329,7 +1383,7 @@
                     const isSelected = trade.entry?.items?.includes(trigger);
                     return `
                         <button type="button" onclick="togglePendingArrayValue(${index}, 'entry', 'items', '${trigger}')" class="px-2 py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
-                            ${trigger}
+                            ${escapeHtml(trigger)}
                         </button>
                     `;
                 }).join('');
@@ -1339,16 +1393,16 @@
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-2 border-b border-slate-800 gap-2">
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="text-sm font-bold text-slate-200">İşlem #${index + 1}</span>
-                            <input type="text" value="${trade.symbol}" oninput="updatePendingField(${index}, 'symbol', this.value)" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-bold w-20 text-center text-white">
+                            <input type="text" value="${escapeHtml(trade.symbol)}" oninput="updatePendingField(${index}, 'symbol', this.value)" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-bold w-20 text-center text-white">
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold ${trade.type === 'Long' ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' : 'bg-rose-950 text-rose-400 border border-rose-500/30'}">
-                                ${trade.type}
+                                ${escapeHtml(trade.type)}
                             </span>
                             <button onclick="togglePendingType(${index})" class="text-[10px] text-sky-400 hover:underline">Tipi Değiştir</button>
                         </div>
                         <div class="flex items-center space-x-2 text-xs text-slate-400 w-full sm:w-auto justify-between sm:justify-end">
                             <div class="flex space-x-1">
-                                <input type="date" value="${trade.date}" onchange="updatePendingField(${index}, 'date', this.value); autoSuggestPendingValues(${index})" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300">
-                                <input type="time" value="${trade.time ? trade.time.substring(0,5) : '12:00'}" onchange="updatePendingField(${index}, 'time', this.value); autoSuggestPendingValues(${index})" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300">
+                                <input type="date" value="${escapeHtml(trade.date)}" onchange="updatePendingField(${index}, 'date', this.value); autoSuggestPendingValues(${index})" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300">
+                                <input type="time" value="${escapeHtml(trade.time ? trade.time.substring(0,5) : '12:00')}" onchange="updatePendingField(${index}, 'time', this.value); autoSuggestPendingValues(${index})" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300">
                             </div>
                             <button onclick="removePendingTrade(${index})" class="p-1 hover:text-rose-500 transition-colors">
                                 <i data-lucide="trash-2" class="w-4 h-4 text-slate-500 hover:text-rose-400"></i>
@@ -1373,7 +1427,7 @@
                         <div>
                             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">RR</label>
                             <div class="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-2 py-1.5 text-xs font-semibold text-sky-400 flex items-center justify-center h-[34px]">
-                                ${trade.rr || '-'}
+                                ${escapeHtml(trade.rr || '-')}
                             </div>
                         </div>
                         <div>
@@ -1466,7 +1520,7 @@
                                     const isSelected = trade.exitReason === reason;
                                     return `
                                         <button type="button" onclick="updatePendingField(${index}, 'exitReason', '${reason}')" class="py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
-                                            ${reason}
+                                            ${escapeHtml(reason)}
                                         </button>
                                     `;
                                 }).join('')}
@@ -1475,7 +1529,7 @@
 
                         <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 text-xs flex flex-col justify-between">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Notlar</label>
-                            <input type="text" value="${trade.notes || ''}" oninput="updatePendingField(${index}, 'notes', this.value)" placeholder="Örn: MT5 Otomatik Yükleme..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 outline-none">
+                            <input type="text" value="${escapeHtml(trade.notes || '')}" oninput="updatePendingField(${index}, 'notes', this.value)" placeholder="Örn: MT5 Otomatik Yükleme..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 outline-none">
                         </div>
                     </div>
                 `;
@@ -1500,14 +1554,8 @@
         function recalculatePendingRR(index) {
             const trade = pendingMT5Trades[index];
             if (!trade) return;
-            const pnl = parseFloat(trade.pnl) || 0;
-            const rPercent = parseFloat(trade.rPercent) || 1.00;
-            if (balance > 0 && rPercent > 0) {
-                const riskAmount = balance * (rPercent / 100);
-                trade.rr = (pnl / riskAmount).toFixed(1);
-            } else {
-                trade.rr = '-';
-            }
+            const rrVal = getTradeRR(trade);
+            trade.rr = rrVal;
             renderPendingTrades();
         }
 
@@ -1656,14 +1704,8 @@
                 }
                 
                 // Recalculate RR
-                const pnl = parseFloat(trade.pnl) || 0;
-                const rPercent = parseFloat(trade.rPercent) || 1.00;
-                if (balance > 0 && rPercent > 0) {
-                    const riskAmount = balance * (rPercent / 100);
-                    trade.rr = (pnl / riskAmount).toFixed(1);
-                } else {
-                    trade.rr = '-';
-                }
+                const rrVal = getTradeRR(trade);
+                trade.rr = rrVal;
             });
 
             renderPendingTrades();
@@ -1877,7 +1919,7 @@
                                 <i data-lucide="wallet" class="w-5 h-5"></i>
                             </div>
                             <div>
-                                <h5 class="font-bold text-slate-100">${acc.name}</h5>
+                                <h5 class="font-bold text-slate-100">${escapeHtml(acc.name)}</h5>
                                 <p class="text-xs text-slate-500">${new Date(acc.createdAt).toLocaleDateString('tr-TR')}</p>
                             </div>
                         </div>
@@ -2002,7 +2044,7 @@
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
             
-            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Aralık", "Eylül", "Ekim", "Kasım", "Aralık"];
+            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
             document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
 
             const firstDay = new Date(year, month, 1).getDay();
@@ -2129,10 +2171,10 @@
                     editTrade(t.id);
                 };
                 tr.innerHTML = `
-                    <td class="py-4 text-sm text-slate-400">${t.date || '-'}${t.time ? '<span class="text-slate-500 text-xs ml-1">' + t.time + '</span>' : ''}</td>
-                    <td class="py-4 font-bold text-slate-100">${t.symbol || 'XAUUSD'}</td>
+                    <td class="py-4 text-sm text-slate-400">${escapeHtml(t.date || '-')}${t.time ? '<span class="text-slate-500 text-xs ml-1">' + escapeHtml(t.time) + '</span>' : ''}</td>
+                    <td class="py-4 font-bold text-slate-100">${escapeHtml(t.symbol || 'XAUUSD')}</td>
                     <td class="py-4">
-                        <span class="px-2 py-1 rounded-md text-[10px] font-bold uppercase ${t.type === 'Long' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-rose-900/30 text-rose-400'}">${t.type}</span>
+                        <span class="px-2 py-1 rounded-md text-[10px] font-bold uppercase ${t.type === 'Long' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-rose-900/30 text-rose-400'}">${escapeHtml(t.type)}</span>
                     </td>
                     <td class="py-4 font-bold ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
                         ${t.pnl >= 0 ? '+' : ''}${t.pnl.toFixed(2)}
@@ -2153,25 +2195,25 @@
             lucide.createIcons();
         }
 
-        // Output Formatter Helpers
+        // Output Formatter Helpers with Secure Escaping
         function formatSetupDisplay(t) {
             if (t.setup && typeof t.setup === 'object') {
                 const tfs = t.setup.timeframes && t.setup.timeframes.length > 0 ? t.setup.timeframes.join('/') : '';
                 const items = t.setup.items && t.setup.items.length > 0 ? t.setup.items.join(', ') : '';
-                if (tfs && items) return `<span class="text-sky-400 font-bold">${tfs}:</span> ${items}`;
-                if (items) return items;
-                if (tfs) return tfs;
+                if (tfs && items) return `<span class="text-sky-400 font-bold">${escapeHtml(tfs)}:</span> ${escapeHtml(items)}`;
+                if (items) return escapeHtml(items);
+                if (tfs) return escapeHtml(tfs);
             }
-            return t.setupTypes && t.setupTypes.length > 0 ? t.setupTypes.join(', ') : (t.entryType || '-');
+            return t.setupTypes && t.setupTypes.length > 0 ? escapeHtml(t.setupTypes.join(', ')) : escapeHtml(t.entryType || '-');
         }
 
         function formatEntryDisplay(t) {
             if (t.entry && typeof t.entry === 'object') {
                 const tfs = t.entry.timeframes && t.entry.timeframes.length > 0 ? t.entry.timeframes.join('/') : '';
                 const items = t.entry.items && t.entry.items.length > 0 ? t.entry.items.join(', ') : '';
-                if (tfs && items) return `<span class="text-emerald-400 font-bold">${tfs}:</span> ${items}`;
-                if (items) return items;
-                if (tfs) return tfs;
+                if (tfs && items) return `<span class="text-emerald-400 font-bold">${escapeHtml(tfs)}:</span> ${escapeHtml(items)}`;
+                if (items) return escapeHtml(items);
+                if (tfs) return escapeHtml(tfs);
             }
             return '-';
         }
@@ -2181,7 +2223,7 @@
                 const selected = [];
                 if (t.bias['1H']) selected.push('1H');
                 if (t.bias['4H']) selected.push('4H');
-                if (selected.length > 0) return selected.join(', ');
+                if (selected.length > 0) return escapeHtml(selected.join(', '));
             }
             return '-';
         }
@@ -2218,7 +2260,7 @@
                 monthSection.className = 'bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-sm';
                 monthSection.innerHTML = `
                     <div class="bg-slate-800/50 px-8 py-4 border-b border-slate-800 flex justify-between items-center">
-                        <h4 class="font-bold text-slate-100">${monthYear}</h4>
+                        <h4 class="font-bold text-slate-100">${escapeHtml(monthYear)}</h4>
                         <span class="text-sm font-bold ${monthPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
                             ${monthPnL >= 0 ? '+' : ''}$${monthPnL.toFixed(2)}
                         </span>
@@ -2244,34 +2286,40 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800">
-                                ${monthTrades.map(t => `
-                                    <tr onclick="editTrade('${t.id}')" class="hover:bg-slate-800/50 cursor-pointer transition-colors">
-                                        <td class="px-8 py-4 text-xs text-slate-400">${t.date || '-'}${t.time ? '<br><span class="text-slate-500">' + t.time + '</span>' : ''}</td>
-                                        <td class="px-4 py-4 text-xs font-bold text-slate-100">${t.symbol || 'XAUUSD'}</td>
-                                        <td class="px-4 py-4 text-xs text-slate-400">${t.lot || '-'}</td>
-                                        <td class="px-4 py-4">
-                                            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${t.type === 'Long' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-rose-900/30 text-rose-400'}">${t.type}</span>
-                                        </td>
-                                        <td class="px-4 py-4 text-xs text-slate-400">${formatBiasDisplay(t)}</td>
-                                        <td class="px-4 py-4 text-xs text-slate-400">${t.killzone || '-'}</td>
-                                        <td class="px-4 py-4 text-xs text-slate-300">${formatSetupDisplay(t)}</td>
-                                        <td class="px-4 py-4 text-xs text-slate-300">${formatEntryDisplay(t)}</td>
-                                        <td class="px-4 py-4 text-xs text-slate-400 max-w-[120px] truncate" title="${t.psychology ? t.psychology.join(', ') : ''}">
-                                            ${t.psychology && t.psychology.length > 0 ? t.psychology.join(', ') : '-'}
-                                        </td>
-                                        <td class="px-4 py-4">
-                                            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${t.exitReason === 'TP' ? 'bg-sky-900/30 text-sky-400' : (t.exitReason === 'SL' ? 'bg-rose-900/30 text-rose-400' : 'bg-slate-800 text-slate-400')}">${t.exitReason || '-'}</span>
-                                        </td>
-                                        <td class="px-4 py-4 text-xs text-slate-400">${t.rPercent ? t.rPercent + '%' : '-'}</td>
-                                        <td class="px-4 py-4 text-xs font-bold ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                                            ${t.rr && t.rr !== '-' ? t.rr + 'R' : ((balance > 0 && t.rPercent > 0) ? (t.pnl / (balance * (t.rPercent / 100))).toFixed(1) + 'R' : '-')}
-                                        </td>
-                                        <td class="px-4 py-4 text-xs font-bold ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                                            ${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}
-                                        </td>
-                                        <td class="px-8 py-4 text-xs text-slate-500 max-w-[200px]" title="${t.notes || ''}" onclick="event.stopPropagation()">${formatNoteLinks(t.notes)}</td>
-                                    </tr>
-                                `).join('')}
+                                ${monthTrades.map(t => {
+                                    const calculatedRR = getTradeRR(t);
+                                    const psychDisplay = t.psychology && t.psychology.length > 0 
+                                        ? t.psychology.map(p => psychologyTranslations[p] || p).join(', ') 
+                                        : '-';
+                                    return `
+                                        <tr onclick="editTrade('${t.id}')" class="hover:bg-slate-800/50 cursor-pointer transition-colors">
+                                            <td class="px-8 py-4 text-xs text-slate-400">${escapeHtml(t.date || '-')}${t.time ? '<br><span class="text-slate-500">' + escapeHtml(t.time) + '</span>' : ''}</td>
+                                            <td class="px-4 py-4 text-xs font-bold text-slate-100">${escapeHtml(t.symbol || 'XAUUSD')}</td>
+                                            <td class="px-4 py-4 text-xs text-slate-400">${escapeHtml(t.lot || '-')}</td>
+                                            <td class="px-4 py-4">
+                                                <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${t.type === 'Long' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-rose-900/30 text-rose-400'}">${escapeHtml(t.type)}</span>
+                                            </td>
+                                            <td class="px-4 py-4 text-xs text-slate-400">${formatBiasDisplay(t)}</td>
+                                            <td class="px-4 py-4 text-xs text-slate-400">${escapeHtml(t.killzone || '-')}</td>
+                                            <td class="px-4 py-4 text-xs text-slate-300">${formatSetupDisplay(t)}</td>
+                                            <td class="px-4 py-4 text-xs text-slate-300">${formatEntryDisplay(t)}</td>
+                                            <td class="px-4 py-4 text-xs text-slate-400 max-w-[120px] truncate" title="${escapeHtml(psychDisplay)}">
+                                                ${escapeHtml(psychDisplay)}
+                                            </td>
+                                            <td class="px-4 py-4">
+                                                <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${t.exitReason === 'TP' ? 'bg-sky-900/30 text-sky-400' : (t.exitReason === 'SL' ? 'bg-rose-900/30 text-rose-400' : 'bg-slate-800 text-slate-400')}">${escapeHtml(t.exitReason || '-')}</span>
+                                            </td>
+                                            <td class="px-4 py-4 text-xs text-slate-400">${t.rPercent ? escapeHtml(t.rPercent) + '%' : '-'}</td>
+                                            <td class="px-4 py-4 text-xs font-bold ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                                                ${calculatedRR && calculatedRR !== '-' ? escapeHtml(calculatedRR) + 'R' : '-'}
+                                            </td>
+                                            <td class="px-4 py-4 text-xs font-bold ${t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                                                ${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}
+                                            </td>
+                                            <td class="px-8 py-4 text-xs text-slate-500 max-w-[200px]" title="${escapeHtml(t.notes || '')}" onclick="event.stopPropagation()">${formatNoteLinks(t.notes)}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -2304,7 +2352,7 @@
                 const idSafe = item.replace(/\s+/g, '');
                 return `
                     <button type="button" onclick="toggleSetupItem('${item}')" id="btn-setupitem-${idSafe}" class="py-2 rounded-xl font-bold border text-[11px] transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700'}">
-                        ${item}
+                        ${escapeHtml(item)}
                     </button>
                 `;
             }).join('');
@@ -2339,7 +2387,7 @@
                 const idSafe = item.replace(/\s+/g, '');
                 return `
                     <button type="button" onclick="toggleEntryItem('${item}')" id="btn-entryitem-${idSafe}" class="py-2 rounded-xl font-bold border text-[11px] transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700'}">
-                        ${item}
+                        ${escapeHtml(item)}
                     </button>
                 `;
             }).join('');
@@ -2592,6 +2640,7 @@
             container.innerHTML = psychologyList.map(item => {
                 const isSelected = selectedPsych.includes(item);
                 const idSafe = item.replace(/\s+/g, '');
+                const displayLabel = psychologyTranslations[item] || item;
                 return `
                     <button type="button" 
                             onclick="togglePsychology('${item}')" 
@@ -2601,7 +2650,7 @@
                                     ? 'bg-sky-600 border-sky-600 text-white' 
                                     : 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700'
                             }">
-                        ${item}
+                        ${escapeHtml(displayLabel)}
                     </button>
                 `;
             }).join('');
@@ -2628,23 +2677,58 @@
             }
         }
 
-        // Clean mapping for Killzones (strictly using requested options)
+        // Strictly DST and ICT compliant Killzone selection based on NY standard time
         function getKillzoneForDateTime(dateStr, timeStr) {
             if (!dateStr || !timeStr) return 'Outside Killzone';
             try {
-                const [h, min] = timeStr.split(':').map(Number);
-                const totalMins = h * 60 + min;
+                const parts = dateStr.split('-');
+                const timeParts = timeStr.split(':');
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1;
+                const day = parseInt(parts[2], 10);
+                const hour = parseInt(timeParts[0], 10);
+                const minute = parseInt(timeParts[1], 10);
                 
-                // Asia: 00:00 - 08:00 Local TR time
-                if (totalMins >= 0 && totalMins < 8 * 60) return 'Asia';
-                // London Open: 08:00 - 12:00
-                if (totalMins >= 8 * 60 && totalMins < 12 * 60) return 'London Open';
-                // New York Open: 14:00 - 17:00
-                if (totalMins >= 14 * 60 && totalMins < 17 * 60) return 'New York Open';
-                // London Close: 17:00 - 19:30
-                if (totalMins >= 17 * 60 && totalMins < 19.5 * 60) return 'London Close';
-                // New York Close: 19:30 - 22:00
-                if (totalMins >= 19.5 * 60 && totalMins < 22 * 60) return 'New York Close';
+                // Turkey Time is permanently UTC+3.
+                // Convert to UTC epoch:
+                const trUtcEpoch = Date.UTC(year, month, day, hour, minute) - (3 * 60 * 60 * 1000);
+                
+                // US DST starts on the second Sunday of March and ends on the first Sunday of November.
+                // NY is roughly 5 hours behind UTC.
+                const approxNyDate = new Date(trUtcEpoch - (5 * 60 * 60 * 1000));
+                
+                const checkUSDST = (d) => {
+                    const yr = d.getFullYear();
+                    const march = new Date(yr, 2, 8);
+                    const dstStart = new Date(yr, 2, 8 + (7 - march.getDay()) % 7);
+                    dstStart.setHours(2, 0, 0, 0);
+
+                    const nov = new Date(yr, 10, 1);
+                    const dstEnd = new Date(yr, 10, 1 + (7 - nov.getDay()) % 7);
+                    dstEnd.setHours(2, 0, 0, 0);
+
+                    return d >= dstStart && d < dstEnd;
+                };
+                
+                const isDst = checkUSDST(approxNyDate);
+                const nyOffset = isDst ? -4 : -5; // EDT (UTC-4) or EST (UTC-5)
+                
+                const nyDate = new Date(trUtcEpoch + (nyOffset * 60 * 60 * 1000));
+                const nyHour = nyDate.getUTCHours();
+                const nyMinute = nyDate.getUTCMinutes();
+                const nyTotalMins = nyHour * 60 + nyMinute;
+                
+                // ICT Killzones in NY Local Time:
+                // Asia: 20:00 - 00:00 NY Local Time (8:00 PM - 12:00 AM)
+                if (nyTotalMins >= 20 * 60 && nyTotalMins <= 24 * 60) return 'Asia';
+                // London Open: 02:00 - 05:00 NY Local Time (2:00 AM - 5:00 AM)
+                if (nyTotalMins >= 2 * 60 && nyTotalMins < 5 * 60) return 'London Open';
+                // New York Open: 07:00 - 10:00 NY Local Time (7:00 AM - 10:00 AM)
+                if (nyTotalMins >= 7 * 60 && nyTotalMins < 10 * 60) return 'New York Open';
+                // London Close: 10:00 - 12:00 NY Local Time (10:00 AM - 12:00 PM)
+                if (nyTotalMins >= 10 * 60 && nyTotalMins < 12 * 60) return 'London Close';
+                // New York Close (PM Session / PM Close): 14:00 - 16:00 NY Local Time (2:00 PM - 4:00 PM)
+                if (nyTotalMins >= 14 * 60 && nyTotalMins < 16 * 60) return 'New York Close';
                 
                 return 'Outside Killzone';
             } catch (e) {
@@ -2664,6 +2748,28 @@
             const pnl = parseFloat(document.getElementById('trade-pnl').value) || 0;
             const rPercent = parseFloat(document.getElementById('trade-r-percent').value) || 0;
             const rrDisplay = document.getElementById('trade-rr-display');
+            
+            // Check if Entry, SL, TP exist on the form if they are added in the future
+            const entryInp = document.getElementById('trade-entry-price');
+            const slInp = document.getElementById('trade-sl');
+            const tpInp = document.getElementById('trade-tp');
+            if (entryInp && slInp && tpInp) {
+                const entry = parseFloat(entryInp.value);
+                const sl = parseFloat(slInp.value);
+                const tp = parseFloat(tpInp.value);
+                const type = document.getElementById('trade-type').value;
+                if (!isNaN(entry) && !isNaN(sl) && !isNaN(tp) && entry > 0 && sl > 0 && tp > 0) {
+                    const isLong = type === 'Long';
+                    const risk = isLong ? (entry - sl) : (sl - entry);
+                    const reward = isLong ? (tp - entry) : (entry - tp);
+                    if (risk > 0 && reward > 0) {
+                        const realRR = (reward / risk).toFixed(1);
+                        rrDisplay.innerText = `RR: ${realRR}R`;
+                        return;
+                    }
+                }
+            }
+
             if (balance > 0 && rPercent > 0) {
                 const riskAmount = balance * (rPercent / 100);
                 const rr = (pnl / riskAmount).toFixed(1);
@@ -2903,8 +3009,9 @@
             let totalRR = 0;
             let rrCount = 0;
             trades.forEach(t => {
-                if (t.rr && t.rr !== '-') {
-                    totalRR += parseFloat(t.rr);
+                const calculatedRR = getTradeRR(t);
+                if (calculatedRR && calculatedRR !== '-') {
+                    totalRR += parseFloat(calculatedRR);
                     rrCount++;
                 }
             });
@@ -2952,14 +3059,15 @@
             });
             let bestPsychology = '-'; let maxPsychPnL = -Infinity;
             Object.entries(psychPnL).forEach(([psych, pnl]) => {
-                if (pnl > maxPsychPnL) { maxPsychPnL = pnl; bestPsychology = `${psych} (+$${pnl.toFixed(0)})`; }
+                const displayLabel = psychologyTranslations[psych] || psych;
+                if (pnl > maxPsychPnL) { maxPsychPnL = pnl; bestPsychology = `${displayLabel} (+$${pnl.toFixed(0)})`; }
             });
 
             // Fill displays
-            document.getElementById('stat-best-setup').innerText = bestSetup;
-            document.getElementById('stat-worst-setup').innerText = worstSetup;
-            document.getElementById('stat-best-killzone').innerText = bestKillzone;
-            document.getElementById('stat-best-psychology').innerText = bestPsychology;
+            document.getElementById('stat-best-setup').innerText = escapeHtml(bestSetup);
+            document.getElementById('stat-worst-setup').innerText = escapeHtml(worstSetup);
+            document.getElementById('stat-best-killzone').innerText = escapeHtml(bestKillzone);
+            document.getElementById('stat-best-psychology').innerText = escapeHtml(bestPsychology);
 
             // Draw clean charts
             drawEquityChart();
@@ -3120,7 +3228,7 @@
             const totalPnLEl = document.getElementById('stat-total-pnl');
             const currentBudgetEl = document.getElementById('stat-current-budget');
 
-            if (winRateEl) winRateEl.innerText = `${winRate}%`;
+           if (winRateEl) winRateEl.innerText = `${winRate}%`;
             if (totalPnLEl) {
                 totalPnLEl.innerText = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
                 totalPnLEl.className = `text-3xl font-bold ${totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
@@ -3147,7 +3255,7 @@
             if (historyBody) {
                 historyBody.innerHTML = transactions.slice().reverse().map(t => `
                     <tr class="text-sm border-b border-slate-800/50">
-                        <td class="py-4 text-slate-400">${new Date(t.date).toLocaleDateString('tr-TR')}</td>
+                        <td class="py-4 text-slate-400">${escapeHtml(new Date(t.date).toLocaleDateString('tr-TR'))}</td>
                         <td class="py-4">
                             <span class="px-2 py-1 rounded-lg text-xs font-bold ${t.type === 'deposit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">
                                 ${t.type === 'deposit' ? 'Yatırma' : 'Çekme'}
@@ -3174,9 +3282,9 @@
                     <button onclick="event.stopPropagation(); deleteNote(${index})" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-2 text-slate-600 hover:text-rose-400 transition-all">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
-                    <h5 class="font-bold text-slate-100 pr-8">${note.title}</h5>
-                    <p class="text-sm text-slate-400 leading-relaxed line-clamp-3">${note.content}</p>
-                    <p class="text-[10px] text-slate-600 font-bold uppercase tracking-wider">${note.date}</p>
+                    <h5 class="font-bold text-slate-100 pr-8">${escapeHtml(note.title)}</h5>
+                    <p class="text-sm text-slate-400 leading-relaxed line-clamp-3">${escapeHtml(note.content)}</p>
+                    <p class="text-[10px] text-slate-600 font-bold uppercase tracking-wider">${escapeHtml(note.date)}</p>
                 `;
                 container.appendChild(div);
             });
@@ -3252,7 +3360,7 @@
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center p-3 bg-slate-800 rounded-xl border border-slate-700 group';
                 div.innerHTML = `
-                    <span class="text-sm font-medium text-slate-200">${type}</span>
+                    <span class="text-sm font-medium text-slate-200">${escapeHtml(type)}</span>
                     <button onclick="deleteEntryType(${index})" class="p-1.5 text-slate-500 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
@@ -3315,7 +3423,7 @@
         function populateEntryTypeSelect() {
             const select = document.getElementById('trade-entry-type');
             if (!select) return;
-            select.innerHTML = entryTypes.map(type => `<option value="${type}">${type}</option>`).join('');
+            select.innerHTML = entryTypes.map(type => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`).join('');
         }
 
         function checkBalanceButton() {
