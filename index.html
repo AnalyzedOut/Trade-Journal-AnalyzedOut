@@ -52,15 +52,839 @@
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex overflow-hidden relative">
-...
-</body>
-</html>
-"""
 
-# Let's extract the JS part from the original user prompt to analyze it.
-import re
+    <!-- Cloud Loader Screen (Race Condition Fix) -->
+    <div id="cloud-loader" class="fixed inset-0 bg-slate-950 z-[110] flex flex-col items-center justify-center p-6 space-y-4">
+        <div class="flex items-center space-x-2 text-sky-500 font-bold text-3xl tracking-tight animate-pulse mb-2">
+            <i data-lucide="trending-up" class="w-10 h-10"></i>
+            <span>AnalyzedOut</span>
+        </div>
+        <div class="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-slate-400 font-medium text-sm">Bulut verileri eşitleniyor, lütfen bekleyin...</p>
+    </div>
 
-user_prompt_code = """
+    <!-- Lock Screen -->
+    <div id="lock-screen" class="fixed inset-0 bg-slate-950 z-[100] flex items-center justify-center p-6">
+        <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center space-y-6">
+            <div class="flex items-center justify-center space-x-2 text-sky-500 font-bold text-2xl tracking-tight">
+                <i data-lucide="trending-up" class="w-8 h-8"></i>
+                <span>AnalyzedOut</span>
+            </div>
+            <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Şifre</label>
+                <input type="password" id="lock-password-input" inputmode="numeric" maxlength="10" placeholder="••••" autocomplete="off"
+                    class="w-full text-center text-2xl tracking-[0.5em] px-4 py-4 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all"
+                    onkeydown="if(event.key==='Enter') checkLockPassword()">
+            </div>
+            <p id="lock-error" class="text-rose-400 text-sm font-medium hidden">Yanlış şifre, tekrar deneyin.</p>
+            <button onclick="checkLockPassword()" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
+                Giriş Yap
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 hidden lg:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar-menu" class="fixed lg:static inset-y-0 left-0 w-64 min-w-[256px] shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col h-screen z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+        <div class="p-6 flex items-center justify-between">
+            <div class="flex items-center space-x-2 text-sky-500 font-bold text-xl tracking-tight">
+                <i data-lucide="trending-up" class="w-8 h-8"></i>
+                <span>XAU Trading</span>
+            </div>
+            <button onclick="toggleMobileSidebar(false)" class="lg:hidden p-2 text-slate-400 hover:text-slate-200 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <nav class="flex-grow px-4 space-y-2 mt-4 overflow-y-auto scrollbar-hide">
+            <button onclick="switchTab('home')" id="nav-home" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400 active-tab">
+                <i data-lucide="home" class="w-5 h-5"></i>
+                <span class="font-semibold">Ana Sayfa</span>
+            </button>
+
+            <div id="account-nav" class="hidden space-y-2">
+                <button onclick="switchTab('calendar')" id="nav-calendar" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
+                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                    <span class="font-semibold">Takvim</span>
+                </button>
+                <button onclick="switchTab('history')" id="nav-history" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
+                    <i data-lucide="list" class="w-5 h-5"></i>
+                    <span class="font-semibold">İşlemler</span>
+                </button>
+                <button onclick="switchTab('analysis')" id="nav-analysis" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                    <span class="font-semibold">Analiz</span>
+                </button>
+                <button onclick="switchTab('balance')" id="nav-balance" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
+                    <i data-lucide="wallet" class="w-5 h-5"></i>
+                    <span class="font-semibold">Bakiye</span>
+                </button>
+                <button onclick="switchTab('notes')" id="nav-notes" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
+                    <i data-lucide="sticky-note" class="w-5 h-5"></i>
+                    <span class="font-semibold">Notlar</span>
+                </button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    <span class="font-semibold">Ayarlar</span>
+                </button>
+            </div>
+        </nav>
+
+        <div id="bottom-home-nav" class="hidden px-4 mb-2">
+            <button onclick="switchTab('home')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                <span class="font-semibold">Ana Sayfa</span>
+            </button>
+        </div>
+
+        <div class="p-4 border-t border-slate-800 flex justify-around items-center">
+            <button onclick="backupData()" class="p-3 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-sky-400 transition-all" title="Verileri Yedekle">
+                <i data-lucide="save" class="w-5 h-5"></i>
+            </button>
+            <button onclick="document.getElementById('restore-input').click()" class="p-3 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-emerald-400 transition-all" title="Yedekten Geri Yükle">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+            </button>
+            <button onclick="lockApp()" class="p-3 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-rose-400 transition-all" title="Çıkış Yap">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+            </button>
+            <input type="file" id="restore-input" class="hidden" accept=".json" onchange="restoreData(event)">
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-grow overflow-y-auto h-screen scrollbar-hide relative w-full">
+        
+        <!-- Header -->
+        <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-4 sticky top-0 z-30 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleMobileSidebar(true)" class="lg:hidden p-2 -ml-2 text-slate-400 hover:text-slate-200 transition-colors">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <h2 id="page-title" class="text-xl font-bold text-slate-100">Takvim</h2>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="current-date-display" class="text-sm font-medium text-slate-400 hidden sm:inline"></span>
+                
+                <!-- Sync Connection Indicator -->
+                <div id="sync-indicator" class="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs">
+                    <span id="sync-indicator-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span id="sync-indicator-text" class="text-slate-400 font-medium">Bağlanıyor...</span>
+                </div>
+
+                <div id="account-badge" class="px-3 py-1.5 rounded-full bg-sky-900/50 flex items-center justify-center text-sky-400 font-bold border border-sky-800 text-sm">
+                    MT
+                </div>
+            </div>
+        </header>
+
+        <!-- Sections Container -->
+        <div class="p-8">
+            
+            <!-- Home Section (Account Management) -->
+            <section id="section-home" class="hidden space-y-8">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-slate-100">Hesaplar</h3>
+                    <button onclick="openAccountModal()" class="bg-sky-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-sky-700 transition-all flex items-center space-x-2 shadow-lg shadow-sky-900/20">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                        <span>Yeni Hesap Ekle</span>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Aktif Hesaplar</h4>
+                        <div id="active-accounts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Active accounts will be injected here -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Pasif Hesaplar</h4>
+                        <div id="passive-accounts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Passive accounts will be injected here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Calendar Section -->
+            <section id="section-calendar" class="space-y-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-800 rounded-lg transition-colors">
+                            <i data-lucide="chevron-left" class="w-5 h-5 text-slate-400"></i>
+                        </button>
+                        <h3 id="calendar-month-year" class="text-2xl font-bold text-slate-100 min-w-[150px] text-center">Mart 2026</h3>
+                        <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-800 rounded-lg transition-colors">
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i>
+                        </button>
+                    </div>
+                    <div class="flex space-x-2">
+                        <!-- MT5 OCR YÜKLEME BUTONU -->
+                        <button onclick="document.getElementById('mt5-upload-input').click()" class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-4 sm:px-6 py-2.5 rounded-xl font-bold hover:bg-emerald-600/30 transition-all flex items-center space-x-2">
+                            <i data-lucide="camera" class="w-5 h-5"></i>
+                            <span class="hidden sm:inline">MT5 Yükle</span>
+                        </button>
+                        <input type="file" id="mt5-upload-input" class="hidden" accept="image/*" onchange="processMT5Screenshot(event)">
+
+                        <button onclick="openTradeModal()" class="bg-sky-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-sky-700 transition-all flex items-center space-x-2 shadow-lg shadow-sky-900/20">
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                            <span>Yeni İşlem</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-3 bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-sm">
+                        <div class="calendar-grid bg-slate-800/50 border-b border-slate-800">
+                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Pzt</div>
+                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Sal</div>
+                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Çar</div>
+                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Per</div>
+                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Cum</div>
+                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest text-sky-500/70">Cmt</div>
+                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest text-sky-500/70">Paz</div>
+                        </div>
+                        <div id="calendar-days" class="calendar-grid divide-x divide-y divide-slate-800">
+                            <!-- Days will be injected here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Weekly Stats Column -->
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Hafta</h4>
+                            <div id="weekly-stats-container" class="space-y-4">
+                                <!-- Weekly stats will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Trade History -->
+                <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="text-lg font-bold text-slate-100">Aylık İşlem Geçmişi</h4>
+                        <div id="monthly-stats" class="text-sm font-semibold text-slate-400"></div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-slate-500 text-sm border-b border-slate-800">
+                                    <th class="pb-4 font-semibold">Tarih</th>
+                                    <th class="pb-4 font-semibold">Parite</th>
+                                    <th class="pb-4 font-semibold">İşlem (Long/short)</th>
+                                    <th class="pb-4 font-semibold">PnL</th>
+                                    <th class="pb-4 font-semibold">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthly-trades-body" class="divide-y divide-slate-800">
+                                <!-- Monthly trades will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section id="section-history" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-slate-100">İşlemler</h3>
+                    <div class="flex space-x-2">
+                        <button onclick="exportTrades()" class="bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-semibold hover:bg-slate-700 transition-all flex items-center space-x-2">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Dışa Aktar</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="detailed-history-container" class="space-y-8">
+                    <!-- Detailed history grouped by month will be injected here -->
+                </div>
+            </section>
+
+            <!-- Simplified Analysis Section -->
+            <section id="section-analysis" class="hidden space-y-8">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Anlık Bütçe</p>
+                        <p id="stat-current-budget" class="text-3xl font-bold text-slate-100">$0</p>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Toplam PnL</p>
+                        <p id="stat-total-pnl" class="text-3xl font-bold text-slate-100">$0</p>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Win Rate</p>
+                        <p id="stat-win-rate" class="text-3xl font-bold text-sky-500">0%</p>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Profit Factor</p>
+                        <p id="stat-profit-factor" class="text-3xl font-bold text-slate-100">0.00</p>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Ortalama R:R</p>
+                        <p id="stat-avg-rr" class="text-3xl font-bold text-slate-100">0.00</p>
+                    </div>
+                </div>
+
+                <!-- Chart Row -->
+                <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="text-lg font-bold text-slate-100">Sermaye Eğrisi (Equity Curve)</h4>
+                        <span id="report-drawdown" class="text-xs font-bold text-rose-500 bg-rose-500/10 px-2 py-1 rounded-lg">Max DD: 0%</span>
+                    </div>
+                    <div id="equity-chart" class="w-full h-64 bg-slate-950/50 rounded-2xl overflow-hidden"></div>
+                </div>
+
+                <!-- Structured Simplified Insights Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Key Performance Analyses -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-6">
+                        <h4 class="text-lg font-bold text-slate-100 border-b border-slate-800 pb-4">Özet Performans Göstergeleri</h4>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">En Başarılı Setup</p>
+                                <p id="stat-best-setup" class="text-sm font-bold text-emerald-400">-</p>
+                            </div>
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">En Başarısız Setup</p>
+                                <p id="stat-worst-setup" class="text-sm font-bold text-rose-400">-</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">En Başarılı Killzone</p>
+                                <p id="stat-best-killzone" class="text-sm font-bold text-emerald-400">-</p>
+                            </div>
+                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
+                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">En Başarılı Psikoloji</p>
+                                <p id="stat-best-psychology" class="text-sm font-bold text-emerald-400">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trading Plan & Summary Insights -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-4">
+                        <h4 class="text-lg font-bold text-slate-100 border-b border-slate-800 pb-4">Kısa Performans Özeti</h4>
+                        <div id="report-insights" class="space-y-3 text-sm text-slate-400 leading-relaxed">
+                            <!-- Crispy Bullet points dynamically loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Balance Section -->
+            <section id="section-balance" class="hidden space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Anlık Bakiye</p>
+                        <p id="balance-current" class="text-3xl font-bold text-slate-100">$0</p>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Toplam Yatırılan</p>
+                        <p id="balance-total-deposit" class="text-3xl font-bold text-emerald-400">$0</p>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Toplam Çekilen</p>
+                        <p id="balance-total-withdraw" class="text-3xl font-bold text-rose-400">$0</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                    <h4 class="text-lg font-bold text-slate-100 mb-6">2026 Yılı Bakiye / Aylık</h4>
+                    <div id="balance-chart" class="w-full h-80 bg-slate-950/50 rounded-2xl overflow-hidden"></div>
+                </div>
+
+                <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                    <h4 class="text-lg font-bold text-slate-100 mb-6">İşlem Geçmişi (Yatırma/Çekme)</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-slate-500 text-sm border-b border-slate-800">
+                                    <th class="pb-4 font-semibold">Tarih</th>
+                                    <th class="pb-4 font-semibold">İşlem Tipi</th>
+                                    <th class="pb-4 font-semibold">Miktar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="balance-history-body" class="divide-y divide-slate-800">
+                                <!-- Balance history will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notes Section -->
+            <section id="section-notes" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-slate-100">Strateji Notları</h3>
+                    <button onclick="openNoteModal()" class="bg-sky-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-sky-700 transition-all flex items-center space-x-2 shadow-lg shadow-sky-900/20">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                        <span>Not Ekle</span>
+                    </button>
+                </div>
+                <div id="notes-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Notes will be injected here -->
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="section-settings" class="hidden space-y-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Setup Management -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Setup Yönetimi</h4>
+                        <div class="space-y-4">
+                            <div class="flex space-x-2">
+                                <input type="text" id="new-entry-type" placeholder="Yeni Setup..." class="flex-grow px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                                <button onclick="addEntryType()" class="bg-sky-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-sky-700 transition-all">
+                                    <i data-lucide="plus" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                            <div id="entry-types-list" class="space-y-2 max-h-64 overflow-y-auto pr-2 scrollbar-hide">
+                                <!-- Entry types will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Balance Management -->
+                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
+                        <h4 class="text-lg font-bold text-slate-100 mb-6">Bakiye Yönetimi</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-400 mb-2">Başlangıç Bakiyesi ($)</label>
+                                <input type="number" id="initial-balance-input" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all mb-4">
+                                <button id="save-balance-btn" onclick="saveInitialBalance()" class="w-full bg-sky-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-sky-700 transition-all">
+                                    Bakiyeyi Gir
+                                </button>
+                            </div>
+                            <div class="pt-4 border-t border-slate-800">
+                                <label class="block text-sm font-semibold text-slate-400 mb-2">Miktar ($)</label>
+                                <input type="number" id="transaction-amount-input" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all mb-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <button onclick="executeTransaction('deposit')" class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-6 py-3 rounded-xl font-bold hover:bg-emerald-600/30 transition-all flex items-center justify-center space-x-2">
+                                        <i data-lucide="arrow-down-left" class="w-5 h-5"></i>
+                                        <span>Para Yatır</span>
+                                    </button>
+                                    <button onclick="executeTransaction('withdraw')" class="bg-rose-600/20 text-rose-400 border border-rose-500/30 px-6 py-3 rounded-xl font-bold hover:bg-rose-600/30 transition-all flex items-center justify-center space-x-2">
+                                        <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+                                        <span>Para Çek</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- OCR Loader Modal -->
+    <div id="ocr-loader" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[200] hidden flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-20 h-20 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+        <h3 class="text-2xl font-bold text-white mb-2">MT5 Ekranı Analiz Ediliyor</h3>
+        <p class="text-slate-400 max-w-xs">Yapay zeka işlemlerinizi okuyor, lütfen sayfayı kapatmayın...</p>
+        <div id="ocr-progress" class="mt-8 w-64 h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div id="ocr-progress-bar" class="h-full bg-sky-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- MT5 Review Modal -->
+    <div id="mt5-review-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[150] hidden flex items-center justify-center p-6">
+        <div class="bg-slate-900 w-full max-w-5xl max-h-[92vh] rounded-3xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/20">
+                <div>
+                    <h3 class="text-xl font-bold text-white">İşlemleri Onayla</h3>
+                    <p class="text-xs text-slate-500 mt-1">Lütfen her işlem için parametreleri kontrol edin ve onaylayın.</p>
+                </div>
+                <button onclick="closeMT5Review()" class="p-2 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            
+            <!-- Bulk Apply Panel -->
+            <div class="bg-slate-950/40 p-5 border-b border-slate-800 space-y-3">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-2">
+                    <i data-lucide="sliders" class="w-4 h-4 text-sky-500"></i>
+                    <span>Toplu Uygula (Seçilenleri Tüm İşlemlere Tanımla)</span>
+                </h4>
+                <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2">
+                    <!-- Setup -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Setup</label>
+                        <select id="bulk-setup" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="Hislerim">Hislerim</option>
+                        </select>
+                    </div>
+                    <!-- Psychology -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Psikoloji</label>
+                        <select id="bulk-psych" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="Patient">Patient</option>
+                            <option value="Discipline">Discipline</option>
+                            <option value="Perfect Execution">Perfect Execution</option>
+                            <option value="FOMO">FOMO</option>
+                            <option value="Revenge Trade">Revenge Trade</option>
+                            <option value="Fear">Fear</option>
+                            <option value="Greed">Greed</option>
+                            <option value="Overconfidence">Overconfidence</option>
+                            <option value="Early Exit">Early Exit</option>
+                            <option value="Late Entry">Late Entry</option>
+                        </select>
+                    </div>
+                    <!-- Killzone -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Killzone</label>
+                        <select id="bulk-killzone" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="Asia">Asia</option>
+                            <option value="London Open">London Open</option>
+                            <option value="London Close">London Close</option>
+                            <option value="New York Open">New York Open</option>
+                            <option value="New York Close">New York Close</option>
+                            <option value="Outside Killzone">Outside Killzone</option>
+                        </select>
+                    </div>
+                    <!-- Exit Reason -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Çıkış Sebebi</label>
+                        <select id="bulk-exit" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="TP">TP</option>
+                            <option value="SL">SL</option>
+                            <option value="Manuel">Manuel</option>
+                        </select>
+                    </div>
+                    <!-- Bias -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Bias</label>
+                        <select id="bulk-bias" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="1H">1H</option>
+                            <option value="4H">4H</option>
+                            <option value="Both">1H & 4H</option>
+                            <option value="None">Hiçbiri</option>
+                        </select>
+                    </div>
+                    <!-- Setup TF -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Setup TF</label>
+                        <select id="bulk-setup-tf" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="15M">15M</option>
+                            <option value="5M">5M</option>
+                            <option value="Both">15M & 5M</option>
+                            <option value="None">Hiçbiri</option>
+                        </select>
+                    </div>
+                    <!-- Entry TF -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Entry TF</label>
+                        <select id="bulk-entry-tf" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="1M">1M</option>
+                            <option value="5M">5M</option>
+                            <option value="Both">1M & 5M</option>
+                            <option value="None">Hiçbiri</option>
+                        </select>
+                    </div>
+                    <!-- Entry Trigger -->
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Entry Trigger</label>
+                        <select id="bulk-entry-trigger" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
+                            <option value="">-- Değiştirme --</option>
+                            <option value="FVG">FVG</option>
+                            <option value="CISD">CISD</option>
+                            <option value="OB">OB</option>
+                            <option value="SMT">SMT</option>
+                            <option value="MSS">MSS</option>
+                            <option value="BOS">BOS</option>
+                            <option value="Liquidity Sweep">Liquidity Sweep</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-2">
+                    <!-- Global risk parameter -->
+                    <div class="flex items-center space-x-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Toplu R (%):</label>
+                        <input type="number" id="bulk-r" step="0.01" placeholder="1.00" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 w-16">
+                    </div>
+                    <button onclick="applyBulkToPending()" type="button" class="bg-sky-600 text-[10px] px-3 py-1.5 rounded-lg font-bold hover:bg-sky-700 text-white transition-all shadow">
+                        Seçilenleri Toplu Uygula
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-grow bg-slate-900 scrollbar-hide" id="mt5-review-container">
+                <div id="mt5-review-body" class="space-y-4"></div>
+            </div>
+            <div class="p-6 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center">
+                <span id="mt5-total-info" class="text-sm font-medium text-slate-400"></span>
+                <button onclick="saveMT5Trades()" class="bg-sky-600 px-10 py-3 rounded-xl font-bold text-white hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
+                    Sisteme Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Modal -->
+    <div id="account-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+        <div class="bg-slate-900 w-full max-w-md rounded-3xl border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <h3 class="text-xl font-bold text-slate-100">Yeni Hesap Oluştur</h3>
+                <button onclick="closeAccountModal()" class="p-2 hover:bg-slate-800 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+                </button>
+            </div>
+            <div class="p-8 space-y-6">
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase">Hesap Adı</label>
+                    <input type="text" id="account-name-input" placeholder="Örn: Kişisel, Fon Hesabı..." class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                </div>
+            </div>
+            <div class="p-8 border-t border-slate-800 bg-slate-900/50">
+                <button onclick="saveAccount()" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
+                    Hesabı Oluştur
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trade Modal (Exactly Aligned with Requirements) -->
+    <div id="trade-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+        <div class="bg-slate-900 w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                <h3 id="modal-title" class="text-xl font-bold text-slate-100">Yeni İşlem Ekle</h3>
+                <button onclick="closeTradeModal()" type="button" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <form id="trade-form" onsubmit="handleTradeSubmit(event)" class="flex flex-col overflow-hidden h-full">
+                <div class="p-6 space-y-4 overflow-y-auto flex-grow scrollbar-hide" id="modal-scrollable-body">
+                    <input type="hidden" id="trade-id">
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Tarih</label>
+                            <input type="date" id="trade-date" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Saat</label>
+                            <input type="time" id="trade-time" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Parite</label>
+                            <input type="text" id="trade-symbol" value="XAUUSD" required class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all text-center font-bold text-lg">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">İşlem</label>
+                            <div class="flex space-x-2">
+                                <button type="button" onclick="setTradeType('Long')" id="btn-type-Long" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Long</button>
+                                <button type="button" onclick="setTradeType('Short')" id="btn-type-Short" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Short</button>
+                            </div>
+                            <input type="hidden" id="trade-type" value="Long">
+                        </div>
+                    </div>
+
+                    <!-- Lot, R and PnL row -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">R (%)</label>
+                            <input type="number" step="0.01" id="trade-r-percent" required placeholder="1.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Lot</label>
+                            <input type="number" step="0.01" id="trade-lot" required placeholder="0.01" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase">PnL ($)</label>
+                                <span id="trade-rr-display" class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">RR: 0.00R</span>
+                            </div>
+                            <input type="number" step="0.01" id="trade-pnl" required placeholder="0.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Simplified Unified Killzone Selection -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Killzone</label>
+                        <select id="trade-killzone" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all text-sm font-semibold">
+                            <option value="Asia">Asia</option>
+                            <option value="London Open">London Open</option>
+                            <option value="London Close">London Close</option>
+                            <option value="New York Open">New York Open</option>
+                            <option value="New York Close">New York Close</option>
+                            <option value="Outside Killzone">Outside Killzone</option>
+                        </select>
+                    </div>
+
+                    <!-- Timeframes Block: Bias, Setup TF, Entry TF -->
+                    <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80 space-y-4">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Timeframe Yönetimi</h4>
+                        
+                        <!-- Bias Selection (1H and 4H) -->
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Bias:</span>
+                            <button type="button" onclick="toggleBiasOption('1H')" id="btn-bias-1H" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
+                                <span id="checkbox-bias-1H" class="w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[9px] text-transparent bg-slate-900">✓</span>
+                                <span>1H</span>
+                            </button>
+                            <button type="button" onclick="toggleBiasOption('4H')" id="btn-bias-4H" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
+                                <span id="checkbox-bias-4H" class="w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[9px] text-transparent bg-slate-900">✓</span>
+                                <span>4H</span>
+                            </button>
+                            <input type="hidden" id="trade-bias-options" value="">
+                        </div>
+
+                        <!-- Setup Timeframe -->
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Setup TF:</span>
+                            <button type="button" onclick="toggleSetupTF('15M')" id="btn-setupTF-15M" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
+                                <span id="checkbox-setupTF-15M" class="w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[9px] text-transparent bg-slate-900">✓</span>
+                                <span>15M</span>
+                            </button>
+                            <button type="button" onclick="toggleSetupTF('5M')" id="btn-setupTF-5M" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
+                                <span id="checkbox-setupTF-5M" class="w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[9px] text-transparent bg-slate-900">✓</span>
+                                <span>5M</span>
+                            </button>
+                            <input type="hidden" id="trade-setup-timeframes" value="">
+                        </div>
+
+                        <!-- Entry Timeframe -->
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Entry TF:</span>
+                            <button type="button" onclick="toggleEntryTF('1M')" id="btn-entryTF-1M" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
+                                <span id="checkbox-entryTF-1M" class="w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[9px] text-transparent bg-slate-900">✓</span>
+                                <span>1M</span>
+                            </button>
+                            <button type="button" onclick="toggleEntryTF('5M')" id="btn-entryTF-5M" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
+                                <span id="checkbox-entryTF-5M" class="w-3.5 h-3.5 rounded border border-sky-600 flex items-center justify-center text-[9px] text-white bg-sky-500">✓</span>
+                                <span>5M</span>
+                            </button>
+                            <input type="hidden" id="trade-entry-timeframes" value="">
+                        </div>
+                    </div>
+
+                    <!-- Setups List -->
+                    <div class="space-y-3 bg-slate-950/30 p-4 rounded-2xl border border-slate-800/80">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Setups (Çoklu Seçim)</label>
+                        <div class="grid grid-cols-3 gap-2" id="setup-items-container">
+                            <!-- Loaded dynamically -->
+                        </div>
+                        <input type="hidden" id="trade-setup-items" value="">
+                    </div>
+
+                    <!-- Clean Entry Trigger -->
+                    <div class="space-y-3 bg-slate-950/30 p-4 rounded-2xl border border-slate-800/80">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Entry Trigger (Çoklu Seçim)</label>
+                        <div class="grid grid-cols-3 gap-2" id="entry-items-container">
+                            <!-- Loaded dynamically -->
+                        </div>
+                        <input type="hidden" id="trade-entry-items" value="">
+                    </div>
+
+                    <!-- Exit Reason -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Çıkış Sebebi</label>
+                        <div class="flex space-x-2">
+                            <button type="button" onclick="setExitReason('TP')" id="btn-exit-TP" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">TP</button>
+                            <button type="button" onclick="setExitReason('Manuel')" id="btn-exit-Manuel" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Manuel</button>
+                            <button type="button" onclick="setExitReason('SL')" id="btn-exit-SL" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">SL</button>
+                        </div>
+                        <input type="hidden" id="trade-exit-reason" value="TP">
+                    </div>
+
+                    <!-- Trading Psychology -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Trading Psychology (Psikoloji)</label>
+                        <div class="grid grid-cols-2 gap-2" id="psychology-buttons-container">
+                            <!-- Psychology buttons will be injected here -->
+                        </div>
+                        <input type="hidden" id="trade-psychology" value="">
+                    </div>
+
+                    <!-- Standard legacy hidden inputs -->
+                    <select id="trade-entry-type" class="hidden"></select>
+
+                    <!-- Notes field -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Notlar</label>
+                        <textarea id="trade-notes" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none resize-none transition-all" placeholder="İşlem notları..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="p-6 border-t border-slate-800 bg-slate-900/95 sticky bottom-0 z-10 flex">
+                    <button type="submit" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="note-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+        <div class="bg-slate-900 w-full max-w-3xl h-[80vh] rounded-3xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-8 border-b border-slate-800 flex justify-between items-center">
+                <h3 id="note-modal-title" class="text-xl font-bold text-slate-100">Not Ekle</h3>
+                <button onclick="closeNoteModal()" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-8 flex-grow flex flex-col space-y-4 overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Başlık</label>
+                    <input type="text" id="note-title" placeholder="Not Başlığı" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all font-bold text-lg">
+                </div>
+                <div class="flex-grow flex flex-col">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">İçerik</label>
+                    <textarea id="note-content" placeholder="Stratejinizi, hatalarınızı veya öğrenimlerinizi buraya yazın..." class="flex-grow w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none resize-none transition-all"></textarea>
+                </div>
+            </div>
+            <div class="p-8 border-t border-slate-800 bg-slate-900/50">
+                <button onclick="saveNote()" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
+                    Notu Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-6">
+        <div class="bg-slate-900 w-full max-w-sm rounded-3xl border border-slate-800 shadow-2xl p-8 space-y-6 animate-in fade-in zoom-in duration-200">
+            <div class="text-center space-y-2">
+                <h3 id="confirm-title" class="text-xl font-bold text-slate-100">Emin misiniz?</h3>
+                <p id="confirm-message" class="text-slate-400 text-sm">Bu işlem geri alınamaz.</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeConfirmModal()" class="flex-1 px-6 py-3 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">
+                    İptal
+                </button>
+                <button id="confirm-action-btn" class="flex-1 px-6 py-3 rounded-xl font-bold bg-rose-600 text-white hover:bg-rose-700 transition-all">
+                    Sil
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 right-8 z-[70] hidden animate-in slide-in-from-bottom-4 duration-300">
+        <div class="bg-slate-800 border border-slate-700 text-slate-100 px-6 py-3 rounded-2xl shadow-2xl flex items-center space-x-3">
+            <i id="toast-icon" data-lucide="check" class="w-5 h-5 text-sky-500"></i>
+            <span id="toast-message" class="font-medium">İşlem başarılı</span>
+        </div>
+    </div>
+
     <!-- Firebase Logic & Core Module Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -481,7 +1305,7 @@ user_prompt_code = """
                 const card = document.createElement('div');
                 card.className = 'bg-slate-800/30 p-5 rounded-2xl border border-slate-800 space-y-4 relative';
                 
-                const defaultSetupsList = ['Hislerim', 'iFVG', 'FVG', 'Breaker', 'Mitigation', 'CISD', 'Likidite', 'Supply/Demand', 'NYMO', 'Key Level', 'Range', 'Pivot', 'SMT', 'RSI'];
+                const defaultSetupsList = ['Hislerim', 'iFVG', 'FVG', 'FTR', 'CISD', 'Likidite', 'Supply/Demand', 'NYMO', 'Key Level', 'Range', 'Pivot', 'SMT', 'RSI'];
                 const setupsHtml = defaultSetupsList.map(setup => {
                     const isSelected = trade.setup?.items?.includes(setup);
                     return `
@@ -1095,1968 +1919,76 @@ user_prompt_code = """
 
             lucide.createIcons();
         }
-    </script>
-"""
 
-# Let's verify if there is any syntax error in this block by checking if it parses correctly.
-try:
-    # Just checking regex for basic match and parsing. Since it is Javascript, we cannot run standard Python compile over it, 
-    # but we can look for unmatched brackets or standard structural errors.
-    print("Javascript block extracted successfully. Length of characters:", len(user_prompt_code))
-except Exception as e:
-    print("Error:", e)
-code
-Code execution result
-Javascript block extracted successfully. Length of characters: 52838
-ThinkingThoughts
-Expand to view model thoughts
-
-chevron_right
-code
-Executable code
-# Let's verify that our proposed JS parses correctly and we didn't introduce any bracket syntax errors or spelling errors.
-
-# Let's write the proposed javascript code and run it through a JS syntax checker or check AST of a simple structure to ensure everything parses.
-# In Python, we can't run a real JS AST parser easily unless we install js2py or similar, but we can do string and balance checks.
-
-raw_js = """
-// State Management
-let currentView = 'home';
-let currentDate = new Date();
-let accounts = [];
-let currentAccountId = null;
-let trades = [];
-let notes = [];
-let balance = 0;
-let transactions = [];
-let entryTypes = [];
-let editingNoteIndex = null;
-let isOnline = false;
-let pendingMT5Trades = [];
-
-// Global Real-time State Objects
-let allTrades = {};
-let allNotes = {};
-let allBalances = {};
-let allTransactions = {};
-
-const LOCK_PASSWORD = '6592';
-
-const psychologyList = [
-    'FOMO', 'İntikam İşlemi', 'Korku', 'Açgözlülük', 'Aşırı Güven', 'Sabır', 'Disiplin', 'Kusursuz Uygulama', 'Erken Çıkış', 'Geç Giriş'
-];
-"""
-
-# Let's count matching braces in our planned code to ensure structure is perfect.
-open_braces = raw_js.count('{')
-close_braces = raw_js.count('}')
-print(f"Braces matching test: Open {open_braces}, Close {close_braces}")
-code
-Code execution result
-Braces matching test: Open 4, Close 4
-ThinkingThoughts
-Expand to view model thoughts
-
-chevron_right
-Belirttiğiniz tüm düzeltmeleri ve eklentileri içeren, mevcut Firebase konfigürasyonunu, Tesseract OCR entegrasyonlarını, arayüz tasarımlarını ve veri yapılarını tamamen koruyan tek ve tam kod bloğu aşağıda sunulmuştur.
-
-### Yapılan Temel Düzenlemeler:
-1. **İşlem Psikolojisi Türkçeleştirildi:** Tüm psikoloji terimleri arayüzde, toplu seçim panellerinde ve veri yapısında Türkçe karşılıklarıyla (`FOMO`, `İntikam İşlemi`, `Korku`, `Açgözlülük`, `Aşırı Güven`, `Sabır`, `Disiplin`, `Kusursuz Uygulama`, `Erken Çıkış`, `Geç Giriş`) güncellendi. Eski (İngilizce) verilerle uyumluluğun bozulmaması adına `migrateTrade` fonksiyonu içerisine dinamik bir eşleme katmanı eklendi.
-2. **`renderAccounts` Tamamlandı:** Kodun sonundaki `renderAccounts` fonksiyonu, karanlık tema DOM standartlarına ve veri akışlarına tam uyumlu olacak biçimde syntax hatalarından arındırılarak eksiksiz biçimde tamamlandı.
-3. **`getKillzoneForDateTime` Entegre Edildi:** ICT/SMC konseptleri ile uyumlu olan Killzone zaman aralıklarını string olarak döndüren `getKillzoneForDateTime(dateStr, timeStr)` fonksiyonu tanımlandı ve MT5 parser ile modal senkronizasyonuna bağlandı.
-4. **CSS Focus State Hatası Giderildi:** `.dark-input:focus` içindeki geçersiz CSS özellikleri (`ring` ve `ring-color`), standart tarayıcılar tarafından desteklenen ve Tailwind halka (ring) estetiğini yansıtan standart `box-shadow` CSS kurallarına dönüştürüldü.
-5. **Takvimdeki Ay İsimleri Hatası Düzeltildi:** Orijinal kodda Ağustos ayının "Aralık" olarak tekrarlanmasına yol açan `monthNames` dizisindeki indeks hatası giderildi.
-
-Doğrudan kopyalayıp çalıştırabileceğiniz tek ve tam kod bloğu:
-
-```html
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnalyzedOut</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <!-- OCR Engine for MT5 Screenshots -->
-    <script src="https://unpkg.com/tesseract.js@v5.0.3/dist/tesseract.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&display=swap');
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #020617;
-            color: #f8fafc;
+        function selectAccount(id) {
+            const acc = accounts.find(a => a.id === id);
+            if (!acc.isActive) {
+                showToast('Pasif hesaplar seçilemez. Önce aktif hale getirin.', 'error');
+                return;
+            }
+            loadAccountData(id);
+            switchTab('calendar');
+            showToast(`${acc.name} hesabına geçiş yapıldı`);
         }
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-        }
-        .glass {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .active-tab {
-            background-color: #0ea5e9; /* Sky 500 */
-            color: white !important;
-        }
-        .active-tab i, .active-tab span {
-            color: white !important;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        .dark-card {
-            background-color: #0f172a;
-            border: 1px solid #1e293b;
-        }
-        .dark-input {
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            color: #f8fafc;
-        }
-        .dark-input:focus {
-            border-color: #0ea5e9;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.4);
-        }
-    </style>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex overflow-hidden relative">
 
-    <!-- Cloud Loader Screen (Race Condition Fix) -->
-    <div id="cloud-loader" class="fixed inset-0 bg-slate-950 z-[110] flex flex-col items-center justify-center p-6 space-y-4">
-        <div class="flex items-center space-x-2 text-sky-500 font-bold text-3xl tracking-tight animate-pulse mb-2">
-            <i data-lucide="trending-up" class="w-10 h-10"></i>
-            <span>AnalyzedOut</span>
-        </div>
-        <div class="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-slate-400 font-medium text-sm">Bulut verileri eşitleniyor, lütfen bekleyin...</p>
-    </div>
-
-    <!-- Lock Screen -->
-    <div id="lock-screen" class="fixed inset-0 bg-slate-950 z-[100] flex items-center justify-center p-6">
-        <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center space-y-6">
-            <div class="flex items-center justify-center space-x-2 text-sky-500 font-bold text-2xl tracking-tight">
-                <i data-lucide="trending-up" class="w-8 h-8"></i>
-                <span>AnalyzedOut</span>
-            </div>
-            <div class="space-y-2">
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Şifre</label>
-                <input type="password" id="lock-password-input" inputmode="numeric" maxlength="10" placeholder="••••" autocomplete="off"
-                    class="w-full text-center text-2xl tracking-[0.5em] px-4 py-4 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all"
-                    onkeydown="if(event.key==='Enter') checkLockPassword()">
-            </div>
-            <p id="lock-error" class="text-rose-400 text-sm font-medium hidden">Yanlış şifre, tekrar deneyin.</p>
-            <button onclick="checkLockPassword()" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
-                Giriş Yap
-            </button>
-        </div>
-    </div>
-
-    <!-- Mobile Sidebar Overlay -->
-    <div id="sidebar-overlay" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 hidden lg:hidden"></div>
-
-    <!-- Sidebar -->
-    <aside id="sidebar-menu" class="fixed lg:static inset-y-0 left-0 w-64 min-w-[256px] shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col h-screen z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
-        <div class="p-6 flex items-center justify-between">
-            <div class="flex items-center space-x-2 text-sky-500 font-bold text-xl tracking-tight">
-                <i data-lucide="trending-up" class="w-8 h-8"></i>
-                <span>XAU Trading</span>
-            </div>
-            <button onclick="toggleMobileSidebar(false)" class="lg:hidden p-2 text-slate-400 hover:text-slate-200 transition-colors">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-        </div>
-
-        <nav class="flex-grow px-4 space-y-2 mt-4 overflow-y-auto scrollbar-hide">
-            <button onclick="switchTab('home')" id="nav-home" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400 active-tab">
-                <i data-lucide="home" class="w-5 h-5"></i>
-                <span class="font-semibold">Ana Sayfa</span>
-            </button>
-
-            <div id="account-nav" class="hidden space-y-2">
-                <button onclick="switchTab('calendar')" id="nav-calendar" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
-                    <i data-lucide="calendar" class="w-5 h-5"></i>
-                    <span class="font-semibold">Takvim</span>
-                </button>
-                <button onclick="switchTab('history')" id="nav-history" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
-                    <i data-lucide="list" class="w-5 h-5"></i>
-                    <span class="font-semibold">İşlemler</span>
-                </button>
-                <button onclick="switchTab('analysis')" id="nav-analysis" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
-                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
-                    <span class="font-semibold">Analiz</span>
-                </button>
-                <button onclick="switchTab('balance')" id="nav-balance" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
-                    <i data-lucide="wallet" class="w-5 h-5"></i>
-                    <span class="font-semibold">Bakiye</span>
-                </button>
-                <button onclick="switchTab('notes')" id="nav-notes" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
-                    <i data-lucide="sticky-note" class="w-5 h-5"></i>
-                    <span class="font-semibold">Notlar</span>
-                </button>
-                <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                    <span class="font-semibold">Ayarlar</span>
-                </button>
-            </div>
-        </nav>
-
-        <div id="bottom-home-nav" class="hidden px-4 mb-2">
-            <button onclick="switchTab('home')" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 text-slate-400">
-                <i data-lucide="chevron-left" class="w-5 h-5"></i>
-                <span class="font-semibold">Ana Sayfa</span>
-            </button>
-        </div>
-
-        <div class="p-4 border-t border-slate-800 flex justify-around items-center">
-            <button onclick="backupData()" class="p-3 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-sky-400 transition-all" title="Verileri Yedekle">
-                <i data-lucide="save" class="w-5 h-5"></i>
-            </button>
-            <button onclick="document.getElementById('restore-input').click()" class="p-3 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-emerald-400 transition-all" title="Yedekten Geri Yükle">
-                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
-            </button>
-            <button onclick="lockApp()" class="p-3 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-rose-400 transition-all" title="Çıkış Yap">
-                <i data-lucide="log-out" class="w-5 h-5"></i>
-            </button>
-            <input type="file" id="restore-input" class="hidden" accept=".json" onchange="restoreData(event)">
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-grow overflow-y-auto h-screen scrollbar-hide relative w-full">
-        
-        <!-- Header -->
-        <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-4 sticky top-0 z-30 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <button onclick="toggleMobileSidebar(true)" class="lg:hidden p-2 -ml-2 text-slate-400 hover:text-slate-200 transition-colors">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
-                </button>
-                <h2 id="page-title" class="text-xl font-bold text-slate-100">Takvim</h2>
-            </div>
-            <div class="flex items-center space-x-4">
-                <span id="current-date-display" class="text-sm font-medium text-slate-400 hidden sm:inline"></span>
-                
-                <!-- Sync Connection Indicator -->
-                <div id="sync-indicator" class="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs">
-                    <span id="sync-indicator-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                    <span id="sync-indicator-text" class="text-slate-400 font-medium">Bağlanıyor...</span>
-                </div>
-
-                <div id="account-badge" class="px-3 py-1.5 rounded-full bg-sky-900/50 flex items-center justify-center text-sky-400 font-bold border border-sky-800 text-sm">
-                    MT
-                </div>
-            </div>
-        </header>
-
-        <!-- Sections Container -->
-        <div class="p-8">
+        function toggleAccountStatus(id) {
+            const index = accounts.findIndex(a => a.id === id);
+            if (index === -1) return;
             
-            <!-- Home Section (Account Management) -->
-            <section id="section-home" class="hidden space-y-8">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-2xl font-bold text-slate-100">Hesaplar</h3>
-                    <button onclick="openAccountModal()" class="bg-sky-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-sky-700 transition-all flex items-center space-x-2 shadow-lg shadow-sky-900/20">
-                        <i data-lucide="plus" class="w-5 h-5"></i>
-                        <span>Yeni Hesap Ekle</span>
-                    </button>
-                </div>
+            const wasActive = accounts[index].isActive;
 
-                <div class="space-y-6">
-                    <div>
-                        <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Aktif Hesaplar</h4>
-                        <div id="active-accounts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <!-- Active accounts will be injected here -->
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Pasif Hesaplar</h4>
-                        <div id="passive-accounts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <!-- Passive accounts will be injected here -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Calendar Section -->
-            <section id="section-calendar" class="space-y-6">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-4">
-                        <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                            <i data-lucide="chevron-left" class="w-5 h-5 text-slate-400"></i>
-                        </button>
-                        <h3 id="calendar-month-year" class="text-2xl font-bold text-slate-100 min-w-[150px] text-center">Mart 2026</h3>
-                        <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                            <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i>
-                        </button>
-                    </div>
-                    <div class="flex space-x-2">
-                        <!-- MT5 OCR YÜKLEME BUTONU -->
-                        <button onclick="document.getElementById('mt5-upload-input').click()" class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-4 sm:px-6 py-2.5 rounded-xl font-bold hover:bg-emerald-600/30 transition-all flex items-center space-x-2">
-                            <i data-lucide="camera" class="w-5 h-5"></i>
-                            <span class="hidden sm:inline">MT5 Yükle</span>
-                        </button>
-                        <input type="file" id="mt5-upload-input" class="hidden" accept="image/*" onchange="processMT5Screenshot(event)">
-
-                        <button onclick="openTradeModal()" class="bg-sky-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-sky-700 transition-all flex items-center space-x-2 shadow-lg shadow-sky-900/20">
-                            <i data-lucide="plus" class="w-5 h-5"></i>
-                            <span>Yeni İşlem</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <div class="lg:col-span-3 bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-sm">
-                        <div class="calendar-grid bg-slate-800/50 border-b border-slate-800">
-                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Pzt</div>
-                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Sal</div>
-                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Çar</div>
-                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Per</div>
-                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Cum</div>
-                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest text-sky-500/70">Cmt</div>
-                            <div class="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest text-sky-500/70">Paz</div>
-                        </div>
-                        <div id="calendar-days" class="calendar-grid divide-x divide-y divide-slate-800">
-                            <!-- Days will be injected here -->
-                        </div>
-                    </div>
-                    
-                    <!-- Weekly Stats Column -->
-                    <div class="space-y-4">
-                        <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
-                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Hafta</h4>
-                            <div id="weekly-stats-container" class="space-y-4">
-                                <!-- Weekly stats will be injected here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Monthly Trade History -->
-                <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
-                    <div class="flex justify-between items-center mb-6">
-                        <h4 class="text-lg font-bold text-slate-100">Aylık İşlem Geçmişi</h4>
-                        <div id="monthly-stats" class="text-sm font-semibold text-slate-400"></div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="text-slate-500 text-sm border-b border-slate-800">
-                                    <th class="pb-4 font-semibold">Tarih</th>
-                                    <th class="pb-4 font-semibold">Parite</th>
-                                    <th class="pb-4 font-semibold">İşlem (Long/short)</th>
-                                    <th class="pb-4 font-semibold">PnL</th>
-                                    <th class="pb-4 font-semibold">İşlem</th>
-                                </tr>
-                            </thead>
-                            <tbody id="monthly-trades-body" class="divide-y divide-slate-800">
-                                <!-- Monthly trades will be injected here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- History Section -->
-            <section id="section-history" class="hidden space-y-6">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-2xl font-bold text-slate-100">İşlemler</h3>
-                    <div class="flex space-x-2">
-                        <button onclick="exportTrades()" class="bg-slate-800 text-slate-300 px-4 py-2 rounded-xl font-semibold hover:bg-slate-700 transition-all flex items-center space-x-2">
-                            <i data-lucide="download" class="w-4 h-4"></i>
-                            <span>Dışa Aktar</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="detailed-history-container" class="space-y-8">
-                    <!-- Detailed history grouped by month will be injected here -->
-                </div>
-            </section>
-
-            <!-- Simplified Analysis Section -->
-            <section id="section-analysis" class="hidden space-y-8">
-                <!-- Summary Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
-                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500 mb-1">Anlık Bütçe</p>
-                        <p id="stat-current-budget" class="text-3xl font-bold text-slate-100">$0</p>
-                    </div>
-                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500 mb-1">Toplam PnL</p>
-                        <p id="stat-total-pnl" class="text-3xl font-bold text-slate-100">$0</p>
-                    </div>
-                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500 mb-1">Win Rate</p>
-                        <p id="stat-win-rate" class="text-3xl font-bold text-sky-500">0%</p>
-                    </div>
-                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500 mb-1">Profit Factor</p>
-                        <p id="stat-profit-factor" class="text-3xl font-bold text-slate-100">0.00</p>
-                    </div>
-                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500 mb-1">Ortalama R:R</p>
-                        <p id="stat-avg-rr" class="text-3xl font-bold text-slate-100">0.00</p>
-                    </div>
-                </div>
-
-                <!-- Chart Row -->
-                <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
-                    <div class="flex justify-between items-center mb-6">
-                        <h4 class="text-lg font-bold text-slate-100">Sermaye Eğrisi (Equity Curve)</h4>
-                        <span id="report-drawdown" class="text-xs font-bold text-rose-500 bg-rose-500/10 px-2 py-1 rounded-lg">Max DD: 0%</span>
-                    </div>
-                    <div id="equity-chart" class="w-full h-64 bg-slate-950/50 rounded-2xl overflow-hidden"></div>
-                </div>
-
-                <!-- Structured Simplified Insights Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Key Performance Analyses -->
-                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-6">
-                        <h4 class="text-lg font-bold text-slate-100 border-b border-slate-800 pb-4">Özet Performans Göstergeleri</h4>
-                        
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
-                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">En Başarılı Setup</p>
-                                <p id="stat-best-setup" class="text-sm font-bold text-emerald-400">-</p>
-                            </div>
-                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
-                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">En Başarısız Setup</p>
-                                <p id="stat-worst-setup" class="text-sm font-bold text-rose-400">-</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
-                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">En Başarılı Killzone</p>
-                                <p id="stat-best-killzone" class="text-sm font-bold text-emerald-400">-</p>
-                            </div>
-                            <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80">
-                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">En Başarılı Psikoloji</p>
-                                <p id="stat-best-psychology" class="text-sm font-bold text-emerald-400">-</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Trading Plan & Summary Insights -->
-                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm space-y-4">
-                        <h4 class="text-lg font-bold text-slate-100 border-b border-slate-800 pb-4">Kısa Performans Özeti</h4>
-                        <div id="report-insights" class="space-y-3 text-sm text-slate-400 leading-relaxed">
-                            <!-- Dynamic report points loaded here -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Balance Section -->
-            <section id="section-balance" class="hidden space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500 mb-1">Anlık Bakiye</p>
-                        <p id="balance-current" class="text-3xl font-bold text-slate-100">$0</p>
-                    </div>
-                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500 mb-1">Toplam Yatırılan</p>
-                        <p id="balance-total-deposit" class="text-3xl font-bold text-emerald-400">$0</p>
-                    </div>
-                    <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500 mb-1">Toplam Çekilen</p>
-                        <p id="balance-total-withdraw" class="text-3xl font-bold text-rose-400">$0</p>
-                    </div>
-                </div>
-
-                <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
-                    <h4 class="text-lg font-bold text-slate-100 mb-6">2026 Yılı Bakiye / Aylık</h4>
-                    <div id="balance-chart" class="w-full h-80 bg-slate-950/50 rounded-2xl overflow-hidden"></div>
-                </div>
-
-                <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
-                    <h4 class="text-lg font-bold text-slate-100 mb-6">İşlem Geçmişi (Yatırma/Çekme)</h4>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="text-slate-500 text-sm border-b border-slate-800">
-                                    <th class="pb-4 font-semibold">Tarih</th>
-                                    <th class="pb-4 font-semibold">İşlem Tipi</th>
-                                    <th class="pb-4 font-semibold">Miktar</th>
-                                </tr>
-                            </thead>
-                            <tbody id="balance-history-body" class="divide-y divide-slate-800">
-                                <!-- Balance history will be injected here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Notes Section -->
-            <section id="section-notes" class="hidden space-y-6">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-2xl font-bold text-slate-100">Strateji Notları</h3>
-                    <button onclick="openNoteModal()" class="bg-sky-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-sky-700 transition-all flex items-center space-x-2 shadow-lg shadow-sky-900/20">
-                        <i data-lucide="plus" class="w-5 h-5"></i>
-                        <span>Not Ekle</span>
-                    </button>
-                </div>
-                <div id="notes-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Notes will be injected here -->
-                </div>
-            </section>
-
-            <!-- Settings Section -->
-            <section id="section-settings" class="hidden space-y-8">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Setup Management -->
-                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
-                        <h4 class="text-lg font-bold text-slate-100 mb-6">Setup Yönetimi</h4>
-                        <div class="space-y-4">
-                            <div class="flex space-x-2">
-                                <input type="text" id="new-entry-type" placeholder="Yeni Setup..." class="flex-grow px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all animate-none">
-                                <button onclick="addEntryType()" class="bg-sky-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-sky-700 transition-all">
-                                    <i data-lucide="plus" class="w-5 h-5"></i>
-                                </button>
-                            </div>
-                            <div id="entry-types-list" class="space-y-2 max-h-64 overflow-y-auto pr-2 scrollbar-hide">
-                                <!-- Entry types will be injected here -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Balance Management -->
-                    <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-sm">
-                        <h4 class="text-lg font-bold text-slate-100 mb-6">Bakiye Yönetimi</h4>
-                        <div class="space-y-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-400 mb-2">Başlangıç Bakiyesi ($)</label>
-                                <input type="number" id="initial-balance-input" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all mb-4">
-                                <button id="save-balance-btn" onclick="saveInitialBalance()" class="w-full bg-sky-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-sky-700 transition-all">
-                                    Bakiyeyi Gir
-                                </button>
-                            </div>
-                            <div class="pt-4 border-t border-slate-800">
-                                <label class="block text-sm font-semibold text-slate-400 mb-2">Miktar ($)</label>
-                                <input type="number" id="transaction-amount-input" step="0.01" placeholder="0.00" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all mb-4">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <button onclick="executeTransaction('deposit')" class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-6 py-3 rounded-xl font-bold hover:bg-emerald-600/30 transition-all flex items-center justify-center space-x-2">
-                                        <i data-lucide="arrow-down-left" class="w-5 h-5"></i>
-                                        <span>Para Yatır</span>
-                                    </button>
-                                    <button onclick="executeTransaction('withdraw')" class="bg-rose-600/20 text-rose-400 border border-rose-500/30 px-6 py-3 rounded-xl font-bold hover:bg-rose-600/30 transition-all flex items-center justify-center space-x-2">
-                                        <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
-                                        <span>Para Çek</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-        </div>
-    </main>
-
-    <!-- OCR Loader Modal -->
-    <div id="ocr-loader" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[200] hidden flex flex-col items-center justify-center p-6 text-center">
-        <div class="w-20 h-20 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-6"></div>
-        <h3 class="text-2xl font-bold text-white mb-2">MT5 Ekranı Analiz Ediliyor</h3>
-        <p class="text-slate-400 max-w-xs">Yapay zeka işlemlerinizi okuyor, lütfen sayfayı kapatmayın...</p>
-        <div id="ocr-progress" class="mt-8 w-64 h-2 bg-slate-800 rounded-full overflow-hidden">
-            <div id="ocr-progress-bar" class="h-full bg-sky-500 transition-all duration-300" style="width: 0%"></div>
-        </div>
-    </div>
-
-    <!-- MT5 Review Modal -->
-    <div id="mt5-review-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[150] hidden flex items-center justify-center p-6">
-        <div class="bg-slate-900 w-full max-w-5xl max-h-[92vh] rounded-3xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/20">
-                <div>
-                    <h3 class="text-xl font-bold text-white">İşlemleri Onayla</h3>
-                    <p class="text-xs text-slate-500 mt-1">Lütfen her işlem için parametreleri kontrol edin ve onaylayın.</p>
-                </div>
-                <button onclick="closeMT5Review()" class="p-2 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
-            </div>
-            
-            <!-- Bulk Apply Panel -->
-            <div class="bg-slate-950/40 p-5 border-b border-slate-800 space-y-3">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-2">
-                    <i data-lucide="sliders" class="w-4 h-4 text-sky-500"></i>
-                    <span>Toplu Uygula (Seçilenleri Tüm İşlemlere Tanımla)</span>
-                </h4>
-                <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2">
-                    <!-- Setup -->
-                    <div>
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Setup</label>
-                        <select id="bulk-setup" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
-                            <option value="">-- Değiştirme --</option>
-                            <option value="Hislerim">Hislerim</option>
-                        </select>
-                    </div>
-                    <!-- Psychology -->
-                    <div>
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Psikoloji</label>
-                        <select id="bulk-psych" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
-                            <option value="">-- Değiştirme --</option>
-                            <option value="Sabır">Sabır</option>
-                            <option value="Disiplin">Disiplin</option>
-                            <option value="Kusursuz Uygulama">Kusursuz Uygulama</option>
-                            <option value="FOMO">FOMO</option>
-                            <option value="İntikam İşlemi">İntikam İşlemi</option>
-                            <option value="Korku">Korku</option>
-                            <option value="Açgözlülük">Açgözlülük</option>
-                            <option value="Aşırı Güven">Aşırı Güven</option>
-                            <option value="Erken Çıkış">Erken Çıkış</option>
-                            <option value="Geç Giriş">Geç Giriş</option>
-                        </select>
-                    </div>
-                    <!-- Killzone -->
-                    <div>
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Killzone</label>
-                        <select id="bulk-killzone" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
-                            <option value="">-- Değiştirme --</option>
-                            <option value="Asia">Asia</option>
-                            <option value="London Open">London Open</option>
-                            <option value="London Close">London Close</option>
-                            <option value="New York Open">New York Open</option>
-                            <option value="New York Close">New York Close</option>
-                            <option value="Outside Killzone">Outside Killzone</option>
-                        </select>
-                    </div>
-                    <!-- Exit Reason -->
-                    <div>
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Çıkış Sebebi</label>
-                        <select id="bulk-exit" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
-                            <option value="">-- Değiştirme --</option>
-                            <option value="TP">TP</option>
-                            <option value="SL">SL</option>
-                            <option value="Manuel">Manuel</option>
-                        </select>
-                    </div>
-                    <!-- Bias -->
-                    <div>
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Bias</label>
-                        <select id="bulk-bias" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
-                            <option value="">-- Değiştirme --</option>
-                            <option value="1H">1H</option>
-                            <option value="4H">4H</option>
-                            <option value="Both">1H & 4H</option>
-                            <option value="None">Hiçbiri</option>
-                        </select>
-                    </div>
-                    <!-- Setup TF -->
-                    <div>
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Setup TF</label>
-                        <select id="bulk-setup-tf" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
-                            <option value="">-- Değiştirme --</option>
-                            <option value="15M">15M</option>
-                            <option value="5M">5M</option>
-                            <option value="Both">15M & 5M</option>
-                            <option value="None">Hiçbiri</option>
-                        </select>
-                    </div>
-                    <!-- Entry TF -->
-                    <div>
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Entry TF</label>
-                        <select id="bulk-entry-tf" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
-                            <option value="">-- Değiştirme --</option>
-                            <option value="1M">1M</option>
-                            <option value="5M">5M</option>
-                            <option value="Both">1M & 5M</option>
-                            <option value="None">Hiçbiri</option>
-                        </select>
-                    </div>
-                    <!-- Entry Trigger -->
-                    <div>
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Entry Trigger</label>
-                        <select id="bulk-entry-trigger" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200 outline-none">
-                            <option value="">-- Değiştirme --</option>
-                            <option value="FVG">FVG</option>
-                            <option value="CISD">CISD</option>
-                            <option value="OB">OB</option>
-                            <option value="SMT">SMT</option>
-                            <option value="MSS">MSS</option>
-                            <option value="BOS">BOS</option>
-                            <option value="Liquidity Sweep">Liquidity Sweep</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex justify-between items-center pt-2">
-                    <!-- Global risk parameter -->
-                    <div class="flex items-center space-x-2">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase">Toplu R (%):</label>
-                        <input type="number" id="bulk-r" step="0.01" placeholder="1.00" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 w-16">
-                    </div>
-                    <button onclick="applyBulkToPending()" type="button" class="bg-sky-600 text-[10px] px-3 py-1.5 rounded-lg font-bold hover:bg-sky-700 text-white transition-all shadow">
-                        Seçilenleri Toplu Uygula
-                    </button>
-                </div>
-            </div>
-
-            <div class="p-6 overflow-y-auto flex-grow bg-slate-900 scrollbar-hide" id="mt5-review-container">
-                <div id="mt5-review-body" class="space-y-4"></div>
-            </div>
-            <div class="p-6 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center">
-                <span id="mt5-total-info" class="text-sm font-medium text-slate-400"></span>
-                <button onclick="saveMT5Trades()" class="bg-sky-600 px-10 py-3 rounded-xl font-bold text-white hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
-                    Sisteme Kaydet
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Account Modal -->
-    <div id="account-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
-        <div class="bg-slate-900 w-full max-w-md rounded-3xl border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div class="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-                <h3 class="text-xl font-bold text-slate-100">Yeni Hesap Oluştur</h3>
-                <button onclick="closeAccountModal()" class="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                    <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
-                </button>
-            </div>
-            <div class="p-8 space-y-6">
-                <div class="space-y-2">
-                    <label class="block text-xs font-bold text-slate-500 uppercase">Hesap Adı</label>
-                    <input type="text" id="account-name-input" placeholder="Örn: Kişisel, Fon Hesabı..." class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
-                </div>
-            </div>
-            <div class="p-8 border-t border-slate-800 bg-slate-900/50">
-                <button onclick="saveAccount()" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
-                    Hesabı Oluştur
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Trade Modal -->
-    <div id="trade-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
-        <div class="bg-slate-900 w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl border border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
-                <h3 id="modal-title" class="text-xl font-bold text-slate-100">Yeni İşlem Ekle</h3>
-                <button onclick="closeTradeModal()" type="button" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <form id="trade-form" onsubmit="handleTradeSubmit(event)" class="flex flex-col overflow-hidden h-full">
-                <div class="p-6 space-y-4 overflow-y-auto flex-grow scrollbar-hide" id="modal-scrollable-body">
-                    <input type="hidden" id="trade-id">
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Tarih</label>
-                            <input type="date" id="trade-date" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Saat</label>
-                            <input type="time" id="trade-time" required onchange="updateKillzone()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Parite</label>
-                            <input type="text" id="trade-symbol" value="XAUUSD" required class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all text-center font-bold text-lg">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">İşlem</label>
-                            <div class="flex space-x-2">
-                                <button type="button" onclick="setTradeType('Long')" id="btn-type-Long" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Long</button>
-                                <button type="button" onclick="setTradeType('Short')" id="btn-type-Short" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Short</button>
-                            </div>
-                            <input type="hidden" id="trade-type" value="Long">
-                        </div>
-                    </div>
-
-                    <!-- Lot, R and PnL row -->
-                    <div class="grid grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">R (%)</label>
-                            <input type="number" step="0.01" id="trade-r-percent" required placeholder="1.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Lot</label>
-                            <input type="number" step="0.01" id="trade-lot" required placeholder="0.01" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
-                        </div>
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <label class="block text-xs font-bold text-slate-500 uppercase">PnL ($)</label>
-                                <span id="trade-rr-display" class="text-[10px] font-bold text-sky-400 uppercase tracking-wider">RR: 0.00R</span>
-                            </div>
-                            <input type="number" step="0.01" id="trade-pnl" required placeholder="0.00" oninput="updateRRDisplay()" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all">
-                        </div>
-                    </div>
-
-                    <!-- Simplified Unified Killzone Selection -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Killzone</label>
-                        <select id="trade-killzone" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all text-sm font-semibold">
-                            <option value="Asia">Asia</option>
-                            <option value="London Open">London Open</option>
-                            <option value="London Close">London Close</option>
-                            <option value="New York Open">New York Open</option>
-                            <option value="New York Close">New York Close</option>
-                            <option value="Outside Killzone">Outside Killzone</option>
-                        </select>
-                    </div>
-
-                    <!-- Timeframes Block: Bias, Setup TF, Entry TF -->
-                    <div class="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80 space-y-4">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Timeframe Yönetimi</h4>
-                        
-                        <!-- Bias Selection (1H and 4H) -->
-                        <div class="grid grid-cols-3 items-center gap-2">
-                            <span class="text-xs font-bold text-slate-500 uppercase">Bias:</span>
-                            <button type="button" onclick="toggleBiasOption('1H')" id="btn-bias-1H" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
-                                <span id="checkbox-bias-1H" class="w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[9px] text-transparent bg-slate-900">✓</span>
-                                <span>1H</span>
-                            </button>
-                            <button type="button" onclick="toggleBiasOption('4H')" id="btn-bias-4H" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
-                                <span id="checkbox-bias-4H" class="w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[9px] text-transparent bg-slate-900">✓</span>
-                                <span>4H</span>
-                            </button>
-                            <input type="hidden" id="trade-bias-options" value="">
-                        </div>
-
-                        <!-- Setup Timeframe -->
-                        <div class="grid grid-cols-3 items-center gap-2">
-                            <span class="text-xs font-bold text-slate-500 uppercase">Setup TF:</span>
-                            <button type="button" onclick="toggleSetupTF('15M')" id="btn-setupTF-15M" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
-                                <span id="checkbox-setupTF-15M" class="w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[9px] text-transparent bg-slate-900">✓</span>
-                                <span>15M</span>
-                            </button>
-                            <button type="button" onclick="toggleSetupTF('5M')" id="btn-setupTF-5M" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
-                                <span id="checkbox-setupTF-5M" class="w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[9px] text-transparent bg-slate-900">✓</span>
-                                <span>5M</span>
-                            </button>
-                            <input type="hidden" id="trade-setup-timeframes" value="">
-                        </div>
-
-                        <!-- Entry Timeframe -->
-                        <div class="grid grid-cols-3 items-center gap-2">
-                            <span class="text-xs font-bold text-slate-500 uppercase">Entry TF:</span>
-                            <button type="button" onclick="toggleEntryTF('1M')" id="btn-entryTF-1M" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
-                                <span id="checkbox-entryTF-1M" class="w-3.5 h-3.5 rounded border border-slate-600 flex items-center justify-center text-[9px] text-transparent bg-slate-900">✓</span>
-                                <span>1M</span>
-                            </button>
-                            <button type="button" onclick="toggleEntryTF('5M')" id="btn-entryTF-5M" class="py-2 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all text-xs flex items-center justify-center space-x-1.5">
-                                <span id="checkbox-entryTF-5M" class="w-3.5 h-3.5 rounded border border-sky-600 flex items-center justify-center text-[9px] text-white bg-sky-500">✓</span>
-                                <span>5M</span>
-                            </button>
-                            <input type="hidden" id="trade-entry-timeframes" value="">
-                        </div>
-                    </div>
-
-                    <!-- Setups List -->
-                    <div class="space-y-3 bg-slate-950/30 p-4 rounded-2xl border border-slate-800/80">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Setups (Çoklu Seçim)</label>
-                        <div class="grid grid-cols-3 gap-2" id="setup-items-container">
-                            <!-- Loaded dynamically -->
-                        </div>
-                        <input type="hidden" id="trade-setup-items" value="">
-                    </div>
-
-                    <!-- Clean Entry Trigger -->
-                    <div class="space-y-3 bg-slate-950/30 p-4 rounded-2xl border border-slate-800/80">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Entry Trigger (Çoklu Seçim)</label>
-                        <div class="grid grid-cols-3 gap-2" id="entry-items-container">
-                            <!-- Loaded dynamically -->
-                        </div>
-                        <input type="hidden" id="trade-entry-items" value="">
-                    </div>
-
-                    <!-- Exit Reason -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Çıkış Sebebi</label>
-                        <div class="flex space-x-2">
-                            <button type="button" onclick="setExitReason('TP')" id="btn-exit-TP" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">TP</button>
-                            <button type="button" onclick="setExitReason('Manuel')" id="btn-exit-Manuel" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">Manuel</button>
-                            <button type="button" onclick="setExitReason('SL')" id="btn-exit-SL" class="flex-1 py-3 rounded-xl font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">SL</button>
-                        </div>
-                        <input type="hidden" id="trade-exit-reason" value="TP">
-                    </div>
-
-                    <!-- Trading Psychology -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-3">İşlem Psikolojisi</label>
-                        <div class="grid grid-cols-2 gap-2" id="psychology-buttons-container">
-                            <!-- Psychology buttons will be injected here -->
-                        </div>
-                        <input type="hidden" id="trade-psychology" value="">
-                    </div>
-
-                    <!-- Standard legacy hidden inputs -->
-                    <select id="trade-entry-type" class="hidden"></select>
-
-                    <!-- Notes field -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Notlar</label>
-                        <textarea id="trade-notes" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none resize-none transition-all animate-none" placeholder="İşlem notları..."></textarea>
-                    </div>
-                </div>
-                
-                <div class="p-6 border-t border-slate-800 bg-slate-900/95 sticky bottom-0 z-10 flex">
-                    <button type="submit" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
-                        Kaydet
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Note Modal -->
-    <div id="note-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
-        <div class="bg-slate-900 w-full max-w-3xl h-[80vh] rounded-3xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div class="p-8 border-b border-slate-800 flex justify-between items-center">
-                <h3 id="note-modal-title" class="text-xl font-bold text-slate-100">Not Ekle</h3>
-                <button onclick="closeNoteModal()" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <div class="p-8 flex-grow flex flex-col space-y-4 overflow-y-auto">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Başlık</label>
-                    <input type="text" id="note-title" placeholder="Not Başlığı" class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none transition-all font-bold text-lg">
-                </div>
-                <div class="flex-grow flex flex-col">
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">İçerik</label>
-                    <textarea id="note-content" placeholder="Stratejinizi, hatalarınızı veya öğrenimlerinizi buraya yazın..." class="flex-grow w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 focus:ring-2 focus:ring-sky-500 outline-none resize-none transition-all"></textarea>
-                </div>
-            </div>
-            <div class="p-8 border-t border-slate-800 bg-slate-900/50">
-                <button onclick="saveNote()" class="w-full bg-sky-600 text-white py-4 rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-900/40">
-                    Notu Kaydet
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div id="confirm-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-6">
-        <div class="bg-slate-900 w-full max-w-sm rounded-3xl border border-slate-800 shadow-2xl p-8 space-y-6 animate-in fade-in zoom-in duration-200">
-            <div class="text-center space-y-2">
-                <h3 id="confirm-title" class="text-xl font-bold text-slate-100">Emin misiniz?</h3>
-                <p id="confirm-message" class="text-slate-400 text-sm">Bu işlem geri alınamaz.</p>
-            </div>
-            <div class="flex space-x-3">
-                <button onclick="closeConfirmModal()" class="flex-1 px-6 py-3 rounded-xl font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all">
-                    İptal
-                </button>
-                <button id="confirm-action-btn" class="flex-1 px-6 py-3 rounded-xl font-bold bg-rose-600 text-white hover:bg-rose-700 transition-all">
-                    Sil
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-8 right-8 z-[70] hidden animate-in slide-in-from-bottom-4 duration-300">
-        <div class="bg-slate-800 border border-slate-700 text-slate-100 px-6 py-3 rounded-2xl shadow-2xl flex items-center space-x-3">
-            <i id="toast-icon" data-lucide="check" class="w-5 h-5 text-sky-500"></i>
-            <span id="toast-message" class="font-medium">İşlem başarılı</span>
-        </div>
-    </div>
-
-    <!-- Firebase Logic & Core Module Scripts -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, update, get, onValue, remove, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyC0U6uXDpb_herXOtUxQDgU90sFqHCseVw",
-            authDomain: "analyzedout-4bf8e.firebaseapp.com",
-            databaseURL: "https://analyzedout-4bf8e-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "analyzedout-4bf8e",
-            storageBucket: "analyzedout-4bf8e.firebasestorage.app",
-            messagingSenderId: "930744089925",
-            appId: "1:930744089925:web:f034b0edfb5fd8af84522c",
-            measurementId: "G-S6KK4GXZG0"
-        };
-
-        // Initialize Firebase Core
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // State Management
-        let currentView = 'home';
-        let currentDate = new Date();
-        let accounts = [];
-        let currentAccountId = null;
-        let trades = [];
-        let notes = [];
-        let balance = 0;
-        let transactions = [];
-        let entryTypes = [];
-        let editingNoteIndex = null;
-        let isOnline = false;
-        let pendingMT5Trades = [];
-
-        // Global Real-time State Objects
-        let allTrades = {};
-        let allNotes = {};
-        let allBalances = {};
-        let allTransactions = {};
-
-        const LOCK_PASSWORD = '6592';
-
-        const psychologyList = [
-            'FOMO', 'İntikam İşlemi', 'Korku', 'Açgözlülük', 'Aşırı Güven', 
-            'Sabır', 'Disiplin', 'Kusursuz Uygulama', 'Erken Çıkış', 'Geç Giriş'
-        ];
-
-        // Connection Flag Tracker
-        let accountsLoaded = false;
-        let entryTypesLoaded = false;
-        let tradesLoaded = false;
-        let notesLoaded = false;
-        let balancesLoaded = false;
-        let transactionsLoaded = false;
-
-        // Date Parsing Helper
-        function safeParseDate(dateStr) {
-            if (!dateStr) return new Date();
-            if (dateStr instanceof Date) return dateStr;
-            const parts = dateStr.split('-');
-            if (parts.length === 3) {
-                return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-            }
-            return new Date(dateStr);
-        }
-
-        // Link formatted helper
-        function formatNoteLinks(text) {
-            if (!text) return '-';
-            const urlRegex = /(https?:\/\/[^\s]+)/g;
-            return text.replace(urlRegex, url =>
-                `<a href="${url}" target="_blank" rel="noopener noreferrer"
-                    class="text-sky-400 hover:text-sky-300 underline underline-offset-2 break-all"
-                    onclick="event.stopPropagation()">${url}</a>`
-            );
-        }
-
-        function toLocalDateStr(d) {
-            const yr  = d.getFullYear();
-            const mo  = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${yr}-${mo}-${day}`;
-        }
-
-        function toLocalTimeStr(d) {
-            const h  = String(d.getHours()).padStart(2, '0');
-            const m  = String(d.getMinutes()).padStart(2, '0');
-            return `${h}:${m}`;
-        }
-
-        // Connection Status Visualizer
-        function updateSyncStatus(status, customText = null) {
-            isOnline = status;
-            const dot = document.getElementById('sync-indicator-dot');
-            const text = document.getElementById('sync-indicator-text');
-            if (!dot || !text) return;
-
-            if (status) {
-                dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-none";
-                if (customText) {
-                    text.innerText = customText;
-                } else {
-                    const timeStr = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                    text.innerText = `Senkronize (${timeStr})`;
-                }
-            } else {
-                dot.className = "w-2 h-2 rounded-full bg-rose-500 animate-pulse";
-                text.innerText = "Çevrimdışı (Yerel)";
-            }
-        }
-
-        function checkInitialLoadComplete() {
-            if (accountsLoaded && entryTypesLoaded && tradesLoaded && notesLoaded && balancesLoaded && transactionsLoaded) {
-                const loader = document.getElementById('cloud-loader');
-                if (loader) {
-                    loader.classList.add('hidden');
-                }
-            }
-        }
-
-        // Retroactive Migration for older trade structures to preserve full backwards compatibility
-        function migrateTrade(t) {
-            if (!t) return t;
-            if (!t.date) {
-                t.date = toLocalDateStr(new Date());
-            }
-            if (!t.time) {
-                t.time = "12:00";
-            }
-            
-            // Clean/align old Session/Killzone to the strict list of 6 options:
-            // Asia, London Open, London Close, New York Open, New York Close, Outside Killzone
-            if (!t.killzone || !['Asia', 'London Open', 'London Close', 'New York Open', 'New York Close', 'Outside Killzone'].includes(t.killzone)) {
-                const oldSess = t.session || '';
-                if (oldSess === 'Asia') t.killzone = 'Asia';
-                else if (oldSess === 'London') t.killzone = 'London Open';
-                else if (oldSess === 'New York') t.killzone = 'New York Open';
-                else if (t.killzone === 'Frankfurt') t.killzone = 'London Open';
-                else if (t.killzone === 'London Open') t.killzone = 'London Open';
-                else if (t.killzone === 'NY Open') t.killzone = 'New York Open';
-                else if (t.killzone === 'NY PM') t.killzone = 'New York Close';
-                else if (t.killzone === 'London Close') t.killzone = 'London Close';
-                else t.killzone = 'Outside Killzone';
-            }
-            if (t.session) delete t.session;
-
-            if (!t.setup || typeof t.setup !== 'object') {
-                const oldSetups = t.setupTypes || (t.entryType ? [t.entryType] : []);
-                t.setup = {
-                    timeframes: [],
-                    items: oldSetups
-                };
-            }
-            if (!t.entry || typeof t.entry !== 'object') {
-                t.entry = {
-                    timeframes: [],
-                    items: []
-                };
-            }
-            if (!t.bias || typeof t.bias !== 'object') {
-                const oldBias = typeof t.bias === 'string' ? t.bias : '';
-                t.bias = {
-                    "1H": oldBias.includes('1H'),
-                    "4H": oldBias.includes('4H')
-                };
-            }
-            if (t.quickTimeframe) delete t.quickTimeframe;
-            
-            // Retroactive English-to-Turkish migration for trade psychology
-            if (t.psychology && Array.isArray(t.psychology)) {
-                const translationMap = {
-                    'Patient': 'Sabır',
-                    'Discipline': 'Disiplin',
-                    'Perfect Execution': 'Kusursuz Uygulama',
-                    'FOMO': 'FOMO',
-                    'Revenge Trade': 'İntikam İşlemi',
-                    'Fear': 'Korku',
-                    'Greed': 'Açgözlülük',
-                    'Overconfidence': 'Aşırı Güven',
-                    'Early Exit': 'Erken Çıkış',
-                    'Late Entry': 'Geç Giriş'
-                };
-                t.psychology = t.psychology.map(p => translationMap[p] || p);
-            } else {
-                t.psychology = [];
-            }
-            
-            return t;
-        }
-
-        // Firebase Sync Initialize Routines
-        function initFirebaseSync() {
-            const connectedRef = ref(db, ".info/connected");
-            onValue(connectedRef, (snap) => {
-                if (snap.val() === true) {
-                    updateSyncStatus(true);
-                } else {
-                    updateSyncStatus(false);
-                }
-            });
-
-            const accountsRef = ref(db, "tradeJournal/6592/accounts");
-            onValue(accountsRef, (snapshot) => {
-                const val = snapshot.val();
-                if (val && val.length > 0) {
-                    accounts = val;
-                    if (!currentAccountId || !accounts.find(a => a.id === currentAccountId)) {
-                        const activeAcc = accounts.find(a => a.isActive);
-                        currentAccountId = activeAcc ? activeAcc.id : accounts[0].id;
-                    }
-                    accountsLoaded = true;
-                    updateStatsAndRefresh();
-                    checkInitialLoadComplete();
-                } else {
-                    const defaultAccount = {
-                        id: 'acc_' + Date.now(),
-                        name: 'Kişisel',
-                        isActive: true,
-                        createdAt: new Date().toISOString()
-                    };
-                    accounts = [defaultAccount];
-                    currentAccountId = defaultAccount.id;
-                    set(accountsRef, accounts).then(() => {
-                        accountsLoaded = true;
-                        updateStatsAndRefresh();
-                        checkInitialLoadComplete();
-                    });
-                }
-            });
-
-            const entryTypesRef = ref(db, "tradeJournal/6592/entryTypes");
-            onValue(entryTypesRef, (snapshot) => {
-                const val = snapshot.val();
-                if (val && val.length > 0) {
-                    entryTypes = val;
-                    entryTypesLoaded = true;
-                    if (currentView === 'settings') renderEntryTypes();
-                    checkInitialLoadComplete();
-                } else {
-                    entryTypes = ['Asia Range Sweep', 'iFVG', 'FVG', 'Breaker', 'Mitigation'];
-                    set(entryTypesRef, entryTypes).then(() => {
-                        entryTypesLoaded = true;
-                        if (currentView === 'settings') renderEntryTypes();
-                        checkInitialLoadComplete();
-                    });
-                }
-            });
-
-            const tradesRef = ref(db, "tradeJournal/6592/trades");
-            onValue(tradesRef, (snapshot) => {
-                const rawTrades = snapshot.val() || {};
-                allTrades = {};
-                Object.keys(rawTrades).forEach(accId => {
-                    if (Array.isArray(rawTrades[accId])) {
-                        allTrades[accId] = rawTrades[accId].map(t => migrateTrade(t));
-                    } else {
-                        allTrades[accId] = [];
-                    }
-                });
-                tradesLoaded = true;
-                updateStatsAndRefresh();
-                checkInitialLoadComplete();
-            });
-
-            const notesRef = ref(db, "tradeJournal/6592/notes");
-            onValue(notesRef, (snapshot) => {
-                allNotes = snapshot.val() || {};
-                notesLoaded = true;
-                updateStatsAndRefresh();
-                checkInitialLoadComplete();
-            });
-
-            const balancesRef = ref(db, "tradeJournal/6592/balance");
-            onValue(balancesRef, (snapshot) => {
-                allBalances = snapshot.val() || {};
-                balancesLoaded = true;
-                updateStatsAndRefresh();
-                checkInitialLoadComplete();
-            });
-
-            const transactionsRef = ref(db, "tradeJournal/6592/transactions");
-            onValue(transactionsRef, (snapshot) => {
-                allTransactions = snapshot.val() || {};
-                transactionsLoaded = true;
-                updateStatsAndRefresh();
-                checkInitialLoadComplete();
-            });
-        }
-
-        // Getters
-        function getTrades() { return allTrades[currentAccountId] || []; }
-        function getNotes() { return allNotes[currentAccountId] || []; }
-        function getBalance() { return allBalances[currentAccountId] !== undefined ? parseFloat(allBalances[currentAccountId]) : 0; }
-        function getTransactions() { return allTransactions[currentAccountId] || []; }
-
-        function updateStatsAndRefresh() {
-            if (!currentAccountId) return;
-            trades = getTrades();
-            notes = getNotes();
-            balance = getBalance();
-            transactions = getTransactions();
-
-            const account = accounts.find(a => a.id === currentAccountId);
-            const badgeEl = document.getElementById('account-badge');
-            if (badgeEl) badgeEl.innerText = account ? account.name : 'MT';
-
-            const initialBalanceInput = document.getElementById('initial-balance-input');
-            if (initialBalanceInput) initialBalanceInput.value = balance > 0 ? balance : '';
-
-            checkBalanceButton();
-            updateStats();
-
-            if (currentView === 'calendar') renderCalendar();
-            if (currentView === 'history') renderHistory();
-            if (currentView === 'analysis') renderAnalysis();
-            if (currentView === 'balance') renderBalance();
-            if (currentView === 'notes') renderNotes();
-            if (currentView === 'settings') renderEntryTypes();
-            if (currentView === 'home') renderAccounts();
-        }
-
-        // --- DYNAMIC TIME-BASED KILLZONE CALCULATOR (ICT/SMC COMPLIANT) ---
-        function getKillzoneForDateTime(dateStr, timeStr) {
-            if (!dateStr || !timeStr) return 'Outside Killzone';
-            try {
-                const [h, min] = timeStr.split(':').map(Number);
-                const totalMins = h * 60 + min;
-                
-                // Asia: 00:00 - 08:00 Local TR time
-                if (totalMins >= 0 && totalMins < 8 * 60) return 'Asia';
-                // London Open: 08:00 - 12:00
-                if (totalMins >= 8 * 60 && totalMins < 12 * 60) return 'London Open';
-                // New York Open: 14:00 - 17:00
-                if (totalMins >= 14 * 60 && totalMins < 17 * 60) return 'New York Open';
-                // London Close: 17:00 - 19:30
-                if (totalMins >= 17 * 60 && totalMins < 19.5 * 60) return 'London Close';
-                // New York Close: 19:30 - 22:00
-                if (totalMins >= 19.5 * 60 && totalMins < 22 * 60) return 'New York Close';
-                
-                return 'Outside Killzone';
-            } catch (e) {
-                return 'Outside Killzone';
-            }
-        }
-
-        // --- MT5 SCREENSHOT OCR ENGINE ---
-        function processMT5Screenshot(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const loader = document.getElementById('ocr-loader');
-            const progressBar = document.getElementById('ocr-progress-bar');
-            if (loader) loader.classList.remove('hidden');
-            if (progressBar) progressBar.style.width = '10%';
-
-            Tesseract.createWorker('eng', 1, {
-                logger: m => {
-                    if (m.status === 'recognizing text' && progressBar) {
-                        progressBar.style.width = `${(m.progress * 100).toFixed(0)}%`;
-                    }
-                }
-            }).then(async worker => {
-                const { data: { text } } = await worker.recognize(file);
-                await worker.terminate();
-                parseMT5Text(text);
-                if (loader) loader.classList.add('hidden');
-                event.target.value = ''; 
-            }).catch(err => {
-                console.error("OCR Error:", err);
-                showToast('Resim okunamadı. Lütfen net bir ekran görüntüsü deneyin.', 'alert-triangle', 'rose');
-                if (loader) loader.classList.add('hidden');
-                event.target.value = '';
-            });
-        }
-
-        function parseMT5Text(rawText) {
-            const lines = rawText.split('\n');
-            pendingMT5Trades = [];
-
-            const symbolPattern = /XAUUSD/i;
-            const actionPattern = /(buy|sell)\s+(\d+\.\d+)/i;
-            const datePattern = /(\d{4})\.(\d{2})\.(\d{2})\s+(\d{2}:\d{2}:\d{2})/;
-            const pnlPattern = /(\d+\.\d{1,2})$/;
-
-            let currentTrade = null;
-
-            lines.forEach(line => {
-                const cleanLine = line.trim();
-                
-                if (symbolPattern.test(cleanLine)) {
-                    const actionMatch = cleanLine.match(actionPattern);
-                    if (actionMatch) {
-                        currentTrade = {
-                            id: 'mt5_' + Date.now() + Math.random().toString(36).substr(2, 5),
-                            symbol: 'XAUUSD',
-                            type: actionMatch[1].toLowerCase() === 'buy' ? 'Long' : 'Short',
-                            lot: parseFloat(actionMatch[2]) || 0.01,
-                            setup: { timeframes: [], items: ['Hislerim'] },
-                            entry: { timeframes: [], items: [] },
-                            bias: { "1H": false, "4H": false },
-                            killzone: 'Outside Killzone',
-                            psychology: [],
-                            notes: 'MT5 Otomatik Yükleme',
-                            date: toLocalDateStr(new Date()),
-                            time: toLocalTimeStr(new Date())
-                        };
-                    }
-                }
-
-                const dateMatch = cleanLine.match(datePattern);
-                if (dateMatch && currentTrade) {
-                    currentTrade.date = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
-                    currentTrade.time = dateMatch[4];
-                }
-
-                const pnlMatch = cleanLine.match(pnlPattern);
-                if (pnlMatch && currentTrade && !currentTrade.pnl) {
-                    currentTrade.pnl = parseFloat(pnlMatch[1]);
-                    currentTrade.killzone = getKillzoneForDateTime(currentTrade.date, currentTrade.time);
-                    
-                    if (balance > 0) {
-                        const riskAmount = balance * (1 / 100);
-                        currentTrade.rr = (currentTrade.pnl / riskAmount).toFixed(1);
-                    } else {
-                        currentTrade.rr = '-';
-                    }
-
-                    pendingMT5Trades.push({...currentTrade});
-                    currentTrade = null;
-                }
-            });
-
-            if (pendingMT5Trades.length > 0) {
-                showMT5Review();
-            } else {
-                showToast("İşlem bulunamadı. Lütfen İşlemler sekmesinin net resmini yükleyin.", "alert-circle", "rose");
-            }
-        }
-
-        function showMT5Review() {
-            const modal = document.getElementById('mt5-review-modal');
-            if (!modal) return;
-            
-            const bulkSetup = document.getElementById('bulk-setup');
-            if (bulkSetup) {
-                bulkSetup.innerHTML = '<option value="">-- Değiştirme --</option><option value="Hislerim">Hislerim</option>' + 
-                    entryTypes.map(t => `<option value="${t}">${t}</option>`).join('');
-            }
-
-            renderPendingTrades();
-            modal.classList.remove('hidden');
-        }
-
-        function renderPendingTrades() {
-            const body = document.getElementById('mt5-review-body');
-            if (!body) return;
-            body.innerHTML = '';
-
-            pendingMT5Trades.forEach((trade, index) => {
-                const card = document.createElement('div');
-                card.className = 'bg-slate-800/30 p-5 rounded-2xl border border-slate-800 space-y-4 relative';
-                
-                const defaultSetupsList = ['Hislerim', 'iFVG', 'FVG', 'Breaker', 'Mitigation', 'CISD', 'Likidite', 'Supply/Demand', 'NYMO', 'Key Level', 'Range', 'Pivot', 'SMT', 'RSI'];
-                const setupsHtml = defaultSetupsList.map(setup => {
-                    const isSelected = trade.setup?.items?.includes(setup);
-                    return `
-                        <button type="button" onclick="togglePendingArrayValue(${index}, 'setup', 'items', '${setup}')" class="px-2 py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
-                            ${setup}
-                        </button>
-                    `;
-                }).join('');
-
-                const psychsHtml = psychologyList.map(psych => {
-                    const isSelected = trade.psychology?.includes(psych);
-                    return `
-                        <button type="button" onclick="togglePendingPsychologyValue(${index}, '${psych}')" class="px-2 py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
-                            ${psych}
-                        </button>
-                    `;
-                }).join('');
-
-                const triggersList = ['FVG', 'OB', 'CISD', 'MSS', 'SMT', 'BOS', 'Liquidity Sweep'];
-                const triggersHtml = triggersList.map(trigger => {
-                    const isSelected = trade.entry?.items?.includes(trigger);
-                    return `
-                        <button type="button" onclick="togglePendingArrayValue(${index}, 'entry', 'items', '${trigger}')" class="px-2 py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
-                            ${trigger}
-                        </button>
-                    `;
-                }).join('');
-
-                card.innerHTML = `
-                    <!-- Header -->
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-2 border-b border-slate-800 gap-2">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="text-sm font-bold text-slate-200">İşlem #${index + 1}</span>
-                            <input type="text" value="${trade.symbol}" oninput="updatePendingField(${index}, 'symbol', this.value)" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-bold w-20 text-center text-white">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${trade.type === 'Long' ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' : 'bg-rose-950 text-rose-400 border border-rose-500/30'}">
-                                ${trade.type}
-                            </span>
-                            <button onclick="togglePendingType(${index})" class="text-[10px] text-sky-400 hover:underline">Tipi Değiştir</button>
-                        </div>
-                        <div class="flex items-center space-x-2 text-xs text-slate-400 w-full sm:w-auto justify-between sm:justify-end">
-                            <div class="flex space-x-1">
-                                <input type="date" value="${trade.date}" onchange="updatePendingField(${index}, 'date', this.value); autoSuggestPendingValues(${index})" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300">
-                                <input type="time" value="${trade.time ? trade.time.substring(0,5) : '12:00'}" onchange="updatePendingField(${index}, 'time', this.value); autoSuggestPendingValues(${index})" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300">
-                            </div>
-                            <button onclick="removePendingTrade(${index})" class="p-1 hover:text-rose-500 transition-colors">
-                                <i data-lucide="trash-2" class="w-4 h-4 text-slate-500 hover:text-rose-400"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Params Grid -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Lot</label>
-                            <input type="number" step="0.01" value="${trade.lot}" oninput="updatePendingField(${index}, 'lot', parseFloat(this.value) || 0)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none font-semibold">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">PnL ($)</label>
-                            <input type="number" step="0.01" value="${trade.pnl}" oninput="updatePendingField(${index}, 'pnl', parseFloat(this.value) || 0); recalculatePendingRR(${index})" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none font-semibold ${trade.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">R (%)</label>
-                            <input type="number" step="0.01" value="${trade.rPercent || 1.00}" oninput="updatePendingField(${index}, 'rPercent', parseFloat(this.value) || 0); recalculatePendingRR(${index})" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none font-semibold text-slate-400">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">RR</label>
-                            <div class="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-2 py-1.5 text-xs font-semibold text-sky-400 flex items-center justify-center h-[34px]">
-                                ${trade.rr || '-'}
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Killzone</label>
-                            <select onchange="updatePendingField(${index}, 'killzone', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none">
-                                <option value="Asia" ${trade.killzone === 'Asia' ? 'selected' : ''}>Asia</option>
-                                <option value="London Open" ${trade.killzone === 'London Open' ? 'selected' : ''}>London Open</option>
-                                <option value="London Close" ${trade.killzone === 'London Close' ? 'selected' : ''}>London Close</option>
-                                <option value="New York Open" ${trade.killzone === 'New York Open' ? 'selected' : ''}>New York Open</option>
-                                <option value="New York Close" ${trade.killzone === 'New York Close' ? 'selected' : ''}>New York Close</option>
-                                <option value="Outside Killzone" ${trade.killzone === 'Outside Killzone' ? 'selected' : ''}>Outside Killzone</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Structural Alignment -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 space-y-2.5">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase">Bias:</span>
-                                <div class="flex space-x-3 text-xs">
-                                    <label class="flex items-center space-x-1 cursor-pointer">
-                                        <input type="checkbox" ${trade.bias?.['1H'] ? 'checked' : ''} onchange="updatePendingCheckbox(${index}, 'bias', '1H', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
-                                        <span>1H</span>
-                                    </label>
-                                    <label class="flex items-center space-x-1 cursor-pointer">
-                                        <input type="checkbox" ${trade.bias?.['4H'] ? 'checked' : ''} onchange="updatePendingCheckbox(${index}, 'bias', '4H', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
-                                        <span>4H</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase">Setup TF:</span>
-                                <div class="flex space-x-3 text-xs">
-                                    <label class="flex items-center space-x-1 cursor-pointer">
-                                        <input type="checkbox" ${trade.setup?.timeframes?.includes('15M') ? 'checked' : ''} onchange="updatePendingArrayField(${index}, 'setup', 'timeframes', '15M', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
-                                        <span>15M</span>
-                                    </label>
-                                    <label class="flex items-center space-x-1 cursor-pointer">
-                                        <input type="checkbox" ${trade.setup?.timeframes?.includes('5M') ? 'checked' : ''} onchange="updatePendingArrayField(${index}, 'setup', 'timeframes', '5M', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
-                                        <span>5M</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase">Entry TF:</span>
-                                <div class="flex space-x-3 text-xs">
-                                    <label class="flex items-center space-x-1 cursor-pointer">
-                                        <input type="checkbox" ${trade.entry?.timeframes?.includes('1M') ? 'checked' : ''} onchange="updatePendingArrayField(${index}, 'entry', 'timeframes', '1M', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
-                                        <span>1M</span>
-                                    </label>
-                                    <label class="flex items-center space-x-1 cursor-pointer">
-                                        <input type="checkbox" ${trade.entry?.timeframes?.includes('5M') ? 'checked' : ''} onchange="updatePendingArrayField(${index}, 'entry', 'timeframes', '5M', this.checked)" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
-                                        <span>5M</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Setups Selection -->
-                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Setups (Çoklu Seçim)</label>
-                            <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
-                                ${setupsHtml}
-                            </div>
-                        </div>
-
-                        <!-- Psychology -->
-                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Psikoloji (Çoklu Seçim)</label>
-                            <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
-                                ${psychsHtml}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Entry Trigger & Exit Reason / Notes -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 text-xs">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Entry Trigger (Çoklu Seçim)</label>
-                            <div class="flex flex-wrap gap-1">
-                                ${triggersHtml}
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 text-xs flex flex-col justify-between gap-1">
-                            <span class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Çıkış Sebebi</span>
-                            <div class="grid grid-cols-3 gap-1">
-                                ${['TP', 'Manuel', 'SL'].map(reason => {
-                                    const isSelected = trade.exitReason === reason;
-                                    return `
-                                        <button type="button" onclick="updatePendingField(${index}, 'exitReason', '${reason}')" class="py-1 rounded text-[10px] font-bold border transition-all ${isSelected ? 'bg-sky-600 border-sky-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}">
-                                            ${reason}
-                                        </button>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-950/20 p-3 rounded-xl border border-slate-800/80 text-xs flex flex-col justify-between">
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Notlar</label>
-                            <input type="text" value="${trade.notes || ''}" oninput="updatePendingField(${index}, 'notes', this.value)" placeholder="Örn: MT5 Otomatik Yükleme..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 outline-none">
-                        </div>
-                    </div>
-                `;
-                body.appendChild(card);
-            });
-
-            const info = document.getElementById('mt5-total-info');
-            if (info) info.innerText = `Toplam ${pendingMT5Trades.length} yeni işlem bulundu.`;
-            lucide.createIcons();
-        }
-
-        // --- DYNAMIC INTERACTIONS FOR PENDING MODAL ---
-        function autoSuggestPendingValues(index) {
-            const trade = pendingMT5Trades[index];
-            if (!trade) return;
-            if (trade.date && trade.time) {
-                trade.killzone = getKillzoneForDateTime(trade.date, trade.time);
-            }
-            renderPendingTrades();
-        }
-
-        function recalculatePendingRR(index) {
-            const trade = pendingMT5Trades[index];
-            if (!trade) return;
-            const pnl = parseFloat(trade.pnl) || 0;
-            const rPercent = parseFloat(trade.rPercent) || 1.00;
-            if (balance > 0 && rPercent > 0) {
-                const riskAmount = balance * (rPercent / 100);
-                trade.rr = (pnl / riskAmount).toFixed(1);
-            } else {
-                trade.rr = '-';
-            }
-            renderPendingTrades();
-        }
-
-        function updatePendingField(index, field, value) {
-            if (pendingMT5Trades[index]) {
-                pendingMT5Trades[index][field] = value;
-                if (field === 'pnl' || field === 'rPercent') {
-                    recalculatePendingRR(index);
-                } else {
-                    renderPendingTrades();
-                }
-            }
-        }
-
-        function togglePendingType(index) {
-            if (pendingMT5Trades[index]) {
-                pendingMT5Trades[index].type = pendingMT5Trades[index].type === 'Long' ? 'Short' : 'Long';
-                renderPendingTrades();
-            }
-        }
-
-        // Checkbox alignment handlers
-        function updatePendingCheckbox(index, parentField, field, value) {
-            if (pendingMT5Trades[index]) {
-                if (!pendingMT5Trades[index][parentField]) {
-                    pendingMT5Trades[index][parentField] = {};
-                }
-                pendingMT5Trades[index][parentField][field] = value;
-                renderPendingTrades();
-            }
-        }
-
-        function updatePendingArrayField(index, parentField, arrayField, value, isChecked) {
-            if (pendingMT5Trades[index]) {
-                if (!pendingMT5Trades[index][parentField]) {
-                    pendingMT5Trades[index][parentField] = {};
-                }
-                if (!pendingMT5Trades[index][parentField][arrayField]) {
-                    pendingMT5Trades[index][parentField][arrayField] = [];
-                }
-                let arr = pendingMT5Trades[index][parentField][arrayField];
-                if (isChecked) {
-                    if (!arr.includes(value)) arr.push(value);
-                } else {
-                    pendingMT5Trades[index][parentField][arrayField] = arr.filter(x => x !== value);
-                }
-                renderPendingTrades();
-            }
-        }
-
-        function togglePendingArrayValue(index, parentField, arrayField, value) {
-            if (pendingMT5Trades[index]) {
-                if (!pendingMT5Trades[index][parentField]) {
-                    pendingMT5Trades[index][parentField] = {};
-                }
-                if (!pendingMT5Trades[index][parentField][arrayField]) {
-                    pendingMT5Trades[index][parentField][arrayField] = [];
-                }
-                let arr = pendingMT5Trades[index][parentField][arrayField];
-                if (arr.includes(value)) {
-                    pendingMT5Trades[index][parentField][arrayField] = arr.filter(x => x !== value);
-                } else {
-                    arr.push(value);
-                }
-                renderPendingTrades();
-            }
-        }
-
-        function togglePendingPsychologyValue(index, value) {
-            if (pendingMT5Trades[index]) {
-                if (!pendingMT5Trades[index].psychology) {
-                    pendingMT5Trades[index].psychology = [];
-                }
-                let arr = pendingMT5Trades[index].psychology;
-                if (arr.includes(value)) {
-                    pendingMT5Trades[index].psychology = arr.filter(x => x !== value);
-                } else {
-                    arr.push(value);
-                }
-                renderPendingTrades();
-            }
-        }
-
-        function removePendingTrade(index) {
-            pendingMT5Trades.splice(index, 1);
-            if (pendingMT5Trades.length === 0) {
-                closeMT5Review();
-            } else {
-                renderPendingTrades();
-            }
-        }
-
-        // --- BULK APPLY ENGINE ---
-        function applyBulkToPending() {
-            const setupVal = document.getElementById('bulk-setup').value;
-            const psychVal = document.getElementById('bulk-psych').value;
-            const killzoneVal = document.getElementById('bulk-killzone').value;
-            const exitVal = document.getElementById('bulk-exit').value;
-            const biasVal = document.getElementById('bulk-bias').value;
-            const setupTfVal = document.getElementById('bulk-setup-tf').value;
-            const entryTfVal = document.getElementById('bulk-entry-tf').value;
-            const triggerVal = document.getElementById('bulk-entry-trigger').value;
-            const rVal = parseFloat(document.getElementById('bulk-r').value);
-
-            pendingMT5Trades.forEach((trade) => {
-                if (setupVal) {
-                    if (!trade.setup) trade.setup = { timeframes: [], items: [] };
-                    trade.setup.items = [setupVal];
-                }
-                if (psychVal) {
-                    trade.psychology = [psychVal];
-                }
-                if (killzoneVal) {
-                    trade.killzone = killzoneVal;
-                }
-                if (exitVal) {
-                    trade.exitReason = exitVal;
-                }
-                if (biasVal) {
-                    if (!trade.bias) trade.bias = { "1H": false, "4H": false };
-                    if (biasVal === '1H') { trade.bias['1H'] = true; trade.bias['4H'] = false; }
-                    else if (biasVal === '4H') { trade.bias['1H'] = false; trade.bias['4H'] = true; }
-                    else if (biasVal === 'Both') { trade.bias['1H'] = true; trade.bias['4H'] = true; }
-                    else if (biasVal === 'None') { trade.bias['1H'] = false; trade.bias['4H'] = false; }
-                }
-                if (setupTfVal) {
-                    if (!trade.setup) trade.setup = { timeframes: [], items: [] };
-                    if (setupTfVal === '15M') trade.setup.timeframes = ['15M'];
-                    else if (setupTfVal === '5M') trade.setup.timeframes = ['5M'];
-                    else if (setupTfVal === 'Both') trade.setup.timeframes = ['15M', '5M'];
-                    else if (setupTfVal === 'None') trade.setup.timeframes = [];
-                }
-                if (entryTfVal) {
-                    if (!trade.entry) trade.entry = { timeframes: [], items: [] };
-                    if (entryTfVal === '1M') trade.entry.timeframes = ['1M'];
-                    else if (entryTfVal === '5M') trade.entry.timeframes = ['5M'];
-                    else if (entryTfVal === 'Both') trade.entry.timeframes = ['1M', '5M'];
-                    else if (entryTfVal === 'None') trade.entry.timeframes = [];
-                }
-                if (triggerVal) {
-                    if (!trade.entry) trade.entry = { timeframes: [], items: [] };
-                    trade.entry.items = [triggerVal];
-                }
-                if (!isNaN(rVal) && rVal > 0) {
-                    trade.rPercent = rVal;
-                }
-                
-                // Recalculate RR
-                const pnl = parseFloat(trade.pnl) || 0;
-                const rPercent = parseFloat(trade.rPercent) || 1.00;
-                if (balance > 0 && rPercent > 0) {
-                    const riskAmount = balance * (rPercent / 100);
-                    trade.rr = (pnl / riskAmount).toFixed(1);
-                } else {
-                    trade.rr = '-';
-                }
-            });
-
-            renderPendingTrades();
-            showToast("Seçilen toplu değişiklikler tanımlandı!", "check", "emerald");
-        }
-
-        function updatePendingPnL(index, val) { 
-            if (pendingMT5Trades[index]) pendingMT5Trades[index].pnl = parseFloat(val) || 0; 
-        }
-        function updatePendingSetup(index, val) { 
-            if (pendingMT5Trades[index]) pendingMT5Trades[index].setup = { timeframes: [], items: [val] }; 
-        }
-        function closeMT5Review() { 
-            const modal = document.getElementById('mt5-review-modal');
-            if (modal) modal.classList.add('hidden'); 
-        }
-
-        // Saving pending trades
-        function saveMT5Trades() {
-            if (!currentAccountId || pendingMT5Trades.length === 0) return;
-            const migratedPending = pendingMT5Trades.map(t => migrateTrade(t));
-            trades = [...trades, ...migratedPending];
-            saveCurrentAccountData();
-            closeMT5Review();
-            showToast(`${pendingMT5Trades.length} işlem başarıyla eklendi!`, 'check', 'emerald');
-            updateStatsAndRefresh();
-        }
-
-        // --- AUTH & NAVIGATION ---
-        function checkLockPassword() {
-            const input = document.getElementById('lock-password-input');
-            const error = document.getElementById('lock-error');
-            if (input.value === LOCK_PASSWORD) {
-                error.classList.add('hidden');
-                unlockApp();
-            } else {
-                error.classList.remove('hidden');
-                input.value = '';
-                input.focus();
-            }
-        }
-
-        // Unlocking Dashboard view
-        function unlockApp() {
-            document.getElementById('lock-screen').classList.add('hidden');
-            updateDateDisplay();
-            switchTab('home');
-        }
-
-        function lockApp() {
-            showConfirm('Çıkış Yap', 'Uygulamadan çıkmak istediğinize emin misiniz?', () => {
-                location.reload();
-            });
-        }
-
-        function toggleMobileSidebar(show) {
-            const sidebar = document.getElementById('sidebar-menu');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (show) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        function loadAccountData(accountId) {
-            currentAccountId = accountId;
-            updateStatsAndRefresh();
-        }
-
-        function saveAccountsState() {
-            if (isOnline) {
-                updateSyncStatus(true, "Eşitleniyor...");
-                set(ref(db, "tradeJournal/6592/accounts"), accounts)
-                    .then(() => {
-                        updateSyncStatus(true);
-                    })
-                    .catch(err => {
-                        console.error("Firebase accounts save failed:", err);
-                        updateSyncStatus(false);
-                    });
-            } else {
-                updateSyncStatus(false);
-            }
-        }
-
-        function saveCurrentAccountData() {
-            if (!currentAccountId) return;
-            
-            if (isOnline) {
-                updateSyncStatus(true, "Eşitleniyor...");
-                const updates = {
-                    [`tradeJournal/6592/trades/${currentAccountId}`]: trades,
-                    [`tradeJournal/6592/notes/${currentAccountId}`]: notes,
-                    [`tradeJournal/6592/balance/${currentAccountId}`]: balance,
-                    [`tradeJournal/6592/transactions/${currentAccountId}`]: transactions
-                };
-
-                update(ref(db), updates)
-                    .then(() => {
-                        updateSyncStatus(true);
-                    })
-                    .catch(err => {
-                        console.error("Firebase sync error:", err);
-                        updateSyncStatus(false);
-                    });
-            } else {
-                updateSyncStatus(false);
-            }
-        }
-
-        function switchTab(tab) {
-            currentView = tab;
-            toggleMobileSidebar(false);
-            
-            document.querySelectorAll('nav border').forEach(b => b.classList.remove('active-tab'));
-            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active-tab'));
-            const navBtn = document.getElementById(`nav-${tab}`);
-            if (navBtn) navBtn.classList.add('active-tab');
-
-            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
-            document.getElementById(`section-${tab}`).classList.remove('hidden');
-
-            const accountNav = document.getElementById('account-nav');
-            const navHome = document.getElementById('nav-home');
-            const bottomHomeNav = document.getElementById('bottom-home-nav');
-
-            if (tab === 'home') {
-                accountNav.classList.add('hidden');
-                navHome.classList.add('hidden');
-                bottomHomeNav.classList.add('hidden');
-            } else {
-                accountNav.classList.remove('hidden');
-                navHome.classList.add('hidden');
-                bottomHomeNav.classList.remove('hidden');
-            }
-
-            const titles = { home: 'Ana Sayfa', calendar: 'Takvim', history: 'İşlemler', analysis: 'Analiz', balance: 'Bakiye', notes: 'Notlar', settings: 'Ayarlar' };
-            document.getElementById('page-title').innerText = titles[tab];
-
-            updateStatsAndRefresh();
-            lucide.createIcons();
-        }
-
-        function openAccountModal() {
-            document.body.classList.add('overflow-hidden');
-            document.getElementById('account-modal').classList.remove('hidden');
-            document.getElementById('account-name-input').focus();
-        }
-
-        function closeAccountModal() {
-            document.body.classList.remove('overflow-hidden');
-            document.getElementById('account-modal').classList.add('hidden');
-            document.getElementById('account-name-input').value = '';
-        }
-
-        function saveAccount() {
-            const nameInput = document.getElementById('account-name-input');
-            const name = nameInput.value.trim();
-            
-            if (!name) {
-                showToast('Lütfen bir hesap adı girin', 'error');
+            if (wasActive && accounts.filter(a => a.isActive).length === 1) {
+                showToast('En az bir aktif hesap olmalıdır', 'error');
                 return;
             }
 
-            const newAccount = {
-                id: 'acc_' + Date.now(),
-                name: name,
-                isActive: true,
-                createdAt: new Date().toISOString()
-            };
-
-            accounts.push(newAccount);
+            accounts[index].isActive = !accounts[index].isActive;
+            
+            if (!accounts[index].isActive && id === currentAccountId) {
+                const nextActive = accounts.find(a => a.isActive);
+                if (nextActive) {
+                    loadAccountData(nextActive.id);
+                }
+            }
+            
             saveAccountsState();
-            closeAccountModal();
-            showToast('Hesap başarıyla oluşturuldu');
+            showToast(wasActive ? 'Hesap pasif bölüme taşındı' : 'Hesap aktif hale getirildi');
+        }
+
+        function confirmDeleteAccount(id) {
+            const acc = accounts.find(a => a.id === id);
+            if (!acc) return;
+            
+            if (accounts.length === 1) {
+                showToast('Son hesabı silemezsiniz', 'error');
+                return;
+            }
+
+            showConfirm(
+                'Hesabı Sil',
+                `"${acc.name}" hesabını ve tüm verilerini (işlemler, notlar, bakiye) kalıcı olarak silmek istediğinize emin misiniz?`,
+                () => deleteAccount(id)
+            );
+        }
+
+        function deleteAccount(id) {
+            const index = accounts.findIndex(a => a.id === id);
+            if (index === -1) return;
+
+            if (id === currentAccountId) {
+                const nextAcc = accounts.find((a, i) => i !== index && a.isActive) || accounts.find((a, i) => i !== index);
+                loadAccountData(nextAcc.id);
+            }
+
+            remove(ref(db, `tradeJournal/6592/trades/${id}`));
+            remove(ref(db, `tradeJournal/6592/notes/${id}`));
+            remove(ref(db, `tradeJournal/6592/balance/${id}`));
+            remove(ref(db, `tradeJournal/6592/transactions/${id}`));
+
+            accounts.splice(index, 1);
+            saveAccountsState();
+            closeConfirmModal();
+            showToast('Hesap ve verileri silindi');
         }
 
         function renderCalendar() {
@@ -3070,7 +2002,7 @@ Doğrudan kopyalayıp çalıştırabileceğiniz tek ve tam kod bloğu:
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
             
-            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Aralık", "Eylül", "Ekim", "Kasım", "Aralık"];
             document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
 
             const firstDay = new Date(year, month, 1).getDay();
@@ -3362,7 +2294,7 @@ Doğrudan kopyalayıp çalıştırabileceğiniz tek ve tam kod bloğu:
         function renderSetupItems(selectedItems = []) {
             const container = document.getElementById('setup-items-container');
             if (!container) return;
-            const defaultSetupItems = ['Hislerim', 'iFVG', 'FVG', 'Breaker', 'Mitigation', 'CISD', 'Likidite', 'Supply/Demand', 'NYMO', 'Key Level', 'Range', 'Pivot', 'SMT', 'RSI'];
+            const defaultSetupItems = ['Hislerim', 'iFVG', 'FVG', 'FTR', 'CISD', 'Likidite', 'Supply/Demand', 'NYMO', 'Key Level', 'Range', 'Pivot', 'SMT', 'RSI'];
             
             // Keep user entries from the Setup Management list synced
             const uniqueSetups = Array.from(new Set([...defaultSetupItems, ...entryTypes]));
@@ -3696,6 +2628,30 @@ Doğrudan kopyalayıp çalıştırabileceğiniz tek ve tam kod bloğu:
             }
         }
 
+        // Clean mapping for Killzones (strictly using requested options)
+        function getKillzoneForDateTime(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return 'Outside Killzone';
+            try {
+                const [h, min] = timeStr.split(':').map(Number);
+                const totalMins = h * 60 + min;
+                
+                // Asia: 00:00 - 08:00 Local TR time
+                if (totalMins >= 0 && totalMins < 8 * 60) return 'Asia';
+                // London Open: 08:00 - 12:00
+                if (totalMins >= 8 * 60 && totalMins < 12 * 60) return 'London Open';
+                // New York Open: 14:00 - 17:00
+                if (totalMins >= 14 * 60 && totalMins < 17 * 60) return 'New York Open';
+                // London Close: 17:00 - 19:30
+                if (totalMins >= 17 * 60 && totalMins < 19.5 * 60) return 'London Close';
+                // New York Close: 19:30 - 22:00
+                if (totalMins >= 19.5 * 60 && totalMins < 22 * 60) return 'New York Close';
+                
+                return 'Outside Killzone';
+            } catch (e) {
+                return 'Outside Killzone';
+            }
+        }
+
         function updateKillzone() {
             const dateVal = document.getElementById('trade-date').value;
             const timeVal = document.getElementById('trade-time').value;
@@ -3876,7 +2832,7 @@ Doğrudan kopyalayıp çalıştırabileceğiniz tek ve tam kod bloğu:
             return [];
         }
 
-        // Crisp dynamically loaded summary report points
+        // Crisp dynamically loaded summary report points (Max 3-5 high-value points)
         function renderInsights(profitFactor, winRate, avgRR, maxDD) {
             const insightsEl = document.getElementById('report-insights');
             if (!insightsEl) return;
@@ -3955,7 +2911,7 @@ Doğrudan kopyalayıp çalıştırabileceğiniz tek ve tam kod bloğu:
             const avgRR = rrCount > 0 ? (totalRR / rrCount) : 0;
             document.getElementById('stat-avg-rr').innerText = avgRR.toFixed(2) + 'R';
 
-            // --- Dynamic KPIs Analysis ---
+            // --- Simplified Dynamic KPIs Analysis ---
 
             // 1. Setup metrics
             const setupPnL = {}; const setupCounts = {};
@@ -4005,10 +2961,10 @@ Doğrudan kopyalayıp çalıştırabileceğiniz tek ve tam kod bloğu:
             document.getElementById('stat-best-killzone').innerText = bestKillzone;
             document.getElementById('stat-best-psychology').innerText = bestPsychology;
 
-            // Draw charts
+            // Draw clean charts
             drawEquityChart();
             
-            // Extract max Drawdown dynamically
+            // Extract max Drawdown dynamically from drawEquityChart calculation output state
             let cumulative = balance;
             let maxEquity = cumulative;
             let maxDD = 0;
@@ -4554,154 +3510,6 @@ Doğrudan kopyalayıp çalıştırabileceğiniz tek ve tam kod bloğu:
             if (el) el.innerText = new Date().toLocaleDateString('tr-TR', options);
         }
 
-        // --- ACCOUNT RENDERER (DARK MODE COMPLIANT) ---
-        function renderAccounts() {
-            const activeList = document.getElementById('active-accounts-list');
-            const textPassiveList = document.getElementById('passive-accounts-list');
-            if (!activeList || !textPassiveList) return;
-            
-            activeList.innerHTML = '';
-            textPassiveList.innerHTML = '';
-
-            accounts.forEach(acc => {
-                const isCurrent = acc.id === currentAccountId;
-                const accStartBalance  = allBalances[acc.id] !== undefined ? parseFloat(allBalances[acc.id]) : 0;
-                const accTrades        = allTrades[acc.id] || [];
-                const accTransactions  = allTransactions[acc.id] || [];
-                const accTotalPnL      = accTrades.reduce((s, t) => s + (parseFloat(t.pnl) || 0), 0);
-                const accTotalDeposit  = accTransactions.filter(t => t.type === 'deposit').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
-                const accTotalWithdraw = accTransactions.filter(t => t.type === 'withdraw').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
-                const accBalance       = accStartBalance + accTotalPnL + accTotalDeposit - accTotalWithdraw;
-
-                const card = document.createElement('div');
-                card.className = `p-6 rounded-2xl border transition-all cursor-pointer ${isCurrent ? 'bg-sky-900/20 border-sky-500/50 ring-1 ring-sky-500/50' : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`;
-                
-                card.onclick = (e) => {
-                    if (e.target.closest('button')) return;
-                    selectAccount(acc.id);
-                };
-
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-sky-400">
-                                <i data-lucide="wallet" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h5 class="font-bold text-slate-100">${acc.name}</h5>
-                                <p class="text-xs text-slate-500">${new Date(acc.createdAt).toLocaleDateString('tr-TR')}</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-col items-end">
-                            <span class="text-sm font-bold text-slate-100">$${accBalance.toFixed(2)}</span>
-                            <span class="text-[10px] text-slate-500 mt-0.5">anlık bakiye</span>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2 justify-end">
-                        ${acc.isActive ? `
-                            <button onclick="toggleAccountStatus('${acc.id}')" class="p-2 bg-slate-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-500 rounded-lg transition-all" title="Sil (Pasife Taşı)">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        ` : `
-                            <button onclick="toggleAccountStatus('${acc.id}')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold transition-all flex items-center space-x-2">
-                                <i data-lucide="unarchive" class="w-4 h-4"></i>
-                                <span>Aktif Et</span>
-                            </button>
-                            <button onclick="confirmDeleteAccount('${acc.id}')" class="p-2 bg-slate-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-500 rounded-lg transition-all" title="Kalıcı Olarak Sil">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        `}
-                    </div>
-                `;
-
-                if (acc.isActive) {
-                    activeList.appendChild(card);
-                } else {
-                    textPassiveList.appendChild(card);
-                }
-            });
-
-            if (activeList.children.length === 0) {
-                activeList.innerHTML = '<div class="col-span-full py-8 text-center text-slate-500 italic">Aktif hesap bulunamadı.</div>';
-            }
-            if (textPassiveList.children.length === 0) {
-                textPassiveList.innerHTML = '<div class="col-span-full py-8 text-center text-slate-500 italic">Pasif hesap bulunamadı.</div>';
-            }
-
-            lucide.createIcons();
-        }
-
-        function selectAccount(id) {
-            const acc = accounts.find(a => a.id === id);
-            if (!acc.isActive) {
-                showToast('Pasif hesaplar seçilemez. Önce aktif hale getirin.', 'error');
-                return;
-            }
-            loadAccountData(id);
-            switchTab('calendar');
-            showToast(`${acc.name} hesabına geçiş yapıldı`);
-        }
-
-        function toggleAccountStatus(id) {
-            const index = accounts.findIndex(a => a.id === id);
-            if (index === -1) return;
-            
-            const wasActive = accounts[index].isActive;
-
-            if (wasActive && accounts.filter(a => a.isActive).length === 1) {
-                showToast('En az bir aktif hesap olmalıdır', 'error');
-                return;
-            }
-
-            accounts[index].isActive = !accounts[index].isActive;
-            
-            if (!accounts[index].isActive && id === currentAccountId) {
-                const nextActive = accounts.find(a => a.isActive);
-                if (nextActive) {
-                    loadAccountData(nextActive.id);
-                }
-            }
-            
-            saveAccountsState();
-            showToast(wasActive ? 'Hesap pasif bölüme taşındı' : 'Hesap aktif hale getirildi');
-        }
-
-        function confirmDeleteAccount(id) {
-            const acc = accounts.find(a => a.id === id);
-            if (!acc) return;
-            
-            if (accounts.length === 1) {
-                showToast('Son hesabı silemezsiniz', 'error');
-                return;
-            }
-
-            showConfirm(
-                'Hesabı Sil',
-                `"${acc.name}" hesabını ve tüm verilerini (işlemler, notlar, bakiye) kalıcı olarak silmek istediğinize emin misiniz?`,
-                () => deleteAccount(id)
-            );
-        }
-
-        function deleteAccount(id) {
-            const index = accounts.findIndex(a => a.id === id);
-            if (index === -1) return;
-
-            if (id === currentAccountId) {
-                const nextAcc = accounts.find((a, i) => i !== index && a.isActive) || accounts.find((a, i) => i !== index);
-                loadAccountData(nextAcc.id);
-            }
-
-            remove(ref(db, `tradeJournal/6592/trades/${id}`));
-            remove(ref(db, `tradeJournal/6592/notes/${id}`));
-            remove(ref(db, `tradeJournal/6592/balance/${id}`));
-            remove(ref(db, `tradeJournal/6592/transactions/${id}`));
-
-            accounts.splice(index, 1);
-            saveAccountsState();
-            closeConfirmModal();
-            showToast('Hesap ve verileri silindi');
-        }
-
         // App Initialization
         function initApp() {
             lucide.createIcons();
@@ -4771,7 +3579,7 @@ Doğrudan kopyalayıp çalıştırabileceğiniz tek ve tam kod bloğu:
             toggleSetupItem,
             toggleEntryTF,
             toggleEntryItem,
-            getKillzoneForDateTime,
+            
             autoSuggestPendingValues,
             recalculatePendingRR,
             updatePendingField,
@@ -4781,8 +3589,7 @@ Doğrudan kopyalayıp çalıştırabileceğiniz tek ve tam kod bloğu:
             togglePendingArrayValue,
             togglePendingPsychologyValue,
             removePendingTrade,
-            applyBulkToPending,
-            renderAccounts
+            applyBulkToPending
         };
 
         Object.keys(globalFunctions).forEach(key => {
